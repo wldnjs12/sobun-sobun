@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: sobun-sobun
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sobunsobun
+    username: sobunsobun
+    password: sobunsobun
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 해커톤 기간 한정. 운영 전환 시 validate/none + 마이그레이션 도구로 교체
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+# 팟 실시간 정산 갱신(WebSocket) 엔드포인트는 global/config/WebSocketConfig 참고
