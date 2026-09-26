@@ -72,7 +72,10 @@ docs/      ERD, API 명세 초안
 - [docs/SETUP.md](./docs/SETUP.md) — 로컬 개발 환경 설정 가이드
 - [docs/API_KEYS.md](./docs/API_KEYS.md) — 외부 API 키 발급 안내
 - [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — 발표/데모 시나리오
+- [docs/PROJECT_BOARD.md](./docs/PROJECT_BOARD.md) — GitHub Projects 칸반 보드 사용법
+- [docs/DISCORD_WEBHOOK.md](./docs/DISCORD_WEBHOOK.md) — Discord GitHub 알림 웹훅 설정
 - [CLAUDE.md](./CLAUDE.md) — Claude Code가 이 프로젝트에서 지켜야 할 규칙 (팀원 로컬 Claude Code에서 자동으로 읽힘)
+- [ONBOARDING.md](./ONBOARDING.md) — 팀원 온보딩 가이드 (클론부터 담당 업무/일정까지)
 
 ## Claude Code 사용자라면
 

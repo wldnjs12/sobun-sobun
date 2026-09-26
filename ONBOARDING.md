@@ -44,8 +44,18 @@ git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
 
 ## 6. main / develop 브랜치는 직접 건드리지 않기로 해요
 
-`main`, `develop`에는 직접 커밋/푸시하지 않고, **항상 feature 브랜치 → PR → 리뷰 승인 → 머지** 구조로 갑니다. Claude Code로 작업하면 훅이 로컬에서 한 번 막아주지만, 이건 Claude Code를 쓸 때만 적용되는 안전장치예요. GitHub 저장소 자체의 브랜치 보호 규칙(Settings → Branches)은 지원님이 별도로 설정해야 모두에게 강제됩니다.
+`main`, `develop`에는 직접 커밋/푸시하지 않고 항상 `feature/기능명` 브랜치에서 작업합니다. 다만 매번 PR 올리고 승인 기다리는 절차는 생략하기로 했어요 — feature 브랜치에서 작업을 어느 정도 쌓은 다음, PR을 올리거나(권장) 바로 develop에 머지해서 push하는 방식으로 편하게 진행하면 됩니다. 자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md) 참고.
 
-## 7. 막히면
+⚠️ 다만 이건 **팀 약속이지 시스템으로 강제되는 규칙은 아니에요.** Claude Code를 쓰면 훅이 `main`/`develop` 직접 커밋을 한 번 막아주지만, 이건 Claude Code 안에서만 동작하고 IntelliJ GUI나 터미널 git 명령어는 막지 못합니다. GitHub 저장소 자체의 브랜치 보호 규칙도 (걸면 번거로워질 것 같아서) 설정하지 않기로 했으니, 결국은 "우리끼리 main/develop 직접 안 건드리기로 한 약속"에 의존하는 구조예요. 데모 직전(10/2~10/3)엔 특히 조심해주세요.
+
+## 7. 할 일 관리 — GitHub Projects 칸반 보드
+
+팀 할 일은 GitHub Projects 칸반 보드로 관리합니다: https://github.com/users/wldnjs12/projects/1 (Backlog → 진행중 → 리뷰 → 완료). 이슈를 만들고 담당자를 지정하면 보드에서 진행 상황을 한눈에 볼 수 있어요. 사용법은 [docs/PROJECT_BOARD.md](./docs/PROJECT_BOARD.md) 참고.
+
+## 8. Discord로 GitHub 알림 받기
+
+푸시/PR/이슈가 팀 Discord 채널에 자동으로 올라오게 하는 방법은 [docs/DISCORD_WEBHOOK.md](./docs/DISCORD_WEBHOOK.md)에 정리했어요 (지원님이 직접 웹훅을 만들어야 해서, 아직 안 하셨다면 한 번 봐주세요).
+
+## 9. 막히면
 
 팀 채팅방에 바로 질문하거나, Claude Code한테 물어보세요 — `CLAUDE.md`에 이 프로젝트 맥락이 이미 들어있어서 꽤 잘 답해줄 거예요.
