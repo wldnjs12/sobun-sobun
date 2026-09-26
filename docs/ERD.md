@@ -32,8 +32,10 @@ erDiagram
         long building_id FK
         string title
         decimal total_amount
+        int target_participant_count
         int participant_count
         decimal commission_rate
+        datetime deadline
         boolean closed
     }
     POD_PARTICIPANT {
@@ -55,4 +57,5 @@ erDiagram
 ## 메모
 
 - `POD_PARTICIPANT`, `BUILDING_AUTH`는 아직 엔티티로 만들지 않았습니다 (담당자가 작업하며 추가).
+- `POD.target_participant_count` 도달 시에만 마감합니다 (목표 금액 방식은 MVP에서 지원 안 함). `deadline`은 화면 표시/참고용이며, 기한이 지나도 자동으로 마감·취소되지 않습니다 — 마감은 대표의 수동 조작(`closed=true`)으로만 이뤄집니다.
 - 최저가 조회(`PRODUCT`)는 다른 도메인과 직접적인 FK 관계가 없는 독립 캐시 테이블로 둡니다.

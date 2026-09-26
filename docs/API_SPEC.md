@@ -10,11 +10,15 @@
 
 ## ② 팟 개설·참여·실시간 정산 (지원)
 
+마감 기준은 **목표 인원 도달만** 지원합니다 (목표 금액 방식은 MVP 범위 밖). `deadline`은 화면 표시용이며 기한이 지나도 자동 마감/취소되지 않고, 마감은 대표가 수동으로만 할 수 있습니다.
+
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /pods | 팟 개설 | `{ buildingId, title, commissionRate }` | `Pod` |
+| POST | /pods | 팟 개설 | `{ buildingId, title, totalAmount, targetParticipantCount, commissionRate, deadline }` | `Pod` |
 | POST | /pods/{id}/join | 팟 참여 | - | `Pod` (참여 후 서버가 WebSocket으로 갱신 브로드캐스트) |
-| GET | /pods/{id} | 팟 상세 조회 | - | `Pod` |
+| DELETE | /pods/{id}/join | 팟 참여 취소 (마감 전까지만 가능) | - | `Pod` (취소 후 갱신 브로드캐스트) |
+| POST | /pods/{id}/close | 팟 마감 (대표만 가능, 참여자 0명이면 실패) | - | `Pod` |
+| GET | /pods/{id} | 팟 상세 조회 (재연결 시 최신 상태 동기화용) | - | `Pod` |
 | WS | /ws-sobun (STOMP) | 실시간 채널 연결 | 구독: `/topic/pods/{id}` | `PodAmountUpdateEvent` |
 
 ## ③ 대표 수고비 정산 (문소원)
