@@ -42,9 +42,9 @@ git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
 - 10/2: 통합 테스트 + [데모 시나리오](./docs/DEMO_SCRIPT.md) 리허설
 - 10/3(토): 빌드업데이 — 온보딩→팟→실시간 갱신→정산까지 이어지는 데모 완성이 목표
 
-## 6. main / develop 브랜치는 직접 못 건드려요
+## 6. main / develop 브랜치는 직접 건드리지 않기로 해요
 
-`main`, `develop`에는 직접 커밋/푸시가 안 되고, **항상 feature 브랜치 → PR → 리뷰 승인 → 머지** 구조예요. Claude Code로 작업하면 훅이 로컬에서 한 번 막아주고, GitHub 저장소 설정(Settings → Branches)에서도 막혀 있어서 PR 없이는 병합 자체가 안 됩니다.
+`main`, `develop`에는 직접 커밋/푸시하지 않고, **항상 feature 브랜치 → PR → 리뷰 승인 → 머지** 구조로 갑니다. Claude Code로 작업하면 훅이 로컬에서 한 번 막아주지만, 이건 Claude Code를 쓸 때만 적용되는 안전장치예요. GitHub 저장소 자체의 브랜치 보호 규칙(Settings → Branches)은 지원님이 별도로 설정해야 모두에게 강제됩니다.
 
 ## 7. 막히면
 
