@@ -20,3 +20,13 @@ server:
   port: 8080
 
 # 팟 실시간 정산 갱신(WebSocket) 엔드포인트는 global/config/WebSocketConfig 참고
+
+naver:
+  ocr:
+    invoke-url: ${NAVER_OCR_INVOKE_URL:}
+    secret-key: ${NAVER_OCR_SECRET_KEY:}
+  shopping:
+    client-id: ${NAVER_SHOPPING_CLIENT_ID:}
+    client-secret: ${NAVER_SHOPPING_CLIENT_SECRET:}
+# 실제 값은 커밋하지 말고 application-local.yml(gitignore 처리됨)에서 덮어써주세요.
+# 발급 방법: ../../../../../docs/API_KEYS.md

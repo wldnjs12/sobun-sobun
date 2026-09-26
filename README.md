@@ -69,6 +69,9 @@ docs/      ERD, API 명세 초안
 - [docs/API_SPEC.md](./docs/API_SPEC.md) — API 명세 초안
 - [docs/DESIGN_HANDOFF.md](./docs/DESIGN_HANDOFF.md) — 디자인 핸드오프용 화면별 상세 설명
 - docs/features/ — 기능별 상세 스펙 ([①온보딩](./docs/features/01-onboarding.md) · [②팟](./docs/features/02-pod.md) · [③정산](./docs/features/03-settlement.md) · [④최저가조회](./docs/features/04-product-search.md))
+- [docs/SETUP.md](./docs/SETUP.md) — 로컬 개발 환경 설정 가이드
+- [docs/API_KEYS.md](./docs/API_KEYS.md) — 외부 API 키 발급 안내
+- [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — 발표/데모 시나리오
 - [CLAUDE.md](./CLAUDE.md) — Claude Code가 이 프로젝트에서 지켜야 할 규칙 (팀원 로컬 Claude Code에서 자동으로 읽힘)
 
 ## Claude Code 사용자라면
