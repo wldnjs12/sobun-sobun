@@ -52,10 +52,6 @@ git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
 
 팀 할 일은 GitHub Projects 칸반 보드로 관리합니다: https://github.com/users/wldnjs12/projects/1 (Backlog → 진행중 → 리뷰 → 완료). 이슈를 만들고 담당자를 지정하면 보드에서 진행 상황을 한눈에 볼 수 있어요. 사용법은 [docs/PROJECT_BOARD.md](./docs/PROJECT_BOARD.md) 참고.
 
-## 8. Discord로 GitHub 알림 받기
-
-푸시/PR/이슈가 팀 Discord 채널에 자동으로 올라오게 하는 방법은 [docs/DISCORD_WEBHOOK.md](./docs/DISCORD_WEBHOOK.md)에 정리했어요 (지원님이 직접 웹훅을 만들어야 해서, 아직 안 하셨다면 한 번 봐주세요).
-
-## 9. 막히면
+## 8. 막히면
 
 팀 채팅방에 바로 질문하거나, Claude Code한테 물어보세요 — `CLAUDE.md`에 이 프로젝트 맥락이 이미 들어있어서 꽤 잘 답해줄 거예요.
