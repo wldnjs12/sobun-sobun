@@ -1,12 +1,25 @@
 # API 명세 초안
 
 베이스 URL: `/api` · 모든 응답은 `{ "success": boolean, "data": ..., "message": string|null }` 형태.
+실패 사유별로 프론트가 분기해야 하는 API는 실패 시 `code`(string)를 추가로 내려줍니다 (없으면 JSON에서 생략).
 
 ## ① QR+GPS 건물 인증 온보딩 (문소원)
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /auth/verify | QR 토큰 + GPS 좌표로 건물 인증 | `{ qrToken, latitude, longitude }` | `boolean` |
+| POST | /auth/verify | QR 토큰 + GPS 좌표로 건물 인증 | 헤더: `X-User-Id` (선택) · `{ qrToken, latitude, longitude }` | `boolean` |
+
+- **`X-User-Id` 헤더 (임시)**: 로그인 기능이 없어서 숫자 사용자 id를 헤더로 받습니다. 있으면 인증 성공 시 `BUILDING_AUTH`에 기록(재인증이면 `verified_at`만 갱신), 없으면 판정만 하고 기록하지 않습니다. 로그인 도입 시 제거 예정.
+- **실패 응답**: `400` · `{ "success": false, "data": null, "message": "...", "code": "..." }` — `code`로 분기하고 `message`는 화면에 그대로 표시.
+
+| code | message |
+| --- | --- |
+| `INVALID_QR` | 유효하지 않은 QR이에요. 다시 스캔해주세요. |
+| `EXPIRED_QR` | QR이 만료됐어요, 다시 스캔해주세요. |
+| `OUT_OF_RANGE` | 건물 근처에서 다시 시도해주세요. |
+
+- 요청 값 검증 실패(`qrToken` 공백, 위도 -90~90·경도 -180~180 밖, 좌표 누락)는 `400` + `code` 없이 `message`만 내려갑니다.
+- 자세한 예시: [handoff/qr-auth.md](./handoff/qr-auth.md)
 
 ## ② 팟 개설·참여·실시간 정산 (지원)
 

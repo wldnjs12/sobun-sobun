@@ -138,7 +138,7 @@ X-User-Id: 1
 ## 8. 다음 작업
 
 - [ ] PR #1 리뷰 반영 후 `develop` 머지
-- [ ] `docs/API_SPEC.md`에 에러 코드·`X-User-Id` 헤더 반영 (이번 PR에는 미포함)
+- [x] `docs/API_SPEC.md`에 에러 코드·`X-User-Id` 헤더 반영
 - [ ] 팀 논의: GPS buffer, QR 갱신 주기, 인증 유효기간 → 결정되면 `01-onboarding.md` "열려있는 질문" 갱신
 - [ ] QR 토큰 발급/재발급 방법 (관리자 API 또는 데모용 고정값 유지)
 - [ ] 로그인 도입 시 `X-User-Id` 제거
