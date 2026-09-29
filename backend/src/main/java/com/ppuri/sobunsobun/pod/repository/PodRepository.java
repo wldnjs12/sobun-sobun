@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PodRepository extends JpaRepository<Pod, Long> {
@@ -18,4 +19,7 @@ public interface PodRepository extends JpaRepository<Pod, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Pod p where p.id = :id")
     Optional<Pod> findByIdForUpdate(@Param("id") Long id);
+
+    /** 건물 홈 화면(S4)용 — 마감되지 않은 팟만 최신순으로. */
+    List<Pod> findByBuildingIdAndClosedFalseOrderByIdDesc(Long buildingId);
 }

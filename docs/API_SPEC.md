@@ -16,7 +16,8 @@
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /pods | 팟 개설 | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline? }` (commissionRate 생략 시 5%) | `Pod` |
+| POST | /pods | 팟 개설 (buildingId가 실존하지 않으면 404) | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline? }` (commissionRate 생략 시 5%) | `Pod` |
+| GET | /pods?buildingId= | 건물의 진행중(미마감)인 팟 목록, 최신순 | 쿼리: buildingId | `Pod[]` |
 | POST | /pods/{id}/join?userId= | 팟 참여 | - | `Pod` (참여 후 서버가 WebSocket으로 갱신 브로드캐스트) |
 | DELETE | /pods/{id}/join?userId= | 팟 참여 취소 (마감 전까지만 가능) | - | `Pod` (취소 후 갱신 브로드캐스트) |
 | POST | /pods/{id}/close?hostUserId= | 팟 마감 (대표만 가능, 참여자 0명이면 실패) | - | `Pod` |
@@ -24,6 +25,8 @@
 | WS | /ws-sobun (STOMP) | 실시간 채널 연결 | 구독: `/topic/pods/{id}` | `PodAmountUpdateEvent` |
 
 `Pod` 응답 필드: `{ id, buildingId, hostUserId, title, totalAmount, targetParticipantCount, participantCount, commissionRate, perPersonAmount, deadline, closed }` — `perPersonAmount`는 저장값이 아니라 매 응답 시 재계산되는 값입니다.
+
+`PodAmountUpdateEvent` 필드: `{ podId, participantCount, perPersonAmount, closed }`.
 
 ## ③ 대표 수고비 정산 (문소원)
 
