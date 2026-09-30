@@ -1,0 +1,244 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── 윗부분: 썸네일 + 상품 정보 ── */
+.top {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.thumbnail {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container);
+}
+
+.thumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 사진 비율이 달라도 찌그러지지 않고 칸을 꽉 채운다 */
+}
+
+.unitBadge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(11, 28, 48, 0.7);
+  backdrop-filter: blur(4px);
+  color: var(--color-surface);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* min-width: 0이 없으면 긴 제목이 말줄임(...) 되지 않고 카드 밖으로 밀려난다 */
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.03em;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pickupIcon {
+  color: var(--color-primary);
+}
+
+.timer {
+  color: var(--color-secondary);
+  font-variant-numeric: tabular-nums; /* 숫자 폭을 고정해 1초마다 글자가 흔들리지 않게 */
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.005em;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-xs);
+}
+
+.discount {
+  color: var(--color-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.015em;
+}
+
+.perPerson {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 32px;
+  letter-spacing: -0.015em;
+}
+
+.original {
+  color: rgba(63, 72, 80, 0.6);
+  font-size: 13px;
+  line-height: 18px;
+  text-decoration: line-through;
+}
+
+/* ── 아랫부분: 진행률 + 참여자 + 버튼 ── */
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md) var(--space-md);
+}
+
+.progressLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.03em;
+}
+
+.joined {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.target {
+  color: var(--color-on-surface-variant);
+  font-weight: 500;
+}
+
+.progressTrack {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: width 0.5s; /* 인원이 늘면 막대가 부드럽게 늘어난다 */
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-xs);
+}
+
+.avatars {
+  display: flex;
+  align-items: center;
+}
+
+/* 원을 왼쪽으로 4px씩 겹쳐 쌓는다 (디자인은 8px인데, 그러면 호수 세 자리가 뒤 원에 가려진다) */
+.avatar + .avatar {
+  margin-left: -4px;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.avatarColor0 {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.avatarColor1 {
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}
+
+.avatarColor2 {
+  background: var(--color-tertiary-fixed);
+  color: var(--color-tertiary);
+}
+
+.avatarMore {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-size: 10px;
+}
+
+.joinButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-sm);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.joinButton:hover {
+  background: var(--color-primary-container);
+}
+
+.joinButton:active {
+  transform: scale(0.95);
+}
+
+.joinButtonUrgent,
+.joinButtonUrgent:hover {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-weight: 700;
+}
