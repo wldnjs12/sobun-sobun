@@ -6,7 +6,9 @@ import { Client } from '@stomp/stompjs'
  */
 export function connectPodSocket(podId, onUpdate) {
   const client = new Client({
-    brokerURL: `ws://${location.hostname}:8080/ws-sobun`,
+    // 백엔드가 /ws-sobun 을 SockJS로 열어둬서(WebSocketConfig의 .withSockJS()),
+    // 순수 WebSocket으로 붙으려면 끝에 /websocket 을 붙여야 한다. 없으면 연결 자체가 실패한다.
+    brokerURL: `ws://${location.hostname}:8080/ws-sobun/websocket`,
     reconnectDelay: 3000,
     onConnect: () => {
       client.subscribe(`/topic/pods/${podId}`, (message) => {
