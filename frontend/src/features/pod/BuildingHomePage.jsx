@@ -5,11 +5,8 @@ import BottomNav from '../../components/BottomNav.jsx'
 import Icon from '../../components/Icon.jsx'
 import PodCard from './PodCard.jsx'
 import EmptyPodState from './EmptyPodState.jsx'
-import { fetchBuildingPods } from './podListApi.js'
+import { BUILDING, fetchBuildingPods } from './podApi.js'
 import styles from './BuildingHomePage.module.css'
-
-// TODO: 온보딩(①)에서 인증한 건물 정보를 받아오도록 교체
-const BUILDING = { id: 1, name: '신촌 청년드림빌' }
 
 const CATEGORIES = [
   { key: 'all', label: '전체' },
@@ -44,8 +41,7 @@ export default function BuildingHomePage() {
     category === 'all' ? openPods : openPods.filter((pod) => pod.category === category)
 
   const goToPod = (pod) => navigate(`/pods/${pod.id}`)
-  // TODO: 팟 생성 화면(S5) 라우트가 생기면 연결
-  const goToCreatePod = () => {}
+  const goToCreatePod = () => navigate('/pods/new')
 
   return (
     <div className={styles.page}>
