@@ -1,5 +1,7 @@
 # 핸드오프 — ③ 대표 수고비 정산 API (`feature/settlement`)
 
+> ⚠️ **참고**: 2026-10-03 기획 개편으로 ③정산에 "건물 소속 검증"과 `hostPaymentLink` 프론트 UI가 추가될 예정입니다. 이 문서의 나머지 내용(OCR, 정산 계산)은 여전히 유효합니다 — 변경분은 [features/03-settlement.md](../features/03-settlement.md) 참고.
+
 담당: 문소원(백엔드) · 프론트 페어: 홍수진 · PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
 
 _최종 갱신: 2026-10-03_

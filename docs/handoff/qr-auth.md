@@ -1,5 +1,7 @@
 # 핸드오프 — QR+GPS 건물 인증 API (`feature/qr-auth`)
 
+> ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: QR 인증은 완전히 삭제되고 주소+GPS 인증으로 교체됐습니다. 이 문서는 과거 작업 히스토리로만 보존하며, 최신 기획은 [기획수정_프롬포트.md](../../기획수정_프롬포트.md)·[API_SPEC.md](../API_SPEC.md)·[features/01-onboarding.md](../features/01-onboarding.md)를 참고하세요.
+
 담당: 문소원(백엔드) · PR: [#1](https://github.com/wldnjs12/sobun-sobun/pull/1) (→ `develop`) · 관련 문서: [01-onboarding](../features/01-onboarding.md), [ERD](../ERD.md)
 
 ## 1. 한 줄 요약

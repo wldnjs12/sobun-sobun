@@ -1,33 +1,45 @@
 # ERD 초안
 
-실제 컬럼은 개발하면서 조정하되, 4개 도메인의 관계는 아래 구조를 기준으로 시작합니다.
+> ⚠️ **기획 개편(2026-10-03)**: QR 관련 컬럼·`PRODUCT` 테이블을 제거하고, 주소/GPS 기반 인증과 커뮤니티 테이블을 추가했습니다. 실제 반영은 [REPLAN_WORK_ASSIGNMENT.md](./REPLAN_WORK_ASSIGNMENT.md) 순서대로 진행됩니다.
+
+실제 컬럼은 개발하면서 조정하되, 아래 구조를 기준으로 시작합니다.
 
 ```mermaid
 erDiagram
     BUILDING ||--o{ POD : "건물 안에서 팟이 열린다"
+    BUILDING ||--o{ USER : "건물에 등록된 주민"
+    BUILDING ||--o{ COMMUNITY_POST : "건물 커뮤니티"
     POD ||--o{ POD_PARTICIPANT : "참여자"
     POD ||--o| SETTLEMENT : "마감 후 정산 1건"
     USER ||--o{ POD_PARTICIPANT : "참여"
-    USER ||--o{ BUILDING_AUTH : "건물 인증 기록"
-    BUILDING ||--o{ BUILDING_AUTH : ""
+    USER ||--o{ LOCATION_CHECK : "GPS 확인 기록"
+    USER ||--o{ COMMUNITY_POST : "작성(내부 보관용)"
+    COMMUNITY_POST ||--o{ COMMUNITY_COMMENT : "댓글"
+    COMMUNITY_POST ||--o{ COMMUNITY_REPORT : "신고(글)"
+    COMMUNITY_COMMENT ||--o{ COMMUNITY_REPORT : "신고(댓글)"
 
     BUILDING {
         long id PK
-        string name
+        string name "건물명(검색 결과의 buildingName)"
+        string road_address
+        string building_management_number "bdMgtSn, 도로명주소 API"
+        string dong "nullable, 아파트만"
+        string building_key UK "bdMgtSn + ':' + (dong 또는 빈문자열)"
         double latitude
         double longitude
-        string qr_token UK "nullable"
-        datetime qr_token_expires_at "nullable, null이면 만료 없음"
-    }
-    BUILDING_AUTH {
-        long id PK
-        long building_id FK "UK(building_id, user_id)"
-        long user_id FK "UK(building_id, user_id)"
-        datetime verified_at
     }
     USER {
         long id PK
-        string nickname
+        long building_id FK
+        datetime created_at
+    }
+    LOCATION_CHECK {
+        long id PK
+        long user_id FK
+        long building_id FK
+        string purpose "POD_CREATE | POD_JOIN | COMMUNITY_ENTER"
+        boolean success
+        datetime checked_at
     }
     POD {
         long id PK
@@ -63,13 +75,39 @@ erDiagram
         boolean confirmed
         string host_payment_link "nullable, 대표 개인 송금 링크/계좌"
     }
+    COMMUNITY_POST {
+        long id PK
+        long building_id FK
+        long author_user_id FK "응답엔 절대 노출 안 함, 신고처리용 내부 보관"
+        string category "FREE | QUESTION | SHARE | GROUP_BUY_SUGGESTION"
+        string content
+        datetime created_at
+        int report_count
+        boolean hidden "report_count >= 3(임시)이면 true"
+    }
+    COMMUNITY_COMMENT {
+        long id PK
+        long post_id FK
+        long author_user_id FK "응답엔 절대 노출 안 함"
+        string content
+        datetime created_at
+        int report_count
+        boolean hidden
+    }
+    COMMUNITY_REPORT {
+        long id PK
+        string target_type "POST | COMMENT"
+        long target_id FK
+        long reporter_user_id FK
+        datetime created_at
+    }
 ```
 
 ## 메모
 
-- `BUILDING_AUTH`는 `auth/domain/BuildingAuth` 엔티티로 추가됐습니다. `(building_id, user_id)` 유니크라서 같은 사용자가 같은 건물에 다시 인증하면 새 행 없이 `verified_at`만 갱신됩니다. `USER` 엔티티가 아직 없어서 `building_id`/`user_id`는 DB FK 없이 id 값만 저장합니다 (`POD.building_id`와 같은 방식).
-- `BUILDING.qr_token`/`qr_token_expires_at`은 QR 인증용 컬럼입니다. 토큰이 없는 기존 건물 행을 위해 nullable이며, 만료 시각이 null이면 만료 없음(데모용 고정 QR)으로 취급합니다.
-- `POD.target_participant_count` 도달 시에만 마감합니다 (목표 금액 방식은 MVP에서 지원 안 함). `deadline`은 화면 표시/참고용이며, 기한이 지나도 자동으로 마감·취소되지 않습니다 — 마감은 대표의 수동 조작(`closed=true`)으로만 이뤄집니다.
-- `POD.pickup_pin`은 `POD` 응답엔 노출하지 않습니다 (비참여자에게 보이면 락커 보안 의미가 없어짐) — 참여자 본인 조회(`GET /pods/{id}/me`)에만 포함됩니다.
-- `POD_PARTICIPANT.paid_at`/`picked_up_at`, `SETTLEMENT.host_payment_link`는 실제 결제/알림 연동이 아니라 자가 신고·수동 링크 입력입니다 (카카오 알림톡·토스페이먼츠 API 연동은 하켓톤 범위에서 불가능 — [handoff/settlement-screens.md](./handoff/settlement-screens.md) 참고).
-- 최저가 조회(`PRODUCT`)는 다른 도메인과 직접적인 FK 관계가 없는 독립 캐시 테이블로 둡니다.
+- `USER`가 처음으로 생기는 엔티티입니다. 로그인이 없어 지금처럼 임의의 숫자 `userId`를 쓰지만, 이 테이블이 "이 userId가 어느 건물 소속인지"의 근거가 되어 건물 소속 검증(`BuildingAccessService`)에 쓰입니다.
+- `BUILDING.building_key`는 서버가 계산해서 저장하는 유니크 키입니다. 빌라/원룸은 `bdMgtSn`만, 아파트는 `bdMgtSn + 동`까지 같아야 같은 건물로 취급합니다.
+- `LOCATION_CHECK`는 원본 좌표를 저장하지 않고 판정 결과·시각·목적만 남깁니다(개인정보 보호 — [기획수정_프롬포트.md](../기획수정_프롬포트.md) 1-3절).
+- `COMMUNITY_POST`/`COMMUNITY_COMMENT`의 `author_user_id`는 DB에는 있지만 **API 응답에는 절대 포함하지 않습니다** — 익명 닉네임("이웃 N"/"글쓴이")은 응답 조립 시점에 매번 계산하고 저장하지 않습니다.
+- `POD.target_participant_count` 도달 시에만 마감(기존과 동일, 변경 없음).
+- `BUILDING_AUTH`(과거 QR 인증 기록 테이블)와 `PRODUCT`(최저가 캐시 테이블)는 **삭제됩니다.**

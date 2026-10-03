@@ -39,6 +39,10 @@
 - 서버는 참여/탈퇴/마감/금액 변경 시마다 `PodAmountUpdateEvent { podId, participantCount, perPersonAmount, closed }`를 해당 토픽으로 발행한다.
 - 연결이 끊겼다 재연결될 경우, 재연결 직후 REST `GET /pods/{id}`로 최신 상태를 한 번 동기화해야 한다(WebSocket은 놓친 이벤트를 재전송하지 않으므로).
 
+## 건물 소속 검증 (기획 개편 추가)
+
+> ⚠️ QR 삭제 후 온보딩이 "주소+GPS"로 바뀌면서, 팟 개설·참여·조회 전체에 "요청자가 그 팟의 건물 소속인지" 검증이 추가됩니다. 다르면 403. 상세 계약은 [../API_SPEC.md](../API_SPEC.md) ② 섹션, 구현은 최지원이 ①(`BuildingAccessService`) 작업과 함께 진행합니다. 추가로 팟 개설·참여 버튼을 누르면 ①의 GPS 재확인(`POST /auth/location-check`, purpose=`POD_CREATE`/`POD_JOIN`)을 먼저 통과해야 합니다 — 프론트 책임.
+
 ## 엣지 케이스
 
 - 동시에 여러 명이 "참여"를 눌러 목표 인원을 초과하는 경우(레이스 컨디션) → 서버에서 참여 처리를 원자적으로(트랜잭션/락) 처리해 초과 참여를 막아야 함.

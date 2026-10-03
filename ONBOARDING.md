@@ -45,6 +45,8 @@ git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
 - 10/2(금): 2차 목표 마무리 + 전체 통합 테스트 + [데모 시나리오](./docs/DEMO_SCRIPT.md) 리허설
 - 10/3(토): 빌드업데이 — 온보딩→팟→실시간 갱신→정산까지 이어지는 데모 완성이 목표
 
+> ⚠️ **위 표는 1차(빌드업데이까지) 기록입니다.** 10/3 멘토링 이후 기획이 바뀌어서(QR→주소+GPS, 최저가 삭제, 커뮤니티 신설) 담당 업무가 일부 재배치됐습니다 — 최신 담당자/의존순서는 [docs/REPLAN_WORK_ASSIGNMENT.md](./docs/REPLAN_WORK_ASSIGNMENT.md) 참고.
+
 ## 6. main / develop 브랜치는 직접 건드리지 않기로 해요
 
 `main`, `develop`에는 직접 커밋/푸시하지 않고 항상 `feature/기능명` 브랜치에서 작업합니다. 다만 매번 PR 올리고 승인 기다리는 절차는 생략하기로 했어요 — feature 브랜치에서 작업을 어느 정도 쌓은 다음, PR을 올리거나(권장) 바로 develop에 머지해서 push하는 방식으로 편하게 진행하면 됩니다. 자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md) 참고.
