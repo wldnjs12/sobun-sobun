@@ -5,7 +5,7 @@ import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
 import JoinConfirmSheet from './JoinConfirmSheet.jsx'
 import { closePod, fetchPod, joinPod } from './podApi.js'
-import { getMyUserId, hasJoined } from './currentUser.js'
+import { getMyUserId, hasJoined } from '../../api/currentUser.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
 import styles from './PodDetailPage.module.css'
 

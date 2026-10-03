@@ -1,5 +1,5 @@
 import { api } from '../../api/client.js'
-import { getMyUserId, rememberJoined } from './currentUser.js'
+import { getMyUserId, rememberJoined } from '../../api/currentUser.js'
 
 /**
  * 팟(②) 화면들이 쓰는 API 함수 모음. 백엔드: origin/feature/pod-realtime (docs/handoff/pod.md)
