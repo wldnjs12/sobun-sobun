@@ -48,7 +48,7 @@ cd sobun-sobun
 
 ## 3. 외부 API 키 설정 (필요한 사람만)
 
-영수증 OCR(③)이나 최저가 조회(④)를 개발/테스트하려면 API 키가 필요합니다. 자세한 발급 방법은 [API_KEYS.md](./API_KEYS.md) 참고. 키가 아직 없어도 나머지 개발(화면, 팟 로직 등)은 진행할 수 있습니다.
+영수증 OCR(③)이나 주소 검색·좌표 변환(①)을 실제 API로 개발/테스트하려면 키가 필요합니다. 자세한 발급 방법은 [API_KEYS.md](./API_KEYS.md) 참고. 키가 없어도 Stub 구현체가 고정된 데모 응답을 돌려주므로 나머지 개발(화면, 팟 로직 등)은 그대로 진행할 수 있습니다.
 
 키가 있다면 `backend/src/main/resources/application-local.yml.example`을 복사해서 `application-local.yml`로 만들고 값을 채워주세요(이 파일은 git에 올라가지 않습니다).
 

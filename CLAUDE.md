@@ -4,7 +4,9 @@
 
 ## 프로젝트
 
-"소분소분" — 같은 건물 이웃끼리 QR+GPS 인증 후 대용량 식재료를 공동구매하는 앱. MOONG TechThon 2026 해커톤 제출작(팀명: 뿌리).
+"소분소분" — 인하대 근처(인천 미추홀구 용현동·학익동) 이웃끼리 주소+GPS 인증 후 생필품·가공식품을 공동구매하는 앱. MOONG TechThon 2026 해커톤 제출작(팀명: 뿌리).
+
+> ⚠️ 2026-10-03 기획 개편으로 QR 인증이 주소+GPS로, 최저가 조회(product 패키지)가 삭제되고 건물별 익명 커뮤니티(community 패키지, 신규)가 추가됩니다. 작업 중이면 `docs/REPLAN_WORK_ASSIGNMENT.md`와 `docs/API_SPEC.md`를 먼저 확인하세요 — 과거 QR/최저가 관련 코드나 문구를 그대로 참고하지 마세요.
 
 ## 기술 스택
 
@@ -14,7 +16,7 @@
 
 ## 패키지/폴더 구조 규칙
 
-백엔드는 계층형이 아니라 **기능별 패키지**로 나뉩니다: `auth`(온보딩/인증), `pod`(팟·실시간 정산), `settlement`(수고비 정산), `product`(최저가 조회), `global`(공통 설정). 새 코드는 해당 기능 패키지 안에 `controller/service/domain/dto`로 넣어주세요.
+백엔드는 계층형이 아니라 **기능별 패키지**로 나뉩니다: `auth`(주소+GPS 인증, 건물 소속 가드), `pod`(팟·실시간 정산), `settlement`(수고비 정산), `community`(건물별 익명 커뮤니티, 신규), `global`(공통 설정). 새 코드는 해당 기능 패키지 안에 `controller/service/domain/dto`로 넣어주세요. `product`(최저가 조회) 패키지는 삭제 대상이니 새로 참고하거나 확장하지 마세요.
 
 프론트엔드는 `src/features/<기능명>/` 아래에 화면 컴포넌트를 두고, 공통 API 호출은 `src/api/client.js`(REST)와 `src/api/socket.js`(WebSocket)를 사용합니다.
 

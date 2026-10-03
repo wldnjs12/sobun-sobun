@@ -1,5 +1,7 @@
 # 핸드오프: 프론트엔드 전체 (① 온보딩 · ② 팟 · ③ 정산 · ④ 최저가 · 마이페이지)
 
+> ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: ①온보딩(QR)과 ④최저가는 기획 개편으로 삭제/교체됩니다. 이 문서는 과거 작업 히스토리로만 보존하며, 최신 기획은 [REPLAN_WORK_ASSIGNMENT.md](../REPLAN_WORK_ASSIGNMENT.md)·[design-changes.md](../design-changes.md)를 참고하세요.
+
 _최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4) · 담당: 도우현_
 
 ## 이번 작업 요약

@@ -3,86 +3,91 @@
 베이스 URL: `/api` · 모든 응답은 `{ "success": boolean, "data": ..., "message": string|null }` 형태.
 실패 사유별로 프론트가 분기해야 하는 API는 실패 시 `code`(string)를 추가로 내려줍니다 (없으면 JSON에서 생략).
 
-## ① QR+GPS 건물 인증 온보딩 (문소원)
+> ⚠️ **기획 개편(2026-10-03)**: QR 인증과 최저가 조회(④)를 삭제하고, 주소+GPS 인증과 커뮤니티(⑤)를 새로 추가했습니다. 이 문서는 새 계약을 기준으로 작성됐고, 실제 코드는 담당자별로 순서대로 반영됩니다 — 진행 상황은 [REPLAN_WORK_ASSIGNMENT.md](./REPLAN_WORK_ASSIGNMENT.md) 참고. 과거 QR 계약은 [handoff/qr-auth.md](./handoff/qr-auth.md)에 기록으로만 남아있습니다.
+
+## ① 주소+GPS 건물 인증 온보딩 (최지원 — 백엔드 / 도우현 — 프론트)
+
+1차(주소, 가입 시 1회) + 2차(GPS, 행동 직전마다)로 나뉩니다. QR은 쓰지 않습니다.
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /auth/verify | QR 토큰 + GPS 좌표로 건물 인증 | 헤더: `X-User-Id` (선택) · `{ qrToken, latitude, longitude }` | `boolean` |
+| GET | /auth/addresses/search?keyword= | 주소 후보 검색 (도로명주소 API 프록시) | 쿼리: keyword | `AddressCandidate[]` |
+| POST | /auth/buildings/register | 건물 확정 등록 (find-or-create) + 내 건물 소속 저장 | 헤더: `X-User-Id` · `{ roadAddress, bdMgtSn, buildingName, dong? }` | `{ buildingId, name, dong }` |
+| POST | /auth/location-check | GPS 2차 확인 (행동 직전마다 호출, 캐시 없음) | 헤더: `X-User-Id`(필수) · `{ latitude, longitude, purpose }` (`purpose`: `POD_CREATE`\|`POD_JOIN`\|`COMMUNITY_ENTER`) | `boolean` |
 
-- **`X-User-Id` 헤더 (임시)**: 로그인 기능이 없어서 숫자 사용자 id를 헤더로 받습니다. 있으면 인증 성공 시 `BUILDING_AUTH`에 기록(재인증이면 `verified_at`만 갱신), 없으면 판정만 하고 기록하지 않습니다. 로그인 도입 시 제거 예정.
-- **실패 응답**: `400` · `{ "success": false, "data": null, "message": "...", "code": "..." }` — `code`로 분기하고 `message`는 화면에 그대로 표시.
+- **`AddressCandidate`**: `{ roadAddress, buildingName, bdMgtSn, isApartment, dongOptions: string[] }` — `isApartment=false`면 `dongOptions`는 빈 배열. API가 동 목록을 안 주면 프론트가 직접입력 폼으로 폴백.
+- **`buildingKey`(서버 내부)**: 빌라/원룸은 `bdMgtSn`, 아파트는 `bdMgtSn + 동`으로 건물을 구분합니다. 같은 키를 가진 사용자끼리만 같은 건물 방에 들어갑니다.
+- **GPS 허용 반경**: 100m(임시값, [open-decisions.md](./open-decisions.md) 참고). 거리 계산은 Haversine 공식, **반드시 서버에서 판정**합니다.
+- **데모 고정 좌표 모드**: 서버 환경변수(`LOCATION_CHECK_DEMO_MODE=true` 등)로만 켜짐, 기본 꺼짐. 운영/기본 환경에서는 항상 꺼져 있어야 합니다.
+- **위치 개인정보**: 제출된 원본 좌표(`latitude`/`longitude`)는 저장하지 않습니다. 판정 결과(성공/실패, 시각, 목적)만 `LOCATION_CHECK` 테이블에 남습니다.
+- **실패 응답**: `400` · `{ "success": false, "data": null, "message": "...", "code": "OUT_OF_RANGE" }`. 위치 권한 거부·타임아웃은 서버까지 오지 않고 **프론트에서 브라우저 Geolocation 에러로 처리**합니다(아래 표의 (b)(c)).
 
-| code | message |
-| --- | --- |
-| `INVALID_QR` | 유효하지 않은 QR이에요. 다시 스캔해주세요. |
-| `EXPIRED_QR` | QR이 만료됐어요, 다시 스캔해주세요. |
-| `OUT_OF_RANGE` | 건물 근처에서 다시 시도해주세요. |
+| 상황 | 주체 | 문구 |
+| --- | --- | --- |
+| (a) 반경 밖 | 서버 (`OUT_OF_RANGE`) | 지금 위치가 등록한 건물({건물명})과 달라요. 집에 돌아가서 다시 시도해 주세요. |
+| (b) 위치 권한 거부 | 프론트 (Geolocation code 1) | 이웃 확인을 위해 위치 권한이 필요해요. |
+| (c) 위치 못 받음(타임아웃/신호 약함) | 프론트 (Geolocation code 2/3) | 위치를 확인하지 못했어요. 창가나 건물 입구 근처에서 다시 시도해 주세요. |
 
-- 요청 값 검증 실패(`qrToken` 공백, 위도 -90~90·경도 -180~180 밖, 좌표 누락)는 `400` + `code` 없이 `message`만 내려갑니다.
-- 자세한 예시: [handoff/qr-auth.md](./handoff/qr-auth.md)
+- 세 경우 모두 해당 행동(팟 개설·참여·커뮤니티 입장)은 진행하지 않습니다. 팟 목록 조회 등은 1차 인증(건물 등록)만으로 허용됩니다.
 
-## ② 팟 개설·참여·실시간 정산 (지원)
+## ② 팟 개설·참여·실시간 정산 (최지원)
 
-마감 기준은 **목표 인원 도달만** 지원합니다 (목표 금액 방식은 MVP 범위 밖). `deadline`은 화면 표시용이며 기한이 지나도 자동 마감/취소되지 않고, 마감은 대표가 수동으로만 할 수 있습니다.
+마감 기준은 **목표 인원 도달만** 지원합니다. `deadline`은 화면 표시용이며 자동 마감/취소되지 않습니다.
 
-> ⚠️ **임시 계약**: ①(로그인/세션)이 아직 없어서 `hostUserId`/`userId`를 요청에 직접 받습니다. 세션이 붙으면 이 파라미터들은 세션에서 꺼내는 방식으로 교체될 예정입니다 (`PodController`에 TODO로 표시됨).
+> ⚠️ **건물 소속 검증 추가 (기획 개편)**: 아래 전체 엔드포인트에 `userId`(요청자) 소속 건물이 해당 `Pod.buildingId`와 같은지 검증이 추가됩니다. 다르면 **403** + `{ success:false, code:"BUILDING_ACCESS_DENIED", message:"다른 건물의 팟에는 접근할 수 없어요." }`. `GET /pods?buildingId=`도 요청자가 그 건물 소속인지 확인합니다(다른 건물 목록을 buildingId로 직접 조회하는 것 방지).
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /pods | 팟 개설 (buildingId가 실존하지 않으면 404) | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline?, originalPrice? }` (commissionRate 생략 시 5%) | `Pod` |
-| GET | /pods?buildingId= | 건물의 진행중(미마감)인 팟 목록, 최신순 | 쿼리: buildingId | `Pod[]` |
-| POST | /pods/{id}/join?userId= | 팟 참여 | - | `Pod` (참여 후 서버가 WebSocket으로 갱신 브로드캐스트) |
-| DELETE | /pods/{id}/join?userId= | 팟 참여 취소 (마감 전까지만 가능) | - | `Pod` (취소 후 갱신 브로드캐스트) |
-| POST | /pods/{id}/close?hostUserId= | 팟 마감 (대표만 가능, 참여자 0명이면 실패) | - | `Pod` |
-| GET | /pods/{id} | 팟 상세 조회 (재연결 시 최신 상태 동기화용) | - | `Pod` |
-| GET | /pods/{id}/me?userId= | 내 참여/송금/수령 상태 + 픽업 PIN (③정산 화면용, 참여 안 했으면 PIN 없음) | - | `MyParticipationResponse` |
-| GET | /pods/{id}/participants?hostUserId= | 참여자별 송금/수령 현황 (대표만 조회 가능) | - | `ParticipantStatusResponse[]` |
-| POST | /pods/{id}/paid?userId= | "보냈어요" 자가 신고 (실제 결제 연동 없음) | - | `MyParticipationResponse` |
+| POST | /pods | 팟 개설 (buildingId가 실존하지 않으면 404, hostUserId가 그 건물 소속 아니면 403) | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline?, originalPrice? }` | `Pod` |
+| GET | /pods?buildingId=&userId= | 건물의 진행중 팟 목록 | 쿼리: buildingId, userId(소속 확인용) | `Pod[]` |
+| POST | /pods/{id}/join?userId= | 팟 참여 (건물 소속 아니면 403) | - | `Pod` |
+| DELETE | /pods/{id}/join?userId= | 팟 참여 취소 | - | `Pod` |
+| POST | /pods/{id}/close?hostUserId= | 팟 마감 (대표만) | - | `Pod` |
+| GET | /pods/{id}?userId= | 팟 상세 조회 (건물 소속 아니면 403) | - | `Pod` |
+| GET | /pods/{id}/me?userId= | 내 참여/송금/수령 상태 + 픽업 PIN | - | `MyParticipationResponse` |
+| GET | /pods/{id}/participants?hostUserId= | 참여자별 송금/수령 현황 (대표만) | - | `ParticipantStatusResponse[]` |
+| POST | /pods/{id}/paid?userId= | "보냈어요" 자가 신고 | - | `MyParticipationResponse` |
 | POST | /pods/{id}/picked-up?userId= | "수령 완료" 자가 신고 | - | `MyParticipationResponse` |
-| WS | /ws-sobun (STOMP) | 실시간 채널 연결 | 구독: `/topic/pods/{id}` | `PodAmountUpdateEvent` |
+| WS | /ws-sobun (STOMP) | 실시간 채널. `connectHeaders`에 `X-User-Id` 필수 | 구독: `/topic/pods/{id}` (다른 건물이면 서버가 구독 거부) | `PodAmountUpdateEvent` |
 
-`Pod` 응답 필드: `{ id, buildingId, hostUserId, title, totalAmount, targetParticipantCount, participantCount, commissionRate, perPersonAmount, deadline, closed, originalPrice }` — `perPersonAmount`는 저장값이 아니라 매 응답 시 재계산되는 값입니다. `originalPrice`(혼자 샀을 때 가격, 선택)는 ③ 정산 결과 화면의 절약액 카드에만 쓰이고 없으면(null) 그 카드를 생략합니다. `pickupPin`(4자리, 생성 시 자동 발급)은 비참여자에게 노출되면 안 돼서 `Pod` 응답엔 없고 `MyParticipationResponse`에만 있습니다.
-
-`PodAmountUpdateEvent` 필드: `{ podId, participantCount, perPersonAmount, closed }`.
-
-`MyParticipationResponse` 필드: `{ joined, paid, pickedUp, pickupPin }`. `ParticipantStatusResponse` 필드: `{ userId, paid, pickedUp }`.
+응답 필드는 기존과 동일(`Pod`, `PodAmountUpdateEvent`, `MyParticipationResponse`, `ParticipantStatusResponse`) — 변경 없음.
 
 ## ③ 대표 수고비 정산 (문소원)
 
-> ⚠️ `hostPaymentLink`는 지원이 ②(팟) 연동 과정에서 추가했습니다 — [handoff/settlement-screens.md](./handoff/settlement-screens.md) 참고. `GET /settlements/{podId}`는 문소원님이 완성하신 버전(미확정 시 200+null)으로 통일했습니다.
+> ⚠️ **건물 소속 검증 추가**: `confirm`/`getConfirmed`에 `userId` 쿼리파라미터가 추가되고, 요청자가 해당 팟의 건물 소속인지 확인합니다(불일치 시 403). 그 외 계약은 기존과 동일합니다.
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /settlements/receipts | 영수증 업로드 → OCR 인식 (JPG/PNG, 10MB 이하) | multipart: `receipt` (파일) | `{ recognizedAmount, success }` |
-| POST | /settlements/{podId}/confirm | 정산 확정 (팟당 1회) | `{ recognizedCost, commissionRate, hostPaymentLink? }` (원가: 원 단위 정수, 수고비율: 0~1, 0.01 단위) | `Settlement` |
-| GET | /settlements/{podId} | 확정된 정산 결과 조회 (참여자·다른 기기용) | - | `Settlement` 또는 `null` |
+| POST | /settlements/receipts | 영수증 업로드 → OCR 인식 | multipart: `receipt` | `{ recognizedAmount, success }` |
+| POST | /settlements/{podId}/confirm?userId= | 정산 확정 (대표만, 건물 소속 확인) | `{ recognizedCost, commissionRate, hostPaymentLink? }` | `Settlement` |
+| GET | /settlements/{podId}?userId= | 확정된 정산 결과 조회 (건물 소속 확인) | - | `Settlement` 또는 `null` |
 
-- **OCR 인식 실패는 에러가 아닙니다**: OCR 호출 실패·타임아웃·총액을 못 찾은 경우 모두 `200` · `{ "success": true, "data": { "recognizedAmount": null, "success": false }, "message": null }` → 프론트는 `data.success`로 수동 입력 폼 전환.
-- `Settlement` 응답 필드: `{ id, podId, receiptImageUrl, recognizedCost, commissionRate, finalAmount, participantCount, perPersonAmount, confirmed, hostPaymentLink }` — `finalAmount = recognizedCost × (1 + commissionRate)` (원 단위 반올림), `perPersonAmount = finalAmount ÷ participantCount` (원 단위 올림), `participantCount`는 확정 시점 `Pod.participantCount` 스냅샷, `receiptImageUrl`은 현재 항상 `null`. `hostPaymentLink`(선택)는 대표가 본인 카카오페이 "받을 링크"나 계좌번호를 직접 붙여넣는 텍스트 — 실제 결제 API 연동이 아닙니다.
-- **결과 조회는 미확정도 에러가 아닙니다**: 아직 확정 전이거나 없는 팟이면 `200` · `{ "success": true, "data": null, "message": null }` → 프론트는 `data === null`이면 "정산 대기" 표시. 다시 조회할 때 금액은 DB 값 그대로라 `12915.00`처럼 소수점 둘째 자리까지 옵니다.
-- **거절 응답**: `400` · `{ "success": false, "data": null, "message": "..." }` (`code` 없음, `message`를 화면에 그대로 표시)
+나머지 세부 규칙(OCR 실패 처리, 금액 계산, 에러 메시지 표)은 기존과 동일 — [handoff/settlement.md](./handoff/settlement.md) 참고.
 
-| API | 조건 | message |
-| --- | --- | --- |
-| receipts | `receipt` 파트 누락 또는 빈 파일 | 영수증 사진을 선택해주세요. |
-| receipts | JPG/PNG 아님 (파일 시그니처로 판별) | JPG 또는 PNG 사진만 올릴 수 있어요. |
-| receipts | 10MB 초과 | 사진 용량은 10MB 이하만 올릴 수 있어요. |
-| confirm | 원가 누락·0 이하 | 영수증 금액은 0원보다 커야 해요. |
-| confirm | 원가에 소수점 | 영수증 금액은 원 단위 정수로 입력해주세요. |
-| confirm | 수고비율 누락·0~1 밖 | 수고비율은 0%에서 100% 사이여야 해요. |
-| confirm | 수고비율이 0.01 단위 아님 | 수고비율은 1% 단위로 입력해주세요. |
-| confirm | 없는 팟 (404 아님) | 팟을 찾을 수 없어요. |
-| confirm | 참여자 0명 | 참여자가 없는 팟은 정산할 수 없어요. |
-| confirm | 이미 확정된 팟 | 이미 정산이 확정된 팟이에요. |
+## ④ ~~최저가 조회~~ — 삭제됨
 
-- JSON 형식이 깨졌거나 업로드가 15MB(multipart 한도)를 넘으면 공통 응답 래퍼가 아닌 Spring 기본 에러가 내려옵니다.
-- 자세한 예시: [handoff/settlement.md](./handoff/settlement.md)
+기획 개편으로 완전히 제거되었습니다. `product` 패키지·`ProductListPage`는 삭제 대상입니다. 과거 계약은 Git 히스토리로만 남습니다.
 
-## ④ 최저가 조회 (김민준)
+## ⑤ 건물별 익명 커뮤니티 (김민준, 신규)
+
+건물 방마다 따로 있고, 같은 건물 주민만 볼 수 있습니다. 입장 시 ①의 GPS 확인(`purpose=COMMUNITY_ENTER`)을 먼저 통과해야 합니다.
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| GET | /products/search?keyword= | 상품명으로 최저가 검색 | 쿼리: `keyword` | `ProductSearchResult[]` |
+| GET | /community/posts?buildingId=&userId=&category= | 글 목록 (건물 소속 확인, 숨김글 제외) | 쿼리: buildingId, userId, category? | `CommunityPostSummary[]` |
+| POST | /community/posts?userId= | 글 작성 | `{ category, content }` | `CommunityPostDetail` |
+| GET | /community/posts/{id}?userId= | 글 상세 + 댓글 | - | `CommunityPostDetail` |
+| DELETE | /community/posts/{id}?userId= | 글 삭제 (본인만) | - | - |
+| POST | /community/posts/{id}/comments?userId= | 댓글 작성 | `{ content }` | `CommunityPostDetail` |
+| DELETE | /community/comments/{id}?userId= | 댓글 삭제 (본인만) | - | - |
+| POST | /community/posts/{id}/report?userId= | 글 신고 | - | - |
+| POST | /community/comments/{id}/report?userId= | 댓글 신고 | - | - |
+
+- **익명화**: 글쓴이는 응답에서 항상 `"글쓴이"`, 그 외 작성자는 그 글 안에서 처음 등장한 순서대로 `"이웃 1"`, `"이웃 2"`... 로 표시됩니다. 실제 `authorUserId`는 절대 응답에 포함되지 않고, 신고 처리용으로만 서버 내부에 보관됩니다(이용 안내에 고지).
+- **`CommunityCategory`**: `FREE`(자유) / `QUESTION`(질문) / `SHARE`(나눔) / `GROUP_BUY_SUGGESTION`(공구 제안) — 임시 목록, [open-decisions.md](./open-decisions.md) 참고.
+- **`CommunityPostDetail`**에 `suggestable: boolean`(category가 `GROUP_BUY_SUGGESTION`이면 true) — true면 프론트가 "이 품목으로 팟 열기" 버튼을 보여주고 `/pods/new`로 이동(이동 시 GPS 재확인).
+- **신고 자동숨김**: 신고 누적 3회(임시값) 이상이면 서버가 자동으로 `hidden=true` 처리, 목록/상세에서 제외.
+- 건물 소속이 아니면 전체 엔드포인트 403.
 
 ---
-필요에 따라 Swagger(springdoc-openapi)를 붙이면 이 표를 자동 문서로 대체할 수 있습니다 (`build.gradle`에 `org.springdoc:springdoc-openapi-starter-webmvc-ui` 추가).
+필요에 따라 Swagger(springdoc-openapi)를 붙이면 이 표를 자동 문서로 대체할 수 있습니다.
