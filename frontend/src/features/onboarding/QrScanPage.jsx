@@ -5,6 +5,33 @@ import Icon from '../../components/Icon.jsx'
 import { extractQrToken } from './onboardingApi.js'
 import styles from './Onboarding.module.css'
 
+// DB building 테이블의 qr_token 값과 같아야 인증된다
+const DEMO_QR_TOKEN = 'demo-qr-token'
+
+/**
+ * 글자를 클립보드에 복사한다.
+ * navigator.clipboard는 보안 주소(localhost, https)에서만 쓸 수 있어서,
+ * 휴대폰으로 http://192.168.x.x 처럼 접속하면 없다 → 예전 방식(숨긴 입력칸에 넣고 선택 후 복사)으로 대신한다.
+ */
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // 권한 거부 등 → 아래 예전 방식으로
+    }
+  }
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed' // 화면이 스크롤로 튀지 않게
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  document.execCommand('copy')
+  textarea.remove()
+}
+
 const CAMERA_MESSAGES = {
   starting: '카메라를 켜는 중이에요…',
   denied: '카메라 권한이 없어요. 브라우저 설정에서 카메라를 허용하거나, 아래에서 코드를 직접 입력해주세요.',
@@ -27,6 +54,13 @@ export default function QrScanPage() {
   const [manualOpen, setManualOpen] = useState(false)
   const [manualCode, setManualCode] = useState('')
   const [helpOpen, setHelpOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyDemoCode = async () => {
+    await copyText(DEMO_QR_TOKEN)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500) // 1.5초 뒤 "복사" 글자로 되돌림
+  }
 
   const goVerify = (rawText) => {
     const qrToken = extractQrToken(rawText)
@@ -160,6 +194,15 @@ export default function QrScanPage() {
             </p>
           )}
         </div>
+
+        {/* 해커톤 데모용 안내. 실제 서비스에서는 지워야 한다 (QR 토큰을 화면에 노출하는 셈이라서) */}
+        <p className={styles.demoHint}>
+          데모 인증코드: <code>{DEMO_QR_TOKEN}</code>
+          <button type="button" className={styles.copyButton} onClick={handleCopyDemoCode}>
+            <Icon name={copied ? 'check' : 'content_copy'} size={14} />
+            {copied ? '복사됨' : '복사'}
+          </button>
+        </p>
 
         {manualOpen ? (
           <form className={styles.manualForm} onSubmit={handleManualSubmit}>
