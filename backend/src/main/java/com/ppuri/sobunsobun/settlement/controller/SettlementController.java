@@ -35,6 +35,16 @@ public class SettlementController {
         return ApiResponse.ok(settlementService.confirm(podId, request));
     }
 
+    /**
+     * 확정된 정산 결과 조회 (참여자 화면·다른 기기용).
+     * 확정 전이면 에러가 아니라 200 + data=null — 공용 client.js가 success=false면 예외를 던지기 때문에,
+     * "아직 정산 전"을 정상 응답으로 내려줘야 화면이 대기 상태를 바로 그릴 수 있다.
+     */
+    @GetMapping("/{podId}")
+    public ApiResponse<SettlementResponse> getConfirmed(@PathVariable Long podId) {
+        return ApiResponse.ok(settlementService.findConfirmed(podId));
+    }
+
     /** 잘못된 파일/입력, 확정할 수 없는 팟 → 400 + { success: false, message } */
     @ExceptionHandler(SettlementException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
