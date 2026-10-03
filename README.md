@@ -72,6 +72,7 @@ docs/      ERD, API 명세 초안
 - [docs/DESIGN_HANDOFF.md](./docs/DESIGN_HANDOFF.md) — 디자인 핸드오프용 화면별 상세 설명
 - docs/features/ — 기능별 상세 스펙 ([①온보딩](./docs/features/01-onboarding.md) · [②팟](./docs/features/02-pod.md) · [③정산](./docs/features/03-settlement.md) · [⑤커뮤니티](./docs/features/05-community.md) · ~~[④최저가조회](./docs/features/04-product-search.md)(삭제됨)~~)
 - [docs/SETUP.md](./docs/SETUP.md) — 로컬 개발 환경 설정 가이드
+- [docs/DEPLOY.md](./docs/DEPLOY.md) — 배포 가이드 (Supabase + Railway + Vercel)
 - [docs/API_KEYS.md](./docs/API_KEYS.md) — 외부 API 키 발급 안내
 - [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md) — 발표/데모 시나리오
 - [docs/PROJECT_BOARD.md](./docs/PROJECT_BOARD.md) — GitHub Projects 칸반 보드 사용법

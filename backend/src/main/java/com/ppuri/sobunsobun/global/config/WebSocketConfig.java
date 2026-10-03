@@ -1,7 +1,7 @@
 package com.ppuri.sobunsobun.global.config;
 
 import com.ppuri.sobunsobun.pod.websocket.PodSubscriptionInterceptor;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -15,18 +15,25 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * /topic/pods/{podId} 를 구독하면 해당 팟의 금액 갱신을 실시간으로 받는다.
  *
  * (기획 개편: 건물 소속 검증) 구독 시점에 PodSubscriptionInterceptor가 다른 건물 팟 구독을 거부한다.
+ * 허용 Origin은 CorsConfig와 같은 app.cors.allowed-origins(ALLOWED_ORIGINS 환경변수)를 쓴다.
  */
 @Configuration
 @EnableWebSocketMessageBroker
-@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final PodSubscriptionInterceptor podSubscriptionInterceptor;
+    private final String[] allowedOrigins;
+
+    public WebSocketConfig(PodSubscriptionInterceptor podSubscriptionInterceptor,
+                            @Value("${app.cors.allowed-origins}") String allowedOrigins) {
+        this.podSubscriptionInterceptor = podSubscriptionInterceptor;
+        this.allowedOrigins = allowedOrigins.split("\\s*,\\s*");
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-sobun")
-                .setAllowedOriginPatterns("*") // 배포 전 프론트 도메인으로 제한할 것
+                .setAllowedOriginPatterns(allowedOrigins)
                 .withSockJS();
     }
 
