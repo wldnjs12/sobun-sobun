@@ -85,8 +85,9 @@ public class SettlementService {
         BigDecimal perPersonAmount = calculatePerPersonAmount(exactFinalAmount, participantCount);
         BigDecimal finalAmount = exactFinalAmount.setScale(0, RoundingMode.HALF_UP);
 
+        String hostPaymentLink = request.hostPaymentLink();
         Settlement settlement = settlementRepository.save(
-                new Settlement(podId, cost, rate, finalAmount, participantCount, perPersonAmount));
+                new Settlement(podId, cost, rate, finalAmount, participantCount, perPersonAmount, hostPaymentLink));
         return SettlementResponse.from(settlement);
     }
 

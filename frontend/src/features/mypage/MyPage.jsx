@@ -6,7 +6,7 @@ import Icon from '../../components/Icon.jsx'
 import { getJoinedPodIds, getMyUserId, isVerified } from '../../api/currentUser.js'
 import { BUILDING, fetchPod } from '../pod/podApi.js'
 import { calcPerPersonPrice } from '../pod/podUtils.js'
-import { getSavedSettlement } from '../settlement/settlementApi.js'
+import { fetchSettlement } from '../settlement/settlementApi.js'
 import styles from './MyPage.module.css'
 
 const FILTERS = [
@@ -18,10 +18,9 @@ const FILTERS = [
 
 /**
  * 팟 하나의 진행 단계를 정한다. 위에서부터 먼저 맞는 조건이 이긴다.
- * (정산 완료 여부는 서버에서 다시 조회할 수 없어서, 이 브라우저에서 정산한 기록으로 판단한다)
+ * settlement은 서버 GET /settlements/{podId} 조회 결과(없으면 null).
  */
-function statusOf(pod) {
-  const settlement = getSavedSettlement(pod.id)
+function statusOf(pod, settlement) {
   if (settlement) return { key: 'settled', label: '정산 완료', link: `/pods/${pod.id}/pickup`, price: settlement.perPersonAmount }
   if (pod.closed) return { key: 'closed', label: '구매·정산 중', link: `/pods/${pod.id}/complete` }
   if (pod.participantCount >= pod.targetParticipantCount) return { key: 'closed', label: '모집 완료', link: `/pods/${pod.id}/complete` }
@@ -40,9 +39,9 @@ export default function MyPage() {
   useEffect(() => {
     const ids = getJoinedPodIds()
     // allSettled: 팟 하나가 지워졌거나 실패해도 나머지는 보여준다 (Promise.all은 하나만 실패해도 전부 실패)
-    Promise.allSettled(ids.map((id) => fetchPod(id))).then((results) => {
-      const pods = results.filter((r) => r.status === 'fulfilled').map((r) => r.value)
-      setItems(pods.reverse().map((pod) => ({ pod, status: statusOf(pod) }))) // 최근 참여가 위로
+    Promise.allSettled(ids.map((id) => Promise.all([fetchPod(id), fetchSettlement(id)]))).then((results) => {
+      const rows = results.filter((r) => r.status === 'fulfilled').map((r) => r.value) // [pod, settlement][]
+      setItems(rows.reverse().map(([pod, settlement]) => ({ pod, status: statusOf(pod, settlement) }))) // 최근 참여가 위로
     })
   }, [])
 

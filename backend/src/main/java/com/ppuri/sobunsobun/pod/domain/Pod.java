@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 
 /** 하나의 공동구매 팟. 참여자 수·총액·수고비율이 바뀔 때마다 1인당 금액을 다시 계산한다. */
 @Entity
@@ -33,9 +34,16 @@ public class Pod {
     private LocalDateTime deadline;
     private Boolean closed;
 
+    /** "혼자 샀을 때" 비교 가격. 없으면(null) 정산 결과 화면에서 절약액 카드를 보여주지 않는다. */
+    private BigDecimal originalPrice;
+
+    /** 비대면 픽업 수령용 4자리 PIN. 생성 시 자동 발급, 이후 변경 없음. */
+    private String pickupPin;
+
     @Builder
     public Pod(Long buildingId, Long hostUserId, String title, BigDecimal totalAmount,
-               Integer targetParticipantCount, BigDecimal commissionRate, LocalDateTime deadline) {
+               Integer targetParticipantCount, BigDecimal commissionRate, LocalDateTime deadline,
+               BigDecimal originalPrice) {
         this.buildingId = buildingId;
         this.hostUserId = hostUserId;
         this.title = title;
@@ -45,6 +53,8 @@ public class Pod {
         this.commissionRate = commissionRate;
         this.deadline = deadline;
         this.closed = false;
+        this.originalPrice = originalPrice;
+        this.pickupPin = String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
     }
 
     public void join() {

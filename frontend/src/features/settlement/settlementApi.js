@@ -51,6 +51,28 @@ export function getSavedSettlement(podId) {
   }
 }
 
+/**
+ * 확정된 정산 결과를 서버에서 다시 받아온다 (GET /settlements/{podId}, 문소원님 구현).
+ * 팟장이 아닌 다른 기기의 참여자도 결과를 볼 수 있게 해준다 — 기존엔 confirm 응답을
+ * 이 브라우저에만 저장해서, 참여자는 팟장 브라우저가 아니면 결과를 볼 방법이 없었다.
+ * 아직 확정 전이거나 없는 팟이면 에러가 아니라 200 + data:null로 온다 — 그대로 null을 돌려준다.
+ */
+export async function fetchSettlement(podId) {
+  try {
+    const settlement = await api.get(`/settlements/${podId}`)
+    if (!settlement) return null
+    return {
+      ...settlement,
+      recognizedCost: Number(settlement.recognizedCost),
+      commissionRate: Number(settlement.commissionRate),
+      finalAmount: Number(settlement.finalAmount),
+      perPersonAmount: Number(settlement.perPersonAmount),
+    }
+  } catch {
+    return null
+  }
+}
+
 const storageKey = (podId) => `sobun.settlement.${podId}`
 
 /** 확정 전 미리보기용 계산 (백엔드와 같은 식) */

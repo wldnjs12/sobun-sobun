@@ -1,6 +1,8 @@
 package com.ppuri.sobunsobun.pod.controller;
 
 import com.ppuri.sobunsobun.global.common.ApiResponse;
+import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
+import com.ppuri.sobunsobun.pod.dto.ParticipantStatusResponse;
 import com.ppuri.sobunsobun.pod.dto.PodCreateRequest;
 import com.ppuri.sobunsobun.pod.dto.PodResponse;
 import com.ppuri.sobunsobun.pod.service.PodService;
@@ -48,5 +50,30 @@ public class PodController {
     @PostMapping("/{podId}/close")
     public ApiResponse<PodResponse> close(@PathVariable Long podId, @RequestParam Long hostUserId) {
         return ApiResponse.ok(podService.close(podId, hostUserId));
+    }
+
+    /** 정산 결과·비대면 픽업 화면용 — 내 참여/송금/수령 상태와 픽업 PIN. */
+    @GetMapping("/{podId}/me")
+    public ApiResponse<MyParticipationResponse> getMyParticipation(@PathVariable Long podId, @RequestParam Long userId) {
+        return ApiResponse.ok(podService.getMyParticipation(podId, userId));
+    }
+
+    /** 정산 결과 화면(대표용) — 참여자별 송금/수령 현황. */
+    @GetMapping("/{podId}/participants")
+    public ApiResponse<List<ParticipantStatusResponse>> listParticipants(@PathVariable Long podId,
+                                                                          @RequestParam Long hostUserId) {
+        return ApiResponse.ok(podService.listParticipants(podId, hostUserId));
+    }
+
+    /** "보냈어요" 자가 신고 (실제 결제 연동 없음). */
+    @PostMapping("/{podId}/paid")
+    public ApiResponse<MyParticipationResponse> markPaid(@PathVariable Long podId, @RequestParam Long userId) {
+        return ApiResponse.ok(podService.markPaid(podId, userId));
+    }
+
+    /** "수령 완료" 자가 신고. */
+    @PostMapping("/{podId}/picked-up")
+    public ApiResponse<MyParticipationResponse> markPickedUp(@PathVariable Long podId, @RequestParam Long userId) {
+        return ApiResponse.ok(podService.markPickedUp(podId, userId));
     }
 }

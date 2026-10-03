@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
-import { BUILDING, fetchPod } from '../pod/podApi.js'
+import { BUILDING, fetchMyParticipation, fetchPod, markPickedUp } from '../pod/podApi.js'
 import styles from './Settlement.module.css'
 
 const PICKUP_STEPS = [
@@ -13,20 +13,33 @@ const PICKUP_STEPS = [
 
 /**
  * 비대면 픽업 안내 (S12 · Stitch 13번).
- *
- * TODO(백엔드 필요): 보관함 번호·비밀번호를 저장/조회하는 API가 아직 없다.
- *   팟장이 보관 후 입력 → 참여자가 여기서 확인하는 흐름이 필요해서, 지금은 "팟장이 알려줄 예정" 상태로 보여준다.
- *   가짜 비밀번호를 보여주면 사용자가 실제로 그 번호를 누를 수 있어서 일부러 넣지 않았다.
+ * 보관함 비밀번호(Pod.pickupPin)와 수령 완료 자가신고(POST /pods/{id}/picked-up)가 백엔드에
+ * 새로 추가돼서, 이전의 "보관 후 알려드려요" placeholder와 로컬 state뿐이던 수령 완료를 실제 값으로 교체했다.
  */
 export default function PickupPage() {
   const { podId } = useParams()
   const [pod, setPod] = useState(null)
-  const [pickedUp, setPickedUp] = useState(false)
+  const [participation, setParticipation] = useState(null)
+  const [pickingUp, setPickingUp] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchPod(podId).then(setPod).catch(() => {})
+    fetchMyParticipation(podId).then(setParticipation).catch(() => {})
   }, [podId])
 
+  const handlePickedUp = async () => {
+    setPickingUp(true)
+    try {
+      setParticipation(await markPickedUp(podId))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setPickingUp(false)
+    }
+  }
+
+  const pickedUp = participation?.pickedUp ?? false
   const spot = pod?.pickupSpot ?? '1층 무인락커'
 
   return (
@@ -63,10 +76,14 @@ export default function PickupPage() {
           </div>
           <div className={styles.pinBox}>
             <span className={styles.resultLabel}>
-              <Icon name="pin" size={16} /> 보관함 번호 · 비밀번호
+              <Icon name="pin" size={16} /> 보관함 비밀번호
             </span>
-            <strong className={styles.pinPending}>보관 후 알려드려요</strong>
-            <span className={styles.pinHint}>팟장이 소분한 상품을 보관함에 넣으면 여기에 표시돼요.</span>
+            {participation?.pickupPin ? (
+              <strong className={styles.pinValue}>{participation.pickupPin}</strong>
+            ) : (
+              <strong className={styles.pinPending}>불러오는 중…</strong>
+            )}
+            <span className={styles.pinHint}>이 팟에 참여한 사람만 볼 수 있는 비밀번호예요.</span>
           </div>
         </section>
 
@@ -103,12 +120,19 @@ export default function PickupPage() {
         <Link to="/mypage" className={styles.textLink}>
           보관함에 물건이 없거나 문제가 있나요? → 마이페이지에서 팟 확인
         </Link>
+
+        {error && <p className={styles.error}>{error}</p>}
       </main>
 
       <div className={styles.ctaDock}>
-        <button type="button" className={styles.primaryButton} disabled={pickedUp} onClick={() => setPickedUp(true)}>
+        <button
+          type="button"
+          className={styles.primaryButton}
+          disabled={pickedUp || pickingUp}
+          onClick={handlePickedUp}
+        >
           <Icon name="check_circle" size={20} />
-          {pickedUp ? '수령 완료! 맛있게 드세요' : '물건을 꺼냈어요 · 수령 완료'}
+          {pickedUp ? '수령 완료! 맛있게 드세요' : pickingUp ? '처리 중…' : '물건을 꺼냈어요 · 수령 완료'}
         </button>
       </div>
     </div>

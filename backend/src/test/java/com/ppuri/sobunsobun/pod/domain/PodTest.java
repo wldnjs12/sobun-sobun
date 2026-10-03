@@ -91,4 +91,11 @@ class PodTest {
 
         assertThatThrownBy(pod::join).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void 생성시_4자리_pickupPin이_자동_발급된다() {
+        Pod pod = newPod(3);
+
+        assertThat(pod.getPickupPin()).matches("\\d{4}");
+    }
 }

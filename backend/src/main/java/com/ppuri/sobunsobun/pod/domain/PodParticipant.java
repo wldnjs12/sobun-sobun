@@ -25,10 +25,24 @@ public class PodParticipant {
     private Long userId;
     private LocalDateTime joinedAt;
 
+    /** 정산 금액을 대표에게 보냈다고 본인이 신고한 시각. 실제 결제 연동은 없음(자가 신고). */
+    private LocalDateTime paidAt;
+
+    /** 비대면 픽업함에서 물품을 수령했다고 본인이 신고한 시각. */
+    private LocalDateTime pickedUpAt;
+
     @Builder
     public PodParticipant(Long podId, Long userId) {
         this.podId = podId;
         this.userId = userId;
         this.joinedAt = LocalDateTime.now();
+    }
+
+    public void markPaid() {
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void markPickedUp() {
+        this.pickedUpAt = LocalDateTime.now();
     }
 }

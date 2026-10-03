@@ -4,7 +4,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getMyUserId } from '../../api/currentUser.js'
 import { fetchPod } from '../pod/podApi.js'
-import { confirmSettlement, getSavedSettlement, previewSettlement, recognizeReceipt } from './settlementApi.js'
+import { confirmSettlement, fetchSettlement, previewSettlement, recognizeReceipt } from './settlementApi.js'
 import styles from './Settlement.module.css'
 
 /**
@@ -31,12 +31,15 @@ export default function SettlementPage() {
   const albumInput = useRef(null)
 
   useEffect(() => {
-    // 이미 정산했다면 결과 화면으로 바로 보낸다 (같은 팟 중복 정산은 백엔드가 거절함)
-    if (getSavedSettlement(podId)) {
-      navigate(`/settlements/${podId}/result`, { replace: true })
-      return
-    }
-    fetchPod(podId).then(setPod).catch((e) => setLoadError(e.message))
+    // 이미 정산했다면 결과 화면으로 바로 보낸다 (localStorage뿐이면 다른 기기에서 들어온 팟장이
+    // 이미 확정된 걸 모르고 다시 확정하려다 400에 막히므로, 서버에 직접 확인한다)
+    fetchSettlement(podId).then((settlement) => {
+      if (settlement) {
+        navigate(`/settlements/${podId}/result`, { replace: true })
+        return
+      }
+      fetchPod(podId).then(setPod).catch((e) => setLoadError(e.message))
+    })
   }, [podId, navigate])
 
   // 미리보기용 사진 주소(blob:)는 브라우저 메모리를 잡아먹으므로, 바뀌거나 화면을 떠날 때 해제

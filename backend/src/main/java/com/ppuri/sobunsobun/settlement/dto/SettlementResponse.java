@@ -14,11 +14,12 @@ public record SettlementResponse(
         BigDecimal finalAmount,
         Integer participantCount,
         BigDecimal perPersonAmount,
-        Boolean confirmed
+        Boolean confirmed,
+        String hostPaymentLink
 ) {
     public static SettlementResponse from(Settlement s) {
         return new SettlementResponse(s.getId(), s.getPodId(), s.getReceiptImageUrl(), s.getRecognizedCost(),
                 s.getCommissionRate(), s.getFinalAmount(), s.getParticipantCount(), s.getPerPersonAmount(),
-                s.getConfirmed());
+                s.getConfirmed(), s.getHostPaymentLink());
     }
 }
