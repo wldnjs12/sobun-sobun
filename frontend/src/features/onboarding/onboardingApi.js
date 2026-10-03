@@ -114,7 +114,21 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms))
 async function mockSearch(keyword) {
   await delay(300) // 네트워크처럼 살짝 늦게
   const q = keyword.replace(/\s/g, '')
-  return MOCK_ADDRESSES.filter((a) => (a.roadAddress + a.buildingName).replace(/\s/g, '').includes(q))
+  const matched = MOCK_ADDRESSES.filter((a) => (a.roadAddress + a.buildingName).replace(/\s/g, '').includes(q))
+
+  // 아무 주소나 테스트할 수 있게, 입력한 글자 그대로도 후보 하나로 넣어준다 (예: "인하로 122")
+  // "아파트"가 들어 있으면 아파트로 보고 동 목록을 준다 → 동 선택 흐름도 확인 가능
+  const name = keyword.trim()
+  const isApartment = name.includes('아파트')
+  const typed = {
+    roadAddress: `${name} (목업 — 입력한 주소 그대로)`,
+    buildingName: name,
+    bdMgtSn: `MOCK-INPUT-${q}`,
+    isApartment,
+    dongOptions: isApartment ? ['101동', '102동', '103동'] : [],
+  }
+  const alreadyListed = matched.some((a) => a.buildingName.replace(/\s/g, '') === q)
+  return alreadyListed ? matched : [...matched, typed]
 }
 
 async function mockRegister({ buildingName, dong }) {
