@@ -37,7 +37,11 @@ const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
 - 공구 제안 → 팟 생성으로 넘길 때: `navigate('/pods/new', { state: { title: '생수 2L 24병' } })` → 생성 화면에 품목이 채워지고 "커뮤니티 제안에서 가져왔어요" 표시
 
 ### 남은 것 / 확인 필요
-- 하단 탭 `[팟·커뮤니티·내 팟·마이]` 변경은 공용 파일(`BottomNav.jsx`)이라 이번 PR에서 안 건드림 — 김민준님과 먼저 끝나는 쪽이 수정 (REPLAN 문서 규칙)
+- ✅ **하단 탭 `[팟·커뮤니티·내 팟·마이]` 변경 완료** (브랜치 `feature/bottom-nav-tabs`, 도우현이 맡기로 함)
+  - "내 팟" 탭 `/my-pods` (`features/mypage/MyPodsPage.jsx`) — 마이페이지의 참여 내역을 분리, 상태별 필터. 데이터는 `useMyPods.js` 훅으로 마이 탭과 공유
+  - "마이" 탭 — 요약 숫자 + "내 팟" 바로가기 + 내 건물 변경만 남김
+  - **"커뮤니티" 탭 `/community`는 임시 "준비 중" 화면**(`components/ComingSoonPage.jsx`) → **@김민준: 커뮤니티 화면이 생기면 `App.jsx`의 `/community` 라우트 element만 그 화면으로 바꾸면 됨** (탭 쪽은 손댈 필요 없음)
+  - 최저가 탭은 내림. `/products` 라우트·파일 삭제는 김민준님 커뮤니티 PR 담당 그대로
 - 백엔드 ① 붙으면: 실제 주소 API 응답 형태 확인, 다른 건물 팟 접근 시 403 화면 처리 필요
 - 검증: 헤드리스 Chrome으로 19개 항목 자동 확인 (빌라·아파트·동 직접입력 등록, 미등록 접근 차단, 팟 개설 GPS 통과 → 생성, 반경 밖·권한 거부·위치 못 받음 시트, 위치 잡힌 뒤 [다시 확인] → 참여 성공), JS 에러 없음
 
