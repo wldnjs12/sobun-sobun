@@ -7,6 +7,7 @@ import com.ppuri.sobunsobun.community.domain.CommunityReport;
 import com.ppuri.sobunsobun.community.domain.ReportTargetType;
 import com.ppuri.sobunsobun.community.repository.CommunityCommentRepository;
 import com.ppuri.sobunsobun.community.repository.CommunityReportRepository;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -109,9 +110,9 @@ class CommunityModerationServiceTest {
 
     @Test
     void 다른_건물_주민은_신고할_수_없다() {
-        when(postService.getVisiblePostOfMyBuilding(1L, 900L)).thenThrow(new CommunityForbiddenException("우리 건물 커뮤니티만 볼 수 있어요."));
+        when(postService.getVisiblePostOfMyBuilding(1L, 900L)).thenThrow(new BuildingAccessDeniedException("우리 건물 커뮤니티만 볼 수 있어요."));
 
-        assertThatThrownBy(() -> service.reportPost(1L, 900L)).isInstanceOf(CommunityForbiddenException.class);
+        assertThatThrownBy(() -> service.reportPost(1L, 900L)).isInstanceOf(BuildingAccessDeniedException.class);
         verify(reportRepository, never()).saveAndFlush(any());
     }
 }

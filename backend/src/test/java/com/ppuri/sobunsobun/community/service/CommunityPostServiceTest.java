@@ -1,5 +1,8 @@
 package com.ppuri.sobunsobun.community.service;
 
+import com.ppuri.sobunsobun.auth.domain.User;
+import com.ppuri.sobunsobun.auth.domain.UserRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.community.domain.CommunityCategory;
 import com.ppuri.sobunsobun.community.domain.CommunityComment;
 import com.ppuri.sobunsobun.community.domain.CommunityPost;
@@ -12,6 +15,7 @@ import com.ppuri.sobunsobun.community.dto.PostCreateRequest;
 import com.ppuri.sobunsobun.community.repository.CommunityCommentRepository;
 import com.ppuri.sobunsobun.community.repository.CommunityPostRepository;
 import com.ppuri.sobunsobun.community.repository.CommunityReportRepository;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-/** 건물 1 주민(100=글쓴이, 200, 300)과 건물 2 주민(900) 기준으로 검증한다. */
+/** 건물 1 주민(100=글쓴이, 200, 300)과 건물 2 주민(900) 기준으로 검증한다. 건물 소속 확인은 ①의 공용 가드를 mock으로 대신한다. */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CommunityPostServiceTest {
@@ -48,15 +54,19 @@ class CommunityPostServiceTest {
     @Mock
     private CommunityReportRepository reportRepository;
     @Mock
-    private CommunityMembershipResolver membershipResolver;
+    private BuildingAccessService buildingAccessService;
+    @Mock
+    private UserRepository userRepository;
 
     private CommunityPostService service;
 
     @BeforeEach
     void setUp() {
-        service = new CommunityPostService(postRepository, commentRepository, reportRepository, membershipResolver);
-        when(membershipResolver.buildingIdOf(anyLong())).thenReturn(MY_BUILDING);
-        when(membershipResolver.buildingIdOf(OUTSIDER)).thenReturn(OTHER_BUILDING);
+        service = new CommunityPostService(postRepository, commentRepository, reportRepository, buildingAccessService, userRepository);
+        // 900번만 다른 건물 주민 — 공용 가드가 403(BuildingAccessDeniedException)을 던진다
+        doThrow(new BuildingAccessDeniedException("우리 건물 커뮤니티만 볼 수 있어요."))
+                .when(buildingAccessService).requireMembership(eq(OUTSIDER), anyLong(), anyString());
+        when(userRepository.findById(AUTHOR)).thenReturn(Optional.of(new User(AUTHOR, MY_BUILDING)));
         when(commentRepository.findByPostIdOrderByIdAsc(anyLong())).thenReturn(List.of());
     }
 
@@ -94,6 +104,15 @@ class CommunityPostServiceTest {
     }
 
     @Test
+    void 건물을_등록하지_않은_사람은_글을_쓸_수_없다() {
+        when(userRepository.findById(555L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.create(555L, new PostCreateRequest(CommunityCategory.FREE, "안녕하세요")))
+                .isInstanceOf(BuildingAccessDeniedException.class);
+        verify(postRepository, never()).save(any());
+    }
+
+    @Test
     void 공구_제안이_아닌_글은_팟_열기_대상이_아니다() {
         givenPost(post(1L, MY_BUILDING, AUTHOR, CommunityCategory.FREE));
 
@@ -120,7 +139,7 @@ class CommunityPostServiceTest {
     @Test
     void 다른_건물_주민은_글_목록을_볼_수_없다() {
         assertThatThrownBy(() -> service.list(MY_BUILDING, OUTSIDER, null))
-                .isInstanceOf(CommunityForbiddenException.class);
+                .isInstanceOf(BuildingAccessDeniedException.class);
         verify(postRepository, never()).findByBuildingIdAndHiddenFalseOrderByIdDesc(anyLong());
     }
 
@@ -128,9 +147,9 @@ class CommunityPostServiceTest {
     void 다른_건물_주민이_글_ID로_직접_접근하면_거절된다() {
         givenPost(post(1L, MY_BUILDING, AUTHOR, CommunityCategory.FREE));
 
-        assertThatThrownBy(() -> service.getDetail(1L, OUTSIDER)).isInstanceOf(CommunityForbiddenException.class);
+        assertThatThrownBy(() -> service.getDetail(1L, OUTSIDER)).isInstanceOf(BuildingAccessDeniedException.class);
         assertThatThrownBy(() -> service.addComment(1L, OUTSIDER, new CommentCreateRequest("안녕하세요")))
-                .isInstanceOf(CommunityForbiddenException.class);
+                .isInstanceOf(BuildingAccessDeniedException.class);
         verify(commentRepository, never()).save(any());
     }
 
@@ -145,6 +164,7 @@ class CommunityPostServiceTest {
 
         assertThat(list).singleElement().satisfies(summary -> {
             assertThat(summary.commentCount()).isEqualTo(4L);
+            assertThat(summary.content()).isEqualTo("생수 2L 24병 같이 사실 분"); // 프론트가 첫 줄을 제목처럼 씀
             assertThat(summary.preview()).isEqualTo("생수 2L 24병 같이 사실 분");
             assertThat(summary.mine()).isFalse();
         });

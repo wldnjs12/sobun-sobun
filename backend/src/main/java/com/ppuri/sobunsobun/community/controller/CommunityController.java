@@ -82,7 +82,8 @@ public class CommunityController {
         return ApiResponse.ok(null);
     }
 
-    // 아래 핸들러는 이 컨트롤러에서 난 예외만 처리한다. 404(없는 글)·409(중복 신고 등)는 GlobalExceptionHandler가 처리.
+    // 아래 핸들러는 이 컨트롤러에서 난 예외만 처리한다.
+    // 404(없는 글)·409(중복 신고 등)·403 BUILDING_ACCESS_DENIED(다른 건물)는 GlobalExceptionHandler가 처리.
 
     @ExceptionHandler(CommunityForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)

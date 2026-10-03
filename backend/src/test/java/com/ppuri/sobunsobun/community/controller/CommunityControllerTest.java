@@ -6,6 +6,7 @@ import com.ppuri.sobunsobun.community.dto.CommunityPostDetail;
 import com.ppuri.sobunsobun.community.service.CommunityForbiddenException;
 import com.ppuri.sobunsobun.community.service.CommunityModerationService;
 import com.ppuri.sobunsobun.community.service.CommunityPostService;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,6 +22,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -55,13 +57,25 @@ class CommunityControllerTest {
     }
 
     @Test
-    void 다른_건물_접근은_403과_안내_문구를_돌려준다() throws Exception {
-        given(postService.getDetail(1L, 900L)).willThrow(new CommunityForbiddenException("우리 건물 커뮤니티만 볼 수 있어요."));
+    void 다른_건물_접근은_403과_BUILDING_ACCESS_DENIED_코드를_돌려준다() throws Exception {
+        given(postService.getDetail(1L, 900L)).willThrow(new BuildingAccessDeniedException("우리 건물 커뮤니티만 볼 수 있어요."));
 
         mockMvc.perform(get("/api/community/posts/1").param("userId", "900"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("BUILDING_ACCESS_DENIED")) // 프론트가 이 코드로 "다른 건물" 화면을 띄움
                 .andExpect(jsonPath("$.message").value("우리 건물 커뮤니티만 볼 수 있어요."));
+    }
+
+    @Test
+    void 남의_글_삭제는_403이지만_다른_건물_코드는_붙지_않는다() throws Exception {
+        org.mockito.BDDMockito.willThrow(new CommunityForbiddenException("본인이 쓴 글만 삭제할 수 있어요."))
+                .given(postService).delete(1L, 200L);
+
+        mockMvc.perform(delete("/api/community/posts/1").param("userId", "200"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").doesNotExist())
+                .andExpect(jsonPath("$.message").value("본인이 쓴 글만 삭제할 수 있어요."));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.ppuri.sobunsobun.community.service;
 
+import com.ppuri.sobunsobun.auth.domain.UserRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.community.domain.CommunityCategory;
 import com.ppuri.sobunsobun.community.domain.CommunityComment;
 import com.ppuri.sobunsobun.community.domain.CommunityPost;
@@ -12,6 +14,7 @@ import com.ppuri.sobunsobun.community.dto.PostCreateRequest;
 import com.ppuri.sobunsobun.community.repository.CommunityCommentRepository;
 import com.ppuri.sobunsobun.community.repository.CommunityPostRepository;
 import com.ppuri.sobunsobun.community.repository.CommunityReportRepository;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +23,7 @@ import java.util.List;
 
 /**
  * 핵심 기능 ⑤: 건물별 익명 커뮤니티 — 글/댓글 (신고는 CommunityModerationService).
- * 모든 동작은 "요청한 사람의 건물 == 글의 건물"일 때만 허용한다 (아니면 403).
+ * 모든 동작은 "요청한 사람의 건물 == 글의 건물"일 때만 허용한다 (아니면 403 BUILDING_ACCESS_DENIED — ①의 공용 가드 사용).
  * 숨김 처리된 글은 목록/상세/댓글/신고 모두에서 없는 글로 취급한다.
  */
 @Service
@@ -30,7 +33,10 @@ public class CommunityPostService {
     private final CommunityPostRepository postRepository;
     private final CommunityCommentRepository commentRepository;
     private final CommunityReportRepository reportRepository;
-    private final CommunityMembershipResolver membershipResolver;
+    private static final String ACCESS_DENIED_MESSAGE = "우리 건물 커뮤니티만 볼 수 있어요.";
+
+    private final BuildingAccessService buildingAccessService;
+    private final UserRepository userRepository;
 
     /** 글 목록(S16) — 최신순, 숨김 글 제외. category가 null이면 전체. */
     @Transactional(readOnly = true)
@@ -44,10 +50,14 @@ public class CommunityPostService {
                 .toList();
     }
 
+    /** 건물은 요청으로 받지 않고 작성자의 소속 건물로 정한다 — 다른 건물에 글을 쓸 방법 자체가 없다. */
     @Transactional
     public CommunityPostDetail create(Long userId, PostCreateRequest request) {
+        Long buildingId = userRepository.findById(userId)
+                .orElseThrow(() -> new BuildingAccessDeniedException("건물을 먼저 등록해야 커뮤니티를 이용할 수 있어요."))
+                .getBuildingId();
         CommunityPost post = postRepository.save(CommunityPost.builder()
-                .buildingId(membershipResolver.buildingIdOf(userId))
+                .buildingId(buildingId)
                 .authorUserId(userId)
                 .category(request.category())
                 .content(request.content().trim())
@@ -112,9 +122,7 @@ public class CommunityPostService {
     }
 
     private void checkMember(Long buildingId, Long userId) {
-        if (!buildingId.equals(membershipResolver.buildingIdOf(userId))) {
-            throw new CommunityForbiddenException("우리 건물 커뮤니티만 볼 수 있어요.");
-        }
+        buildingAccessService.requireMembership(userId, buildingId, ACCESS_DENIED_MESSAGE);
     }
 
     /** 익명 닉네임은 저장하지 않고 여기서 매번 계산한다. 응답에는 실제 작성자 ID를 넣지 않는다. */
