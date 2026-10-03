@@ -117,6 +117,19 @@ export async function fetchMyParticipation(podId) {
   return api.get(`/pods/${podId}/me?userId=${getMyUserId()}`)
 }
 
+/** "보냈어요" 자가 신고 — 참여자가 팟장에게 송금한 뒤 누른다 (실제 입금 여부는 앱이 확인하지 않음). */
+export async function markPaid(podId) {
+  return api.post(`/pods/${podId}/paid?userId=${getMyUserId()}`)
+}
+
+/**
+ * 참여자별 송금·수령 현황 (팟장만 조회 가능).
+ * 결과: [{ userId, paid, pickedUp }] — 화면에는 userId를 그대로 보여주지 않고 "이웃 1, 2…"로 바꿔 쓴다 (익명 원칙).
+ */
+export async function fetchParticipants(podId) {
+  return api.get(`/pods/${podId}/participants?hostUserId=${getMyUserId()}`)
+}
+
 /** "수령 완료" 자가 신고 — 비대면 픽업 화면에서 쓴다. */
 export async function markPickedUp(podId) {
   return api.post(`/pods/${podId}/picked-up?userId=${getMyUserId()}`)
