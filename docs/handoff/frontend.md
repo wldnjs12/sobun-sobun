@@ -17,8 +17,20 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: �
 - 시작 화면 문구 개편(우리 건물 이웃 · 화장지 30롤 예시), 팟 생성의 "최저가에서 가져왔어요" → "커뮤니티 제안에서 가져왔어요"
 - **버그 수정**: 팟 생성 금액 입력이 `step="100"`이라 21,990원 같은 실제 가격을 브라우저가 거절하고 제출이 안 되던 문제 → `step="1"`
 
-### ⚠️ 목업 상태 (백엔드 ① 완성 전)
-- `features/onboarding/onboardingApi.js` 맨 위 **`USE_MOCK = true`** — 최지원 ① PR 머지되면 **`false`로 한 줄만** 바꾸면 실제 API(`/auth/addresses/search`, `/auth/buildings/register`, `/auth/location-check`) 사용
+### ✅ 실제 서버 연결 (2026-10-03, PR #17 머지 후)
+- `features/onboarding/onboardingApi.js`의 **`USE_MOCK = false`** — 실제 API(`/auth/addresses/search`, `/auth/buildings/register`, `/auth/location-check`) 사용
+  - ⚠️ 실제 서버에서 `true`로 두면 안 됨: 목업 등록은 서버에 건물 소속이 안 남아서 팟 목록이 전부 403으로 막힘
+  - 백엔드에 주소·지오코딩 키가 없으면 서버가 Stub을 씀: 주소 검색은 고정 후보 2건(용현 한아름아파트·학익 다세대주택), 건물 좌표는 인하대(37.4502, 126.6558) → 크롬 Sensors로 이 좌표를 지정하면 GPS 통과
+  - 실제 서버로 데모 시나리오 확인: 등록 → GPS 통과 팟 개설 → 같은 건물 참여·실시간 → 다른 건물은 목록에 안 보이고 링크 접근 시 403 화면, WebSocket 구독 거부 후 재연결 안 함 → 다른 위치에서 개설 시 서버 OUT_OF_RANGE 시트
+- **🛠 로컬 DB에 예전(QR 시절) 건물 데이터가 있으면** 서버가 `building.building_key`(NOT NULL) 컬럼을 못 만들어 건물 등록이 JDBC 에러로 실패함. 데이터 지우지 않고 해결:
+  ```sql
+  ALTER TABLE building ADD COLUMN IF NOT EXISTS building_key varchar(255);
+  UPDATE building SET building_key = 'legacy-' || id WHERE building_key IS NULL;
+  ALTER TABLE building ALTER COLUMN building_key SET NOT NULL;
+  ```
+  실행 후 백엔드 재시작. (새로 만든 DB·배포 DB는 해당 없음)
+
+### (참고) 목업 모드 — 백엔드 없이 화면만 볼 때 `USE_MOCK = true`
 - 목업 주소: "인하로", "학익", "용현" 등으로 검색 (제니스빌·인하하우스·학익한마음아파트·용현그린아파트 — 가짜 주소). 그 밖에 **아무 주소나 입력해도 입력한 글자 그대로 후보 1개**가 나옴 ("아파트"가 들어 있으면 아파트로 보고 101~103동 목록)
 - 목업 등록은 어떤 건물이든 `buildingId: 1`로 묶음 (지금 팟 API가 건물 1번 기준이라)
 - GPS는 목업이어도 **브라우저 위치는 실제로 받음** → 권한 거부/위치 못 받음(b)(c)은 진짜로 확인 가능. 반경 밖(a)은 주소 뒤에 `?mockGps=out`을 붙여 연 탭에서 흉내 냄
@@ -76,6 +88,7 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/community-and-onboarding-design
 
 ### ⚠️ 목업 상태 + 👉 @김민준(⑤ 백엔드) 맞춰주세요
 - `features/community/communityApi.js` 맨 위 **`USE_MOCK = true`** → ⑤ 백엔드 머지되면 `false`
+- 목업 샘플 글은 **처음 커뮤니티를 연 건물**의 글이 됨 (실제 건물 id는 등록 때 서버가 정해서 미리 모름). 다른 건물은 빈 커뮤니티로 시작 → 건물 분리가 보임. **데모 때는 데모 건물(팟장 폰)에서 커뮤니티를 먼저 열 것**
 - API_SPEC ⑤에 응답 필드가 다 적혀 있지 않아서 프론트가 아래 모양을 **가정**함. 백엔드를 이렇게 맞추거나, 다르면 알려주세요:
   ```
   CommunityPostSummary = { id, category, content, commentCount, createdAt, mine }
