@@ -1,0 +1,572 @@
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--margin-mobile) 112px; /* 아래: 고정된 참여 바에 가려지지 않게 */
+}
+
+.fallback {
+  margin: var(--space-lg) 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-align: center;
+}
+
+.primaryIcon {
+  color: var(--color-primary);
+}
+
+.secondaryIcon {
+  color: var(--color-secondary);
+}
+
+/* ── 마감 시간 · 위치 ── */
+.microBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.countdown,
+.locationChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.countdown {
+  flex-shrink: 0;
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  box-shadow: var(--shadow-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.locationChip {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+/* ── 사진 ── */
+.gallery {
+  position: relative;
+  aspect-ratio: 4 / 3; /* 폭에 맞춰 높이를 4:3으로 자동 계산 */
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  box-shadow: var(--shadow-sm);
+}
+
+.galleryImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.galleryPlaceholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-primary-fixed-dim);
+}
+
+.galleryTag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-sm);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+
+/* ── 공통 카드 ── */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.cardTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.mutedSmall {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.peachBadge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+/* ── 가격 카드 ── */
+.priceCard {
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.ribbon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 220, 197, 0.7);
+  color: var(--color-on-secondary-fixed);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.ribbonIcon {
+  color: var(--color-secondary);
+}
+
+.ribbonText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ribbonTime {
+  color: var(--color-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.priceLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-xs);
+}
+
+.priceLabel {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.saveBadge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--color-primary);
+}
+
+.priceBig {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 48px;
+  letter-spacing: -0.03em;
+}
+
+.priceWon {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.priceOriginal {
+  margin-left: auto;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  text-decoration: line-through;
+}
+
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+  font-size: 13px;
+}
+
+.breakdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.breakdownLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.strike {
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.breakdownSave {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.breakdownSave .breakdownLabel {
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+
+/* ── 모집 현황 ── */
+.countText {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.progressTrack {
+  height: 12px;
+  padding: 2px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: width 0.7s ease-out;
+}
+
+.progressHint {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.progressHint strong {
+  color: var(--color-secondary);
+}
+
+.portionGrid {
+  display: grid; /* 칸 개수는 JSX에서 목표 인원만큼 지정 */
+  gap: 6px;
+}
+
+.portion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 2px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+}
+
+.portionMine {
+  background: rgba(255, 220, 197, 0.5);
+  color: var(--color-secondary);
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.portionLabel {
+  color: var(--color-on-surface-variant);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.portionMine .portionLabel {
+  color: var(--color-secondary);
+}
+
+.portionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-highest);
+}
+
+.portionDotFilled {
+  background: var(--color-primary);
+}
+
+.portionMine .portionDot {
+  background: var(--color-secondary);
+}
+
+/* ── 참여자 목록 ── */
+.participants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.participant,
+.emptySlot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+
+.participantLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.participantAvatar,
+.emptySlotAvatar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.participantName {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hostTag {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.joinedText {
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.emptySlot {
+  width: 100%;
+  padding: 12px 10px;
+  border: none;
+  background: rgba(255, 220, 197, 0.4);
+  color: var(--color-secondary);
+  text-align: left;
+}
+
+.emptySlotAvatar {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.emptySlotTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lastSeatTag {
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary);
+  color: var(--color-on-secondary);
+  font-size: 10px;
+}
+
+.emptySlotSub {
+  color: var(--color-on-secondary-container);
+  font-size: 12px;
+}
+
+/* ── 픽업 ── */
+.pickupBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+  font-size: 13px;
+}
+
+/* ── 하단 고정 참여 바 ── */
+.dock {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--margin-mobile) calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  background: rgba(248, 249, 255, 0.9);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.dockPrice {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dockLabel {
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dockDiscount {
+  color: var(--color-secondary);
+}
+
+.dockAmount {
+  color: var(--color-primary);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 28px;
+}
+
+.dockAmount small {
+  margin-left: 2px;
+  font-size: 12px;
+}
+
+.dockButton {
+  flex: 1;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-md);
+  font-size: 16px;
+  font-weight: 700;
+  transition: transform 0.1s;
+}
+
+.dockButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.dockButton:disabled {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  box-shadow: none;
+  cursor: default;
+}
+
+.dockButtonHost {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.dockSeats {
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-size: 11px;
+}

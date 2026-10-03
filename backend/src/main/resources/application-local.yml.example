@@ -1,0 +1,18 @@
+# 이 파일을 application-local.yml 로 복사한 뒤 실제 값을 채워주세요.
+# application-local.yml은 .gitignore에 등록되어 있어 커밋되지 않습니다.
+# 발급 방법: docs/API_KEYS.md
+
+naver:
+  ocr:
+    invoke-url: "여기에_CLOVA_OCR_Invoke_URL"
+    secret-key: "여기에_CLOVA_OCR_Secret_Key"
+  shopping:
+    client-id: "여기에_네이버_쇼핑_Client_ID"
+    client-secret: "여기에_네이버_쇼핑_Client_Secret"
+
+juso:
+  api-key: "여기에_도로명주소_API_승인키(confmKey)"
+kakao:
+  rest-api-key: "여기에_카카오_REST_API_키"
+location-check:
+  demo-mode: false

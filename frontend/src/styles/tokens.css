@@ -1,0 +1,73 @@
+/**
+ * 디자인 토큰 — stitch_new_starter_project/sobunsobun/DESIGN.md 의 값을 CSS 변수로 옮긴 것.
+ * 색상을 코드에 직접(#006194) 쓰지 말고 var(--color-primary)처럼 이름으로 써야
+ * 나중에 디자인이 바뀌어도 이 파일 하나만 고치면 전체가 바뀐다.
+ */
+:root {
+  /* 색상 */
+  --color-primary: #006194;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #007bb9;
+  --color-primary-fixed: #cce5ff;
+  --color-primary-fixed-dim: #93ccff;
+
+  --color-secondary: #944a00;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fd933d;
+  --color-on-secondary-container: #693300;
+  --color-secondary-fixed: #ffdcc5;
+  --color-on-secondary-fixed: #301400;
+
+  --color-tertiary: #765700;
+  --color-tertiary-fixed: #ffdf9f;
+  --color-tertiary-fixed-dim: #f9bd22;
+  --color-on-tertiary-fixed: #261a00;
+
+  --color-surface: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #3f4850;
+  --color-outline: #707881;
+
+  /* 간격 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --margin-mobile: 16px;
+
+  /* 모서리 둥글기 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* 그림자 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+
+  /*
+   * 폰트: Plus Jakarta Sans에는 한글 글자가 없다.
+   * 브라우저는 앞 폰트에 없는 글자를 다음 폰트에서 찾으므로,
+   * 영문·숫자는 Plus Jakarta Sans, 한글은 Pretendard로 자연스럽게 섞여 나온다.
+   */
+  --font-base: 'Plus Jakarta Sans', 'Pretendard Variable', Pretendard, -apple-system,
+    'Apple SD Gothic Neo', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: var(--font-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}

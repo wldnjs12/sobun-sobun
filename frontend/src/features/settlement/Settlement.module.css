@@ -1,0 +1,636 @@
+/* 정산(③) 화면들 — 10/11 영수증·금액 확인, 12 정산 결과, 13 비대면 픽업 — 이 같이 쓰는 스타일 */
+
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface);
+}
+
+.mainWithCta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--margin-mobile) 130px; /* 아래: 고정 버튼에 가려지지 않게 */
+}
+
+.primaryIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.tertiaryIcon {
+  color: var(--color-tertiary);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.title {
+  margin: var(--space-xs) 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 34px;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.error {
+  margin: 0;
+  color: #ba1a1a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-lg) var(--margin-mobile);
+  padding: var(--space-lg) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.message p {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.textLink {
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.textButton {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: none;
+  background: none;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ctaDock {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  padding: var(--space-md) var(--margin-mobile) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  background: rgba(248, 249, 255, 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  color: var(--color-on-primary);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-high);
+}
+
+.infoBox p {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── 10 영수증 등록 ── */
+.pickRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.pickButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-lg) var(--space-sm);
+  border: 2px dashed var(--color-primary-fixed-dim);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  font-size: 14px;
+}
+
+.pickButton > span:last-child {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.pickIcon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.pickIconAlt {
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.receiptPreview {
+  position: relative;
+  max-height: 320px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-surface-container);
+  box-shadow: var(--shadow-sm);
+}
+
+.receiptPreview img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain; /* 영수증은 잘리면 안 되니까 cover 대신 contain */
+}
+
+.scanning {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: rgba(0, 97, 148, 0.55);
+  backdrop-filter: blur(2px);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: rgba(255, 223, 159, 0.3);
+}
+
+.tips p {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.tipsTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tipGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.tipGrid span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ── 11 금액 확인 ── */
+.amountCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+}
+
+.amountThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.amountLabel {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.amountInputWrap {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--color-primary-fixed);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.amountInputWrap:focus-within {
+  border-color: var(--color-primary);
+}
+
+.amountInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 32px;
+  font-weight: 800;
+  text-align: right;
+  outline: none;
+}
+
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.breakdownHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.breakdownHead h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.perPersonRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid rgba(191, 199, 210, 0.4);
+}
+
+.perPersonRow > span {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.perPersonRow small {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.perPersonRow > strong {
+  color: var(--color-primary);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.perPersonRow > strong small {
+  display: inline;
+  margin-left: 2px;
+  font-size: 16px;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+.breakdownRow > span:last-child {
+  flex-shrink: 0;
+  color: var(--color-on-surface);
+  font-weight: 600;
+}
+
+.breakdownTotal {
+  padding-top: var(--space-sm);
+  border-top: 1px solid rgba(191, 199, 210, 0.4);
+  color: var(--color-on-surface);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.breakdownTotal > span:last-child {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-outline);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── 12 정산 결과 ── */
+.resultHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--space-md);
+  text-align: center;
+}
+
+.resultCheck {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(0, 97, 148, 0.3);
+  color: var(--color-on-primary);
+}
+
+.resultCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-md);
+  border-radius: 20px;
+  background: linear-gradient(160deg, var(--color-surface-container-lowest), var(--color-surface-container-low));
+  box-shadow: var(--shadow-md);
+}
+
+.resultLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resultAmount {
+  color: var(--color-primary);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 52px;
+  letter-spacing: -0.03em;
+}
+
+.resultAmount small {
+  margin-left: 4px;
+  font-size: 20px;
+}
+
+.resultChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.resultChips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resultItem {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+/* ── 13 비대면 픽업 ── */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lockerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+}
+
+.lockerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lockerRow strong {
+  display: block;
+  font-size: 16px;
+}
+
+.lockerIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary);
+}
+
+.pinBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-md);
+  border: 2px dashed var(--color-primary-fixed-dim);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.pinPending {
+  color: var(--color-primary);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.pinValue {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
+.pinHint {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.pickupSteps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pickupSteps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 13px;
+}
+
+.pickupStepNum {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.labelCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed);
+  font-size: 14px;
+}
+
+.labelCard p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}

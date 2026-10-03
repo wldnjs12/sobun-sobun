@@ -1,0 +1,71 @@
+/* sticky: 스크롤해도 화면 위에 붙어 있고, 반투명 배경 뒤로 내용이 흐릿하게 비친다 */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 64px;
+  padding: 0 var(--margin-mobile);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(248, 249, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+}
+
+.buildingButton {
+  min-height: 44px;
+  margin-left: calc(var(--space-xs) * -1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: none;
+  background: none;
+  color: var(--color-on-surface);
+}
+
+.buildingIcon {
+  color: var(--color-primary);
+}
+
+.buildingName {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.005em;
+}
+
+.chevron {
+  color: var(--color-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-on-surface);
+}
+
+.profile {
+  width: 32px;
+  height: 32px;
+  margin-left: var(--space-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}

@@ -1,0 +1,595 @@
+/* 온보딩 화면 3개(01 시작 · 02 QR · 03/04 위치 확인)가 같이 쓰는 스타일 */
+
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface);
+}
+
+.main,
+.mainWithCta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--margin-mobile) var(--space-lg);
+}
+
+/* 하단에 고정 버튼이 있는 화면은 마지막 내용이 버튼에 가려지지 않게 */
+.mainWithCta {
+  padding-bottom: 150px;
+}
+
+.secondaryIcon {
+  color: var(--color-secondary);
+}
+
+.tertiaryIcon {
+  color: var(--color-tertiary);
+}
+
+.accentText {
+  color: var(--color-primary);
+}
+
+/* ── 01 시작 화면 ── */
+.brandBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--margin-mobile) 0;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg); /* SVG 자체 모서리(rx 64/256 ≈ 25%)와 맞춤 */
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.brandTag {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+}
+
+.pill {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 38px;
+  letter-spacing: -0.02em;
+}
+
+.heroAccent {
+  color: var(--color-primary-container);
+}
+
+.heroBody {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.noContact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.noContact > span {
+  color: var(--color-secondary);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.cardEyebrow {
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.cardBody {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.compareRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.strike {
+  color: var(--color-outline);
+  text-decoration: line-through;
+}
+
+.compareAccent {
+  color: var(--color-primary);
+}
+
+.compareBig {
+  color: var(--color-primary);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.compareBar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+}
+
+.compareBar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.compareBarGray {
+  background: var(--color-outline-variant, #bfc7d2);
+}
+
+.compareBarBlue {
+  background: var(--color-primary-container);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 12px;
+  text-align: center;
+}
+
+.step > span:last-child {
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+}
+
+.stepNum {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.stepNumAccent {
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}
+
+/* ── 하단 고정 버튼 영역 ── */
+.ctaDock {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--margin-mobile) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  background: rgba(248, 249, 255, 0.92);
+  backdrop-filter: blur(16px);
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  color: var(--color-on-primary);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.textLink,
+.textButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: none;
+  background: none;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.textLink {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ── 공용 (주소 검색 · 건물 확인) ── */
+.sectionTitle {
+  margin: 0 0 var(--space-xs);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.sectionBody {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 13px;
+}
+
+.infoBox p {
+  margin: 2px 0 0;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.input {
+  padding: 14px 16px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+.errorText {
+  margin: 0;
+  color: #ba1a1a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+/* ── S1' 주소 검색 ── */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 6px 6px 14px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+/* :focus-within — 안쪽 input에 커서가 있으면 바깥 상자 테두리를 강조 */
+.searchBox:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+.searchIcon {
+  color: var(--color-primary);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.searchButton {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.searchButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stateText {
+  margin: var(--space-md) 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-align: center;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  text-align: center;
+}
+
+.emptyState > span:first-child {
+  color: var(--color-primary-fixed-dim);
+}
+
+.emptyState strong {
+  color: var(--color-on-surface);
+  font-size: 15px;
+}
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resultItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-on-surface);
+  text-align: left;
+}
+
+.resultIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.resultText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
+.resultText span {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+/* ── S1'' 건물 확인 · 동 선택 ── */
+.confirmCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.confirmIcon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.confirmTitle {
+  margin: var(--space-xs) 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 30px;
+}
+
+.confirmAddress {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+.dongSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.dongSection h3 {
+  margin: 0;
+}
+
+.dongGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+
+.dongChip {
+  padding: 12px 4px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dongChipActive {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-sm);
+}
