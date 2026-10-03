@@ -481,82 +481,14 @@
   list-style: none;
 }
 
-.resultItem {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  border: none;
-  border-radius: 16px;
-  background: var(--color-surface-container-lowest);
-  box-shadow: var(--shadow-sm);
-  color: var(--color-on-surface);
-  text-align: left;
-}
 
-.resultIcon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-high);
-  color: var(--color-primary);
-}
 
-.resultText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 15px;
-}
 
-.resultText span {
-  color: var(--color-on-surface-variant);
-  font-size: 12px;
-}
 
 /* ── S1'' 건물 확인 · 동 선택 ── */
-.confirmCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg) var(--space-md);
-  border-radius: 20px;
-  background: var(--color-surface-container-lowest);
-  box-shadow: var(--shadow-md);
-  text-align: center;
-}
 
-.confirmIcon {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-}
 
-.confirmTitle {
-  margin: var(--space-xs) 0 0;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 30px;
-}
 
-.confirmAddress {
-  margin: 0;
-  color: var(--color-on-surface-variant);
-  font-size: 13px;
-}
 
 .dongSection {
   display: flex;
@@ -568,9 +500,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-.dongSection h3 {
-  margin: 0;
-}
 
 .dongGrid {
   display: grid;
@@ -579,17 +508,426 @@
 }
 
 .dongChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   padding: 12px 4px;
   border: none;
   border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+}
+
+.dongChip small {
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .dongChipActive {
   background: var(--color-primary);
   color: var(--color-on-primary);
   box-shadow: var(--shadow-sm);
+}
+
+/* ── Stitch s1_2 주소 검색 (개편 디자인) ── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--margin-mobile) 0;
+}
+
+.roundButton,
+.roundButtonSmall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+
+.roundButton {
+  width: 44px;
+  height: 44px;
+}
+
+.roundButtonSmall {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+}
+
+.regionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.matchBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.searchTitle {
+  margin: var(--space-sm) 0 var(--space-xs);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+}
+
+.clearButton {
+  display: flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--color-outline);
+}
+
+.quickChips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.quickChip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.resultCount {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+}
+
+.resultCount strong {
+  color: var(--color-primary);
+}
+
+.resultCard {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px var(--space-md);
+  border: none;
+  border-radius: 20px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-on-surface);
+  text-align: left;
+}
+
+.resultBadges {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.typeBadge,
+.typeBadgeApt,
+.typeBadgeSub {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.typeBadge {
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.typeBadgeApt {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.typeBadgeSub {
+  background: var(--color-surface-container);
+  color: var(--color-on-surface-variant);
+}
+
+.resultName {
+  padding-right: 48px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.resultAddress {
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+}
+
+.resultArrow {
+  position: absolute;
+  top: 18px;
+  right: var(--space-md);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.safeInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
+  font-size: 13px;
+}
+
+.safeInfo strong {
+  font-size: 16px;
+}
+
+.safeInfo p {
+  margin: 4px 0 8px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.safeIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+}
+
+.safeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Stitch s1_1 건물 확인 (개편 디자인) ── */
+.stepBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--margin-mobile) 0;
+}
+
+.stepDots {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.stepDot,
+.stepDotOn {
+  width: 28px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+}
+
+.stepDotOn {
+  background: var(--color-primary);
+}
+
+.stepLabel {
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.heroCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 24px;
+  background: linear-gradient(160deg, var(--color-surface-container-lowest) 60%, var(--color-surface-container-low));
+  box-shadow: var(--shadow-md);
+}
+
+/* 건물 사진 대신 쓰는 일러스트 영역 (주소 API가 사진을 주지 않음) */
+.heroImage {
+  position: relative;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-primary-fixed), var(--color-secondary-fixed));
+}
+
+.heroBuildingIcon {
+  color: rgba(0, 75, 115, 0.55);
+}
+
+.heroChip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.heroRadius {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.heroCardTitle {
+  margin: var(--space-xs) 0 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 38px;
+  letter-spacing: -0.02em;
+}
+
+.heroAddress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+}
+
+.dongHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dongHead h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.required {
+  color: var(--color-secondary);
+  font-size: 14px;
+}
+
+.lockNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.promiseSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
+}
+
+.promiseTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  color: var(--color-on-surface);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.promiseTitle > span {
+  color: var(--color-primary);
+}
+
+.promiseItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  cursor: pointer;
+}
+
+.promiseItem input {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.promiseItem span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.promiseItem strong {
+  color: var(--color-on-surface);
+  font-size: 15px;
+}
+
+.ctaNote {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
 }
