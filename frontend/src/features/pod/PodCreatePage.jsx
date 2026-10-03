@@ -4,6 +4,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { BUILDING, createPod } from './podApi.js'
 import { calcPerPersonPrice } from './podUtils.js'
+import useLocationCheck from '../onboarding/useLocationCheck.jsx'
 import styles from './PodCreatePage.module.css'
 
 const MIN_MEMBERS = 2
@@ -45,12 +46,12 @@ function resolveDeadline(key, customValue) {
  */
 export default function PodCreatePage() {
   const navigate = useNavigate()
-  // 최저가 조회(④)에서 "이 상품으로 팟 만들기"로 넘어오면 상품명·가격이 state에 담겨 온다
-  const fromProduct = useLocation().state
+  // ⑤ 커뮤니티 "공구 제안" 글의 [이 품목으로 팟 열기]로 넘어오면 state에 { title, totalAmount? }가 담겨 온다
+  const fromSuggestion = useLocation().state
 
-  const [title, setTitle] = useState(fromProduct?.title ?? '')
+  const [title, setTitle] = useState(fromSuggestion?.title ?? '')
   const [memberCount, setMemberCount] = useState(4)
-  const [totalAmount, setTotalAmount] = useState(fromProduct?.totalAmount ? String(fromProduct.totalAmount) : '')
+  const [totalAmount, setTotalAmount] = useState(fromSuggestion?.totalAmount ? String(fromSuggestion.totalAmount) : '')
   const [originalPrice, setOriginalPrice] = useState('')
   const [commissionRate, setCommissionRate] = useState(0.05)
   const [deadlineKey, setDeadlineKey] = useState('tomorrowNoon')
@@ -76,9 +77,16 @@ export default function PodCreatePage() {
           ? '안심 비대면 약속에 동의해주세요'
           : null
 
-  const handleSubmit = async (e) => {
+  // ① 2차 인증: 팟을 열기 직전에 "지금 등록한 건물 근처에 있는지" GPS로 확인 (실패하면 바텀시트)
+  const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
+
+  const handleSubmit = (e) => {
     e.preventDefault() // form 기본 동작(페이지 새로고침)을 막는다
     if (problem) return
+    runWithLocationCheck('POD_CREATE', submitPod)
+  }
+
+  const submitPod = async () => {
     setSubmitting(true)
     setError(null)
     try {
@@ -108,10 +116,10 @@ export default function PodCreatePage() {
             <Icon name="eco" size={20} filled />
           </span>
           <div className={styles.tipText}>
-            <span className={styles.tipLabel}>{fromProduct ? '최저가 조회에서 가져왔어요' : '스마트 소분 팁'}</span>
+            <span className={styles.tipLabel}>{fromSuggestion ? '커뮤니티 제안에서 가져왔어요' : '스마트 소분 팁'}</span>
             <p>
-              {fromProduct
-                ? '상품명과 가격이 채워져 있어요. 실제 구매 금액에 맞게 고쳐도 돼요.'
+              {fromSuggestion
+                ? '제안 글의 품목이 채워져 있어요. 총액은 실제 구매 금액으로 입력해주세요.'
                 : '혼자 사긴 많은 대용량 묶음, 이웃과 똑똑하게 나눠요'}
             </p>
           </div>
@@ -189,7 +197,7 @@ export default function PodCreatePage() {
                 type="number"
                 inputMode="numeric"
                 min="0"
-                step="100"
+                step="1" /* 100원 단위로 막으면 21,990원 같은 실제 가격을 브라우저가 거절한다 */
                 placeholder="0"
                 className={`${styles.input} ${styles.amountInput}`}
                 value={totalAmount}
@@ -212,7 +220,7 @@ export default function PodCreatePage() {
                 type="number"
                 inputMode="numeric"
                 min="0"
-                step="100"
+                step="1"
                 placeholder="예: 일반 마트 소량 구매가"
                 className={`${styles.input} ${styles.amountInput}`}
                 value={originalPrice}
@@ -326,12 +334,14 @@ export default function PodCreatePage() {
 
         <div className={styles.dock}>
           {(problem || error) && <p className={styles.dockHint}>{error ?? problem}</p>}
-          <button type="submit" className={styles.submitButton} disabled={Boolean(problem) || submitting}>
-            <Icon name="bolt" size={24} />
-            {submitting ? '팟 만드는 중…' : `팟 만들기 (${memberCount}명 모집)`}
+          <button type="submit" className={styles.submitButton} disabled={Boolean(problem) || submitting || checking}>
+            <Icon name={checking ? 'my_location' : 'bolt'} size={24} />
+            {checking ? '위치를 확인하고 있어요…' : submitting ? '팟 만드는 중…' : `팟 만들기 (${memberCount}명 모집)`}
           </button>
+          {checking && <p className={styles.dockHint}>건물 안에 있는 이웃인지 확인하는 용도예요</p>}
         </div>
       </form>
+      {locationSheet}
     </div>
   )
 }

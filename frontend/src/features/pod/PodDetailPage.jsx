@@ -4,6 +4,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
 import JoinConfirmSheet from './JoinConfirmSheet.jsx'
+import useLocationCheck from '../onboarding/useLocationCheck.jsx'
 import { closePod, fetchPod, joinPod } from './podApi.js'
 import { getMyUserId, hasJoined } from '../../api/currentUser.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
@@ -58,6 +59,8 @@ export default function PodDetailPage() {
   }, [podId])
 
   const remainingText = useRemainingTime(pod?.deadline)
+  // ① 2차 인증: 참여를 확정하기 직전에 GPS 확인 (훅이라서 아래의 early return보다 먼저 불러야 한다)
+  const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
 
   if (error) return <Fallback message={error} />
   if (!pod) return <Fallback message="팟 정보를 불러오는 중이에요…" />
@@ -75,7 +78,9 @@ export default function PodDetailPage() {
   const discountRate = calcDiscountRate(myPrice, pod.originalPrice)
   const progressPercent = (pod.participantCount / pod.targetParticipantCount) * 100
 
-  const handleConfirmJoin = async () => {
+  const handleConfirmJoin = () => runWithLocationCheck('POD_JOIN', joinNow)
+
+  const joinNow = async () => {
     setJoining(true)
     setJoinError(null)
     myJoinPending.current = true
@@ -305,6 +310,7 @@ export default function PodDetailPage() {
           pod={pod}
           pricePerPerson={myPrice}
           joining={joining}
+          checking={checking}
           error={joinError}
           onConfirm={handleConfirmJoin}
           onClose={() => {
@@ -313,6 +319,7 @@ export default function PodDetailPage() {
           }}
         />
       )}
+      {locationSheet}
     </div>
   )
 }
