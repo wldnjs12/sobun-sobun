@@ -12,7 +12,9 @@ import PickupPage from './features/settlement/PickupPage.jsx'
 import ProductListPage from './features/products/ProductListPage.jsx'
 import MyPage from './features/mypage/MyPage.jsx'
 import MyPodsPage from './features/mypage/MyPodsPage.jsx'
-import ComingSoonPage from './components/ComingSoonPage.jsx'
+import CommunityListPage from './features/community/CommunityListPage.jsx'
+import CommunityDetailPage from './features/community/CommunityDetailPage.jsx'
+import CommunityWritePage from './features/community/CommunityWritePage.jsx'
 import { isVerified } from './api/currentUser.js'
 
 /**
@@ -54,19 +56,10 @@ export default function App() {
         <Route path="/mypage" element={<RequireBuilding><MyPage /></RequireBuilding>} />
         <Route path="/my-pods" element={<RequireBuilding><MyPodsPage /></RequireBuilding>} />
 
-        {/* ⑤ 커뮤니티 — 김민준 담당. 화면이 생기면 ComingSoonPage를 그 화면으로 교체 */}
-        <Route
-          path="/community"
-          element={
-            <RequireBuilding>
-              <ComingSoonPage
-                icon="forum"
-                title="우리 건물 커뮤니티"
-                description="같은 건물 이웃끼리 익명으로 공구를 제안하고 이야기하는 공간이에요."
-              />
-            </RequireBuilding>
-          }
-        />
+        {/* ⑤ 커뮤니티: 목록(S16) · 상세(S17) · 글쓰기(S18). 들어올 때 GPS 확인(COMMUNITY_ENTER) */}
+        <Route path="/community" element={<RequireBuilding><CommunityListPage /></RequireBuilding>} />
+        <Route path="/community/posts/:postId" element={<RequireBuilding><CommunityDetailPage /></RequireBuilding>} />
+        <Route path="/community/write" element={<RequireBuilding><CommunityWritePage /></RequireBuilding>} />
 
         {/* 없는 주소로 오면 시작 화면으로 */}
         <Route path="*" element={<Navigate to="/" replace />} />
