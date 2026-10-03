@@ -1,6 +1,7 @@
 package com.ppuri.sobunsobun.pod.service;
 
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
 import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
@@ -24,6 +25,7 @@ public class PodService {
     private final PodRepository podRepository;
     private final PodParticipantRepository podParticipantRepository;
     private final BuildingRepository buildingRepository;
+    private final BuildingAccessService buildingAccessService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
@@ -31,6 +33,7 @@ public class PodService {
         if (!buildingRepository.existsById(request.buildingId())) {
             throw new IllegalArgumentException("존재하지 않는 건물입니다: " + request.buildingId());
         }
+        buildingAccessService.requireMembership(request.hostUserId(), request.buildingId());
         Pod pod = Pod.builder()
                 .buildingId(request.buildingId())
                 .hostUserId(request.hostUserId())
@@ -47,6 +50,7 @@ public class PodService {
     @Transactional
     public PodResponse join(Long podId, Long userId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         if (podParticipantRepository.existsByPodIdAndUserId(podId, userId)) {
             throw new IllegalStateException("이미 참여한 팟입니다.");
         }
@@ -59,6 +63,7 @@ public class PodService {
     @Transactional
     public PodResponse cancelJoin(Long podId, Long userId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         if (!podParticipantRepository.existsByPodIdAndUserId(podId, userId)) {
             throw new IllegalStateException("참여하지 않은 팟입니다.");
         }
@@ -71,19 +76,23 @@ public class PodService {
     @Transactional
     public PodResponse close(Long podId, Long hostUserId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         pod.close(hostUserId);
         broadcast(pod);
         return PodResponse.from(pod);
     }
 
     @Transactional(readOnly = true)
-    public PodResponse getDetail(Long podId) {
-        return PodResponse.from(getPod(podId));
+    public PodResponse getDetail(Long podId, Long userId) {
+        Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
+        return PodResponse.from(pod);
     }
 
-    /** 건물 홈 화면(S4)용 — 진행중(미마감)인 팟만 최신순으로. */
+    /** 건물 홈 화면(S4)용 — 진행중(미마감)인 팟만 최신순으로. userId는 그 건물 소속인지 확인용. */
     @Transactional(readOnly = true)
-    public List<PodResponse> list(Long buildingId) {
+    public List<PodResponse> list(Long buildingId, Long userId) {
+        buildingAccessService.requireMembership(userId, buildingId);
         return podRepository.findByBuildingIdAndClosedFalseOrderByIdDesc(buildingId).stream()
                 .map(PodResponse::from)
                 .toList();
@@ -93,6 +102,7 @@ public class PodService {
     @Transactional(readOnly = true)
     public MyParticipationResponse getMyParticipation(Long podId, Long userId) {
         Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         return podParticipantRepository.findByPodIdAndUserId(podId, userId)
                 .map(participant -> MyParticipationResponse.from(pod, participant))
                 .orElseGet(MyParticipationResponse::notJoined);
@@ -102,6 +112,7 @@ public class PodService {
     @Transactional(readOnly = true)
     public List<ParticipantStatusResponse> listParticipants(Long podId, Long hostUserId) {
         Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         if (!pod.getHostUserId().equals(hostUserId)) {
             throw new IllegalStateException("대표만 참여자 현황을 볼 수 있습니다.");
         }
@@ -112,16 +123,20 @@ public class PodService {
 
     @Transactional
     public MyParticipationResponse markPaid(Long podId, Long userId) {
+        Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         PodParticipant participant = getMyParticipant(podId, userId);
         participant.markPaid();
-        return MyParticipationResponse.from(getPod(podId), participant);
+        return MyParticipationResponse.from(pod, participant);
     }
 
     @Transactional
     public MyParticipationResponse markPickedUp(Long podId, Long userId) {
+        Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         PodParticipant participant = getMyParticipant(podId, userId);
         participant.markPickedUp();
-        return MyParticipationResponse.from(getPod(podId), participant);
+        return MyParticipationResponse.from(pod, participant);
     }
 
     private PodParticipant getMyParticipant(Long podId, Long userId) {
