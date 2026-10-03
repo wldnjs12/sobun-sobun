@@ -17,7 +17,8 @@ public record PodResponse(
         BigDecimal commissionRate,
         BigDecimal perPersonAmount,
         LocalDateTime deadline,
-        Boolean closed
+        Boolean closed,
+        BigDecimal originalPrice
 ) {
     public static PodResponse from(Pod pod) {
         return new PodResponse(
@@ -31,7 +32,8 @@ public record PodResponse(
                 pod.getCommissionRate(),
                 pod.calculatePerPersonAmount(),
                 pod.getDeadline(),
-                pod.getClosed()
+                pod.getClosed(),
+                pod.getOriginalPrice()
         );
     }
 }

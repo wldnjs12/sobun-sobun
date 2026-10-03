@@ -573,6 +573,13 @@
   font-weight: 800;
 }
 
+.pinValue {
+  color: var(--color-primary);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
 .pinHint {
   color: var(--color-on-surface-variant);
   font-size: 12px;

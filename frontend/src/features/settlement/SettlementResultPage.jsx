@@ -3,22 +3,46 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { fetchPod } from '../pod/podApi.js'
-import { getSavedSettlement } from './settlementApi.js'
+import { calcDiscountRate } from '../pod/podUtils.js'
+import { fetchSettlement, getSavedSettlement } from './settlementApi.js'
 import styles from './Settlement.module.css'
 
 /**
  * 정산 결과 (S11 · Stitch 12번).
- * 정산 결과를 다시 조회하는 API가 아직 없어서, 확정 직후 넘겨받은 값(state) → 이 브라우저에 저장한 값 순으로 쓴다.
+ * 확정 직후엔 넘겨받은 값(state)을 바로 쓰고, 그 외(참여자, 새로고침, 다른 기기)엔
+ * 서버에서 다시 받아온다(GET /settlements/{podId} — 백엔드에 새로 추가됨).
+ * 서버 요청이 실패할 때만(오프라인 등) 이 브라우저에 저장된 값을 마지막으로 시도한다.
  */
 export default function SettlementResultPage() {
   const { podId } = useParams()
   const navigate = useNavigate()
-  const settlement = useLocation().state?.settlement ?? getSavedSettlement(podId)
+  const stateSettlement = useLocation().state?.settlement
+  const [settlement, setSettlement] = useState(stateSettlement ?? null)
+  const [loaded, setLoaded] = useState(Boolean(stateSettlement))
   const [pod, setPod] = useState(null)
 
   useEffect(() => {
     fetchPod(podId).then(setPod).catch(() => {})
   }, [podId])
+
+  useEffect(() => {
+    if (stateSettlement) return
+    fetchSettlement(podId).then((fetched) => {
+      setSettlement(fetched ?? getSavedSettlement(podId))
+      setLoaded(true)
+    })
+  }, [podId, stateSettlement])
+
+  if (!loaded) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="정산 결과" />
+        <div className={styles.message}>
+          <p>정산 결과를 불러오는 중이에요…</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!settlement) {
     return (
@@ -69,6 +93,16 @@ export default function SettlementResultPage() {
           </div>
           {pod && <p className={styles.resultItem}>소분 품목 · {pod.title}</p>}
         </section>
+
+        {pod?.originalPrice && (
+          <section className={styles.breakdown}>
+            <p className={styles.resultItem}>
+              🎉 이번 팟에서 {(pod.originalPrice - perPersonAmount).toLocaleString()}원 아꼈어요! (혼자 샀을 때{' '}
+              {pod.originalPrice.toLocaleString()}원 → {perPersonAmount.toLocaleString()}원, 약{' '}
+              {calcDiscountRate(perPersonAmount, pod.originalPrice)}% 절약)
+            </p>
+          </section>
+        )}
 
         <section className={styles.breakdown}>
           <div className={styles.breakdownHead}>

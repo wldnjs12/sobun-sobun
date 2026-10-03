@@ -6,7 +6,10 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/** 팟 마감 후 확정되는 정산 결과. 영수증 OCR로 원가를 확인해 수고비 정률을 적용한다. */
+/**
+ * 팟 마감 후 확정되는 정산 결과. 영수증 OCR로 원가를 확인해 수고비 정률을 적용한다.
+ * hostPaymentLink 필드는 지원이 ③ 정산 결과 화면(12번) 구현 중 추가함 — 문소원님 확인 부탁드려요.
+ */
 @Entity
 @Getter
 @NoArgsConstructor
@@ -28,14 +31,21 @@ public class Settlement {
     /** 1인당 송금액. 정산 결과 화면에서 바로 쓰고, 계산 당시 반올림 결과를 그대로 보존한다. */
     private BigDecimal perPersonAmount;
 
+    /**
+     * 대표가 직접 입력한 개인 송금 링크(카카오페이 "받을 링크" 등) 또는 계좌번호 텍스트. 선택값.
+     * 실제 결제 API 연동이 아니라 대표가 본인 앱에서 만든 링크를 그대로 붙여넣는 방식.
+     */
+    private String hostPaymentLink;
+
     public Settlement(Long podId, BigDecimal recognizedCost, BigDecimal commissionRate, BigDecimal finalAmount,
-                      Integer participantCount, BigDecimal perPersonAmount) {
+                      Integer participantCount, BigDecimal perPersonAmount, String hostPaymentLink) {
         this.podId = podId;
         this.recognizedCost = recognizedCost;
         this.commissionRate = commissionRate;
         this.finalAmount = finalAmount;
         this.participantCount = participantCount;
         this.perPersonAmount = perPersonAmount;
+        this.hostPaymentLink = hostPaymentLink;
         this.confirmed = true;
     }
 }

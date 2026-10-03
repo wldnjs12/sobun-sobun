@@ -35,6 +35,12 @@ public class SettlementController {
         return ApiResponse.ok(settlementService.confirm(podId, request));
     }
 
+    /** 정산 결과 화면(12번) 재조회용 — 지원이 추가(참여자/대표가 새로고침해도 결과를 다시 받을 수 있어야 해서). */
+    @GetMapping("/{podId}")
+    public ApiResponse<SettlementResponse> getByPodId(@PathVariable Long podId) {
+        return ApiResponse.ok(settlementService.getByPodId(podId));
+    }
+
     /** 잘못된 파일/입력, 확정할 수 없는 팟 → 400 + { success: false, message } */
     @ExceptionHandler(SettlementException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
