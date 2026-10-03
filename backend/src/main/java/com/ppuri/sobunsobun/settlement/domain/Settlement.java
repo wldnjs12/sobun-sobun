@@ -48,4 +48,10 @@ public class Settlement {
         this.hostPaymentLink = hostPaymentLink;
         this.confirmed = true;
     }
+
+    /** hostPaymentLink 없이 만드는 기존 호출 호환용. */
+    public Settlement(Long podId, BigDecimal recognizedCost, BigDecimal commissionRate, BigDecimal finalAmount,
+                      Integer participantCount, BigDecimal perPersonAmount) {
+        this(podId, recognizedCost, commissionRate, finalAmount, participantCount, perPersonAmount, null);
+    }
 }

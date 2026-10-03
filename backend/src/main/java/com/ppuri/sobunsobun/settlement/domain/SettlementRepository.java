@@ -8,6 +8,6 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
     boolean existsByPodIdAndConfirmedTrue(Long podId);
 
-    /** 정산 결과 화면(12번) 재조회용 — 지원이 추가. */
-    Optional<Settlement> findByPodIdAndConfirmedTrue(Long podId);
+    /** pod_id 유니크 제약이 없어 동시 확정으로 행이 2개 생길 수 있으므로, 단건 조회 대신 가장 최근 것 하나를 고른다 */
+    Optional<Settlement> findFirstByPodIdAndConfirmedTrueOrderByIdDesc(Long podId);
 }
