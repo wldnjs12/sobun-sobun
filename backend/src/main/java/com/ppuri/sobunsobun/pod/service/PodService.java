@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.pod.service;
 
-import com.ppuri.sobunsobun.auth.repository.BuildingRepository;
+import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
 import com.ppuri.sobunsobun.pod.dto.PodAmountUpdateEvent;

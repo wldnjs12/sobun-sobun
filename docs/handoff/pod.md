@@ -32,8 +32,8 @@ _최종 갱신: 2026-09-29 · 브랜치: feature/pod-realtime_
 **⚠️ 의도적으로 단순화/확장한 부분**
 - `hostUserId`를 `Pod`에 추가했습니다 (ERD·API_SPEC.md 원본엔 없음). "대표만 마감 가능"을 구현하려면 대표를 식별할 값이 필요한데 기획 문서에 빠져있어서 추가한 것 — `docs/API_SPEC.md`도 이번에 실제 계약대로 갱신함.
 - ①(로그인/세션)이 아직 없어서 `join`/`cancelJoin`/`close`에 `userId`/`hostUserId`를 쿼리 파라미터로 직접 받습니다. 세션이 붙으면 세션에서 꺼내도록 교체 필요 — `PodController`에 TODO 주석 남김.
-- `PodRepository`/`PodParticipantRepository`를 `pod.repository` 패키지로 분리했습니다. 루트 `CLAUDE.md`엔 `controller/service/domain/dto`만 명시돼 있어서 `/spec-check` 때 이 부분을 짚었고, 팀 확인 결과 **`repository`는 계속 별도 패키지로 유지하기로 결정** (Spring 프로젝트에서 흔한 레이어라 CLAUDE.md 목록은 예시로 취급). 2차 작업에서 같은 판단으로 `auth/repository/BuildingRepository`도 동일하게 별도 패키지로 추가함.
-- `auth/repository/BuildingRepository.java`는 문소원님 담당 영역인 `auth` 패키지에 지원이 추가한 파일입니다 — 팟 생성 시 `buildingId` 존재 검증에만 씀 (`existsById` 상속 외 커스텀 메서드 없음). auth 작업 시작하시면 충돌 여부 확인 부탁드려요.
+- `PodRepository`/`PodParticipantRepository`를 `pod.repository` 패키지로 분리했습니다. 루트 `CLAUDE.md`엔 `controller/service/domain/dto`만 명시돼 있어서 `/spec-check` 때 이 부분을 짚었고, 팀 확인 결과 **`repository`는 계속 별도 패키지로 유지하기로 결정** (Spring 프로젝트에서 흔한 레이어라 CLAUDE.md 목록은 예시로 취급).
+- ~~`auth/repository/BuildingRepository.java`를 임시로 추가~~ → **(2026-10-03, develop 머지 시 정리됨)** ①(qr-auth) PR이 `auth.domain.BuildingRepository`(`findByQrToken` 포함)를 이미 만들어놔서 중복이었음. 제 임시 버전은 삭제하고 `PodService`가 `auth.domain.BuildingRepository`를 쓰도록 교체함.
 
 **❌ 남은 것 (다음 작업자가 확인)**
 - 없음. `/spec-check`에서 나온 항목은 모두 위 ⚠️로 정리·해소됨.
