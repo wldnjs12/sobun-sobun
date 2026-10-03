@@ -11,6 +11,8 @@ import SettlementResultPage from './features/settlement/SettlementResultPage.jsx
 import PickupPage from './features/settlement/PickupPage.jsx'
 import ProductListPage from './features/products/ProductListPage.jsx'
 import MyPage from './features/mypage/MyPage.jsx'
+import MyPodsPage from './features/mypage/MyPodsPage.jsx'
+import ComingSoonPage from './components/ComingSoonPage.jsx'
 import { isVerified } from './api/currentUser.js'
 
 /**
@@ -50,6 +52,21 @@ export default function App() {
         {/* ④ 최저가 (14) · 마이페이지 (15) */}
         <Route path="/products" element={<RequireBuilding><ProductListPage /></RequireBuilding>} />
         <Route path="/mypage" element={<RequireBuilding><MyPage /></RequireBuilding>} />
+        <Route path="/my-pods" element={<RequireBuilding><MyPodsPage /></RequireBuilding>} />
+
+        {/* ⑤ 커뮤니티 — 김민준 담당. 화면이 생기면 ComingSoonPage를 그 화면으로 교체 */}
+        <Route
+          path="/community"
+          element={
+            <RequireBuilding>
+              <ComingSoonPage
+                icon="forum"
+                title="우리 건물 커뮤니티"
+                description="같은 건물 이웃끼리 익명으로 공구를 제안하고 이야기하는 공간이에요."
+              />
+            </RequireBuilding>
+          }
+        />
 
         {/* 없는 주소로 오면 시작 화면으로 */}
         <Route path="*" element={<Navigate to="/" replace />} />
