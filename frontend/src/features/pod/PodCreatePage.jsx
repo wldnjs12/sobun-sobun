@@ -51,6 +51,7 @@ export default function PodCreatePage() {
   const [title, setTitle] = useState(fromProduct?.title ?? '')
   const [memberCount, setMemberCount] = useState(4)
   const [totalAmount, setTotalAmount] = useState(fromProduct?.totalAmount ? String(fromProduct.totalAmount) : '')
+  const [originalPrice, setOriginalPrice] = useState('')
   const [commissionRate, setCommissionRate] = useState(0.05)
   const [deadlineKey, setDeadlineKey] = useState('tomorrowNoon')
   const [customDeadline, setCustomDeadline] = useState('')
@@ -84,6 +85,7 @@ export default function PodCreatePage() {
       const pod = await createPod({
         title: title.trim(),
         totalAmount: total,
+        originalPrice: Number(originalPrice) > 0 ? Number(originalPrice) : null,
         targetParticipantCount: memberCount,
         commissionRate,
         deadline,
@@ -192,6 +194,29 @@ export default function PodCreatePage() {
                 className={`${styles.input} ${styles.amountInput}`}
                 value={totalAmount}
                 onChange={(e) => setTotalAmount(e.target.value)}
+              />
+              <span className={styles.amountUnit}>원</span>
+            </div>
+          </div>
+
+          <div>
+            <div className={styles.fieldRow}>
+              <label htmlFor="pod-original-price" className={styles.fieldLabel}>
+                혼자 샀을 때 가격 (선택)
+              </label>
+              <span className={styles.fieldHint}>정산 결과에서 절약액을 보여줄 때 씀</span>
+            </div>
+            <div className={styles.inputWrap}>
+              <input
+                id="pod-original-price"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="100"
+                placeholder="예: 일반 마트 소량 구매가"
+                className={`${styles.input} ${styles.amountInput}`}
+                value={originalPrice}
+                onChange={(e) => setOriginalPrice(e.target.value)}
               />
               <span className={styles.amountUnit}>원</span>
             </div>

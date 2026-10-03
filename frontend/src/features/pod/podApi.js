@@ -21,11 +21,12 @@ function toPod(raw) {
     totalAmount: Number(raw.totalAmount),
     commissionRate: Number(raw.commissionRate),
     perPersonAmount: Number(raw.perPersonAmount),
-    // ↓ API에 없는 화면용 필드 (백엔드와 협의 필요)
+    // originalPrice는 백엔드에 실제로 추가됐음(팟 생성 시 선택 입력) — 있으면 숫자로, 없으면(null) 절약액 카드를 안 보여줌
+    originalPrice: raw.originalPrice != null ? Number(raw.originalPrice) : null,
+    // ↓ 여전히 API에 없는 화면용 필드
     imageUrl: null,
     unitLabel: `1/${raw.targetParticipantCount} 소분`,
     pickupSpot: DEFAULT_PICKUP_SPOT,
-    originalPrice: null,
     category: null,
   }
 }
@@ -79,15 +80,29 @@ export async function closePod(podId) {
  * 서버는 팟을 참여자 0명으로 만들기 때문에, "나누어 살 인원(본인 포함)"에 맞추려면
  * 만든 직후 팟장 본인을 참여시켜야 한다.
  */
-export async function createPod({ title, totalAmount, targetParticipantCount, commissionRate, deadline }) {
+export async function createPod({ title, totalAmount, originalPrice, targetParticipantCount, commissionRate, deadline }) {
   const created = await api.post('/pods', {
     buildingId: BUILDING.id,
     hostUserId: getMyUserId(),
     title,
     totalAmount,
+    originalPrice,
     targetParticipantCount,
     commissionRate,
     deadline: toLocalDateTime(deadline),
   })
   return joinPod(created.id)
+}
+
+/**
+ * 내 참여/송금/수령 상태 + 비대면 픽업 PIN. 참여 안 했으면 PIN 없이 joined:false.
+ * pickupPin은 비참여자에게 노출되면 안 돼서(락커 보안) 일반 팟 조회(fetchPod)엔 없고 여기에만 있다.
+ */
+export async function fetchMyParticipation(podId) {
+  return api.get(`/pods/${podId}/me?userId=${getMyUserId()}`)
+}
+
+/** "수령 완료" 자가 신고 — 비대면 픽업 화면에서 쓴다. */
+export async function markPickedUp(podId) {
+  return api.post(`/pods/${podId}/picked-up?userId=${getMyUserId()}`)
 }
