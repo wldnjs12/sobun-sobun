@@ -41,14 +41,9 @@
 }
 
 .logo {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg); /* SVG 자체 모서리(rx 64/256 ≈ 25%)와 맞춤 */
 }
 
 .brandName {

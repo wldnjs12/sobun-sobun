@@ -112,6 +112,8 @@ Stitch 디자인(`stitch_new_starter_project/`) 16개 화면을 모두 구현하
 | 14 | 최저가 조회 | `/products` | `features/products/ProductListPage.jsx` |
 | 15 | 마이페이지 | `/mypage` | `features/mypage/MyPage.jsx` |
 
+**앱 로고**: `frontend/public/logo.svg` (4칸 소분 큐브). 시작 화면(01) 왼쪽 위 + 브라우저 탭 아이콘(`index.html` favicon)에 사용. 16px 탭 아이콘에서는 여백 때문에 작게 보여서, 필요하면 여백 줄인 전용 버전을 따로 만들 것.
+
 **같이 고친 버그**
 - 실시간 갱신이 처음부터 연결 안 됨: 백엔드 `/ws-sobun`이 SockJS라 순수 WebSocket은 `/ws-sobun/websocket`으로 붙어야 함 (`api/socket.js`)
 - 1인당 금액이 1원 더 나옴: `총액 × 1.05` 부동소수점 오차 → 정수 %로 계산하도록 수정, 백엔드 식과 142만여 조합 차이 0건 확인 (`podUtils.js`)

@@ -26,14 +26,14 @@ public class PodController {
     }
 
     @GetMapping("/{podId}")
-    public ApiResponse<PodResponse> getDetail(@PathVariable Long podId) {
-        return ApiResponse.ok(podService.getDetail(podId));
+    public ApiResponse<PodResponse> getDetail(@PathVariable Long podId, @RequestParam Long userId) {
+        return ApiResponse.ok(podService.getDetail(podId, userId));
     }
 
-    /** 건물 홈 화면(S4)용 — 진행중인 팟 목록. */
+    /** 건물 홈 화면(S4)용 — 진행중인 팟 목록. userId는 그 건물 소속인지 확인용(다른 건물 목록을 buildingId로 직접 조회 방지). */
     @GetMapping
-    public ApiResponse<List<PodResponse>> list(@RequestParam Long buildingId) {
-        return ApiResponse.ok(podService.list(buildingId));
+    public ApiResponse<List<PodResponse>> list(@RequestParam Long buildingId, @RequestParam Long userId) {
+        return ApiResponse.ok(podService.list(buildingId, userId));
     }
 
     // TODO(①온보딩 연동 전 임시): 실제 로그인 세션이 생기면 userId는 세션에서 꺼내도록 교체

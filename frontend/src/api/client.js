@@ -1,4 +1,6 @@
-const BASE_URL = '/api'
+// 로컬 개발: vite.config.js가 /api를 8080으로 프록시하므로 상대경로로 충분하다.
+// 배포(Vercel): 프론트와 백엔드가 다른 도메인이라 VITE_API_BASE_URL(백엔드 Railway 주소)을 origin으로 붙인다.
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api`
 
 /**
  * 모든 API 응답이 { success, data, message, code? } 형태(백엔드 ApiResponse)라고 가정하고

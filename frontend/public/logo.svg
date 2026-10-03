@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" fill="none">
+  <!-- Outer App Icon Container / Squircle -->
+  <rect width="256" height="256" rx="64" fill="#F0F9FF"/>
+  <rect x="2" y="2" width="252" height="252" rx="62" stroke="#BAE6FD" stroke-width="4"/>
+
+  <!-- 4-Split Portions (소분 큐브 심볼 마크) -->
+  <!-- Top Left: Primary Sky Blue -->
+  <rect x="52" y="52" width="68" height="68" rx="20" fill="#0284C7"/>
+  <!-- Top Right: Light Vivid Sky Blue -->
+  <rect x="136" y="52" width="68" height="68" rx="20" fill="#38BDF8"/>
+  <!-- Bottom Left: Warm Butter Apricot -->
+  <rect x="52" y="136" width="68" height="68" rx="20" fill="#FB923C"/>
+  <!-- Bottom Right: Deep Sky Blue with smile -->
+  <rect x="136" y="136" width="68" height="68" rx="20" fill="#0369A1"/>
+
+  <!-- Inner Detail Accents (나눔 포인트 & 미소) -->
+  <circle cx="86" cy="86" r="8.5" fill="#E0F2FE" opacity="0.85"/>
+  <circle cx="170" cy="86" r="8.5" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="86" cy="170" r="8.5" fill="#FEF3C7" opacity="0.95"/>
+  <!-- Handshake / smile notch in bottom right -->
+  <path d="M156 168C161 175 179 175 184 168" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+</svg>

@@ -19,4 +19,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(e.getMessage()));
     }
+
+    /** 다른 건물 리소스에 접근하려는 요청 → 403 (기획 개편: 건물 소속 검증). */
+    @ExceptionHandler(BuildingAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBuildingAccessDenied(BuildingAccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.fail("BUILDING_ACCESS_DENIED", e.getMessage()));
+    }
 }

@@ -8,11 +8,14 @@ import { getMyUserId } from './currentUser.js'
  * 기획 개편(건물 소속 검증): 연결할 때 X-User-Id를 보내야 하고, 다른 건물 팟이면 서버가 구독을 거부한다.
  * 거부되면 onDenied()를 부르고 재연결을 멈춘다. (안 멈추면 3초마다 거부 → 재연결을 끝없이 반복함)
  */
+// 로컬 개발: 백엔드가 같은 머신의 8080 포트라고 가정. 배포(Vercel): VITE_WS_BASE_URL(백엔드 Railway 주소, wss://)을 쓴다.
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL ?? `ws://${location.hostname}:8080`
+
 export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
   const client = new Client({
     // 백엔드가 /ws-sobun 을 SockJS로 열어둬서(WebSocketConfig의 .withSockJS()),
     // 순수 WebSocket으로 붙으려면 끝에 /websocket 을 붙여야 한다. 없으면 연결 자체가 실패한다.
-    brokerURL: `ws://${location.hostname}:8080/ws-sobun/websocket`,
+    brokerURL: `${WS_BASE_URL}/ws-sobun/websocket`,
     connectHeaders: { 'X-User-Id': String(getMyUserId()) },
     reconnectDelay: 3000,
     onConnect: () => {

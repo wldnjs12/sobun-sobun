@@ -134,6 +134,9 @@ Content-Type: application/json
 1. **단위 테스트**: `cd backend && ./gradlew test`
    > 💡 Windows에서 사용자 폴더 이름이 한글이면 `Could not find or load main class ...GradleWorkerMain`로 실패한다. `GRADLE_USER_HOME=C:\gradle-home`(영문 경로)을 설정하면 해결된다.
 2. **앱 실행**: PostgreSQL을 켜고 `./gradlew bootRun`. 기동 로그에 `영수증 OCR: 키가 없어 Stub 사용`이 보이면 Stub(어떤 사진이든 합계 12,300원)으로 동작하는 것이다. 실제 OCR은 `application-local.yml`(gitignore) 또는 환경변수 `NAVER_OCR_INVOKE_URL` / `NAVER_OCR_SECRET_KEY`를 설정한다 ([API_KEYS](../API_KEYS.md)).
+   - `application-local.yml`은 **local 프로필로 실행해야** 읽힌다: `./gradlew bootRun --args='--spring.profiles.active=local'`. 기동 로그에 `The following 1 profile is active: "local"`과 `영수증 OCR: Naver Clova OCR(General) 사용`이 둘 다 보이면 실제 OCR이다.
+   - **Invoke URL은 콘솔(CLOVA OCR → General 도메인 → API Gateway 연동)에서 그대로 복사**한다. `https://`로 시작하고 `/general`로 끝나야 한다. `http://`로 적으면 연결 단계에서 막혀 약 3초(연결 타임아웃) 뒤 `success=false`가 온다.
+   - 키와 Invoke URL은 커밋·로그·채팅에 남기지 않는다. 서버도 실패 로그에 예외 종류만 남기도록 되어 있다.
 3. **테스트 건물**: 팟 생성에는 `building` 행이 필요하다 (② 서버가 `buildingId` 존재 검증). 앱을 한 번 실행해 테이블이 만들어진 뒤 [qr-auth 핸드오프](./qr-auth.md) 4번처럼 건물을 넣는다.
 4. **전체 흐름** (건물 id=1, 사용자 1=대표, 2·3=참여자 기준):
    ```bash
@@ -155,19 +158,33 @@ Content-Type: application/json
    curl http://localhost:8080/api/settlements/1
    ```
    > 💡 Windows Git Bash에서는 curl 인자에 한글을 직접 넣으면 UTF-8로 전달되지 않아 `400 JSON parse error: Invalid UTF-8 middle byte`가 난다. 한글이 든 JSON은 UTF-8 파일로 저장해 `--data-binary @pod.json`으로 보내면 된다.
-5. **OCR 실패 흐름 확인**: 이미지가 아닌 파일을 `.jpg`로 바꿔 올리면 400, 진짜 사진인데 키가 잘못됐으면 200 + `data.success=false`.
+5. **OCR 실패 흐름 확인**: 이미지가 아닌 파일을 `.jpg`로 바꿔 올리면 400(OCR 호출 전 거절), 글자 없는 단색 이미지나 연결이 안 되는 Invoke URL이면 200 + `data.success=false`.
+   - 실패 원인은 서버 로그 `영수증 OCR 호출 실패: <예외 종류>`로 구분한다. 문구는 "호출 실패"지만 의미가 다르다.
+
+   | 로그의 예외 종류 | 의미 |
+   | --- | --- |
+   | `ResourceAccessException` | 네트워크·연결 실패 (Invoke URL 오류, 타임아웃 등). Clova에 닿지 않음 |
+   | `IllegalStateException` | Clova가 응답했지만 `inferResult`가 `SUCCESS`가 아님 (글자 없음·흐림) |
+   | HTTP 오류 이름 + `status=` (예: `Unauthorized status=401`, `NotFound status=404`) | Clova가 4xx·5xx로 응답 (Secret Key 오류, Invoke URL 끝부분 오류 등) |
+   | (예외 없이) `영수증 OCR: 총액을 찾지 못함` | 글자는 읽었지만 "합계/총액/총금액/결제금액" 근처에서 금액을 못 찾음 |
 
 > ✅ 2026-10-03 `develop`(`f3d6307`) + 로컬 PostgreSQL + Stub OCR로 4번 흐름을 curl로 확인했다. 응답은 위 주석 그대로였다 (인식 12300, 확정 `finalAmount 12915` / `participantCount 3` / `perPersonAmount 4305`, 재확정 400). 이미지 아닌 파일, `receipt` 파트 누락, 없는 팟, 참여자 0명도 2-4의 400 메시지 그대로 나왔다. 결과 조회(`GET`)는 PR #7 브랜치에서 같은 방식으로 확인했다 (확정 전 `data: null` → 확정 후 결과 반환, 없는 팟 `data: null`).
 >
 > ⚠️ 같은 확인에서 **마감하지 않은 팟도 확정되고, 확정 뒤에도 참여가 된다**는 것을 확인했다 (팟장 1명 상태로 확정 → 1인당 10,500원 저장 → 이후 2번째 사용자 참여 성공, 정산은 1명 기준 그대로). 6번 "참여자 수" 항목 참고.
 >
-> ⚠️ 실제 Clova OCR 키로 호출하는 것은 아직 검증하지 않았다 (응답 파싱은 샘플 JSON으로만 테스트). 5번의 "키가 잘못됐을 때 200 + `data.success=false`"도 코드와 단위 테스트 기준이다.
+> ✅ 2026-10-03 `develop`(`57ed7f5`) + local 프로필 + **실제 Clova OCR(General)**로 영수증 인식을 확인했다.
+> - 실제 영수증 사진(JPG) 1장 → `200 · { recognizedAmount: 27600, success: true }` (약 2초). **영수증에 찍힌 실제 합계와 일치**함을 사람이 확인했다.
+> - 글자 없는 흰색 단색 PNG → `200 · { recognizedAmount: null, success: false }`, 로그 `IllegalStateException` (Clova가 인식 실패로 응답).
+> - 빈 파일, 텍스트를 `.jpg`로 바꾼 파일, `receipt` 파트 누락 → 2-4의 400 메시지 그대로, OCR은 호출되지 않음.
+> - Invoke URL을 `http://`로 잘못 넣었을 때 → 약 3초 뒤 `success=false`, 로그 `ResourceAccessException`. 콘솔에서 `https://…/general` 주소를 다시 복사해 해결.
+>
+> ⚠️ 실제 OCR로 확인한 영수증은 **1장**뿐이다. 다른 마트·편의점 영수증 형식에서 총액을 제대로 고르는지(키워드 근처 숫자 중 최댓값 규칙)는 아직 확인하지 않았다. 영수증 원문은 개인정보(카드번호 등)가 있을 수 있어 로그·문서에 남기지 않았다.
 
 ## 5. 임시 처리 / TODO
 
 - **`PodTableParticipantCountReader`** (TODO 주석 있음): 작업 당시 develop에 `PodRepository`가 없어서, `select p.participantCount from Pod p where p.id = :podId` JPQL로 참여자 수를 읽기 전용 조회한다. 이제 develop에 ②의 `PodRepository`가 들어왔으니 그걸 쓰는 구현체로 바꿀 수 있다 (`PodParticipantCountReader` 인터페이스는 그대로, 구현체만 교체).
 - **로그인 없음**: 확정 API는 사용자를 받지 않는다. 대표가 아닌 사람도 어떤 팟이든 확정할 수 있다. ①의 `X-User-Id`나 ②의 `hostUserId` 같은 임시 식별도 아직 안 붙였다.
-- **Stub OCR**: 키가 없으면 어떤 사진이든 `success=true, 12,300원`. 데모 서버에서 키 설정이 빠지면 실패로 드러나지 않고 가짜 금액이 나가므로, 데모 전 기동 로그로 어느 구현체인지 확인할 것.
+- **Stub OCR**: 키가 없으면 어떤 사진이든 `success=true, 12,300원`. 데모 서버에서 키 설정이 빠지면 실패로 드러나지 않고 가짜 금액이 나가므로, 데모 전 기동 로그로 어느 구현체인지 확인할 것. local 프로필 없이 실행하면 `application-local.yml`에 키가 있어도 Stub이 선택된다.
 - **영수증 원본 저장 안 함**: `receiptImageUrl`은 항상 `null`.
 
 ## 6. 미결정 사항 / 가정 (팀 논의 필요)
@@ -203,7 +220,8 @@ Content-Type: application/json
 - [ ] `docs/ERD.md`의 `SETTLEMENT`에 `commission_rate`, `participant_count`, `per_person_amount` 반영
 - [ ] 6번 미결정 사항 팀 논의 → 결정되면 코드·이 문서 갱신
 - [ ] `PodTableParticipantCountReader` → `PodRepository` 기반 구현체로 교체
-- [ ] 실제 Clova OCR 키로 영수증 몇 장 인식률 확인
+- [x] 실제 Clova OCR 키로 영수증 인식 확인 (1장, 27,600원 일치 · 단색 이미지 실패 처리 확인)
+- [ ] 다른 형식의 영수증 몇 장 더 인식률 확인 (데모용 영수증 사진으로 리허설 때 1번 이상)
 - [x] 로컬 DB에서 4번 전체 흐름 curl 확인 (Stub OCR 기준)
 - [ ] 정산 확정을 마감된 팟에만 허용할지 지원님과 결정
 - [x] 확정 결과 조회 API `GET /settlements/{podId}` (PR #7)
