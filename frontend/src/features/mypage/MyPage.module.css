@@ -1,0 +1,256 @@
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--margin-mobile) 96px; /* 아래: 하단 탭 바 높이만큼 */
+}
+
+.primaryIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+/* ── 프로필 ── */
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.eyebrow {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.userTag {
+  color: var(--color-outline);
+  font-size: 11px;
+}
+
+/* ── 요약 숫자 ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-container));
+  box-shadow: var(--shadow-md);
+  color: #fff;
+}
+
+.stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stats span {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.stats strong {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.ok {
+  color: #fff;
+}
+
+.warn {
+  color: var(--color-tertiary-fixed);
+}
+
+/* ── 참여 내역 ── */
+.history,
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.historyHead h2,
+.settings h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filterActive {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.link {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container);
+  color: var(--color-primary-fixed-dim);
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statusTag {
+  width: max-content;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.recruiting {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.closed {
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}
+
+.settled {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.itemTitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+}
+
+.itemSub {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.itemPrice {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* ── 설정 ── */
+.settingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.settingRow div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.settingRow div span {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.settingAction {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}

@@ -55,6 +55,11 @@ function readJoined() {
   }
 }
 
+/** 마이페이지(15)에서 "내가 참여한 팟" 목록을 그릴 때 쓴다 */
+export function getJoinedPodIds() {
+  return readJoined()
+}
+
 export function hasJoined(podId) {
   return readJoined().includes(Number(podId))
 }
@@ -62,4 +67,16 @@ export function hasJoined(podId) {
 export function rememberJoined(podId) {
   const ids = readJoined()
   if (!ids.includes(Number(podId))) write('localStorage', joinedKey(), JSON.stringify([...ids, Number(podId)]))
+}
+
+// ── 건물 인증(①) 여부 ──
+// 서버 인증 기록(BUILDING_AUTH)을 조회하는 API가 아직 없어서, 인증에 성공하면 이 브라우저에 기억해둔다.
+const verifiedKey = () => `sobun.verified.${getMyUserId()}`
+
+export function markVerified() {
+  write('localStorage', verifiedKey(), new Date().toISOString())
+}
+
+export function isVerified() {
+  return Boolean(read('localStorage', verifiedKey()))
 }

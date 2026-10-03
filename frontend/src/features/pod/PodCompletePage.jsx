@@ -4,7 +4,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
 import { closePod, fetchPod } from './podApi.js'
-import { getMyUserId } from './currentUser.js'
+import { getMyUserId } from '../../api/currentUser.js'
 import { calcPerPersonPrice } from './podUtils.js'
 import styles from './PodCompletePage.module.css'
 
