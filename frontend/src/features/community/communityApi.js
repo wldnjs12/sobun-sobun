@@ -84,7 +84,7 @@ export function timeAgo(iso) {
 }
 
 // ───────────────────────── 목업 (⑤ 백엔드 완성 전 임시) ─────────────────────────
-// 서버 규칙을 흉내 낸다: 건물별로 분리, 익명 번호는 응답 만들 때 계산, 실제 작성자 id는 밖으로 안 내보냄,
+// 서버 규칙을 흉내 낸다: 건물별로 분리(샘플 글은 처음 연 건물 것), 익명 번호는 응답 만들 때 계산, 실제 작성자 id는 밖으로 안 내보냄,
 // 같은 사람 중복 신고 무시, 신고 3회면 숨김.
 // localStorage에 저장해서 새로고침해도 남고, 같은 브라우저의 다른 탭(?user=2)에서도 같은 글이 보인다.
 const STORE_KEY = 'sobun.mockCommunity'
@@ -98,14 +98,14 @@ function seed() {
     nextId: 100,
     posts: [
       {
-        id: 1, buildingId: 1, author: 9003, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(2), reports: [], hidden: false,
+        id: 1, buildingId: null, author: 9003, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(2), reports: [], hidden: false,
         content: '삼다수 2L 24병 같이 나누실 분? (1인당 6병씩)\n내일 오전 배송으로 주문할게요. 6병 묶음이 4팩이라 뜯지 않고 1팩씩 나누면 돼요. 1층 무인택배함에 둘게요!',
         comments: [
           { id: 11, author: 9007, content: '저요! 생수 딱 떨어졌어요', createdAt: ago(1), reports: [], hidden: false },
         ],
       },
       {
-        id: 2, buildingId: 1, author: 9007, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(15), reports: [], hidden: false,
+        id: 2, buildingId: null, author: 9007, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(15), reports: [], hidden: false,
         content: '코스트코 3겹 화장지 30롤, 10롤씩 3명 나눠요!\n혼자 살아서 30롤은 보관할 공간이 부족하네요. 10롤 비닐 그대로 나누니까 위생 걱정 없어요.',
         comments: [
           { id: 21, author: 9012, content: '저도 참여하고 싶어요! 팟 열어주시면 바로 들어갈게요 🙌', createdAt: ago(8), reports: [], hidden: false },
@@ -113,12 +113,12 @@ function seed() {
         ],
       },
       {
-        id: 3, buildingId: 1, author: 9001, category: 'SHARE', createdAt: ago(60), reports: [], hidden: false,
+        id: 3, buildingId: null, author: 9001, category: 'SHARE', createdAt: ago(60), reports: [], hidden: false,
         content: '스팸 클래식 200g 2캔 나눔해요\n본가에서 선물세트로 많이 보내주셨어요. 유통기한 넉넉해요. 1층 보관함에 둘게요!',
         comments: [],
       },
       {
-        id: 4, buildingId: 1, author: 9005, category: 'QUESTION', createdAt: ago(180), reports: [], hidden: false,
+        id: 4, buildingId: null, author: 9005, category: 'QUESTION', createdAt: ago(180), reports: [], hidden: false,
         content: '인하대 후문 쪽에서 트레이더스 가기 편한 방법 있나요?\n차 없이 장보러 가기 괜찮은 방법이나 꿀팁 있으면 알려주세요!',
         comments: [],
       },
@@ -126,12 +126,24 @@ function seed() {
   }
 }
 
+/**
+ * 샘플 글은 "처음 커뮤니티를 연 건물"의 글로 정한다 (실제 건물 id는 등록할 때 서버가 정하므로 미리 알 수 없음).
+ * 다른 건물 사람은 샘플이 안 보이고 빈 커뮤니티로 시작 → 건물별로 분리되는 모습을 데모에서 보여줄 수 있다.
+ */
 function load() {
+  let store
   try {
-    return JSON.parse(localStorage.getItem(STORE_KEY)) ?? seed()
+    store = JSON.parse(localStorage.getItem(STORE_KEY)) ?? seed()
   } catch {
-    return seed()
+    store = seed()
   }
+  if (store.posts.some((p) => p.buildingId === null)) {
+    store.posts.forEach((p) => {
+      if (p.buildingId === null) p.buildingId = BUILDING.id
+    })
+    save(store)
+  }
+  return store
 }
 
 function save(store) {

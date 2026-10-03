@@ -7,9 +7,12 @@ import { getMyUserId, setMyBuilding } from '../../api/currentUser.js'
  * 1차(가입 시 1회): 주소 검색 → 건물 등록
  * 2차(팟 개설·참여·커뮤니티 입장 직전마다): GPS 확인 — 판정은 반드시 서버가 한다
  *
- * TODO(최지원 ① 백엔드 PR 머지되면): USE_MOCK을 false로 바꾸면 실제 서버를 쓴다. 화면 코드는 고칠 필요 없음.
+ * ① 백엔드(PR #17)가 develop에 머지돼서 실제 서버를 쓴다 (USE_MOCK = false).
+ * 백엔드 없이 화면만 볼 때는 true로 바꾸면 아래 목업으로 동작한다.
+ * ⚠️ 실제 서버를 쓸 때는 반드시 false여야 한다: 목업으로 등록하면 서버에 건물 소속이 안 남아서
+ *    팟 목록 등이 전부 403(다른 건물)으로 막힌다.
  */
-const USE_MOCK = true
+const USE_MOCK = false
 
 /**
  * 주소 후보 검색.
