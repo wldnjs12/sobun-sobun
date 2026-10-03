@@ -45,8 +45,28 @@
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /settlements/receipts | 영수증 업로드 → OCR 인식 | multipart: `receipt` | `{ recognizedAmount, success }` |
-| POST | /settlements/{podId}/confirm | 정산 확정 | `{ recognizedCost, commissionRate }` | `Settlement` |
+| POST | /settlements/receipts | 영수증 업로드 → OCR 인식 (JPG/PNG, 10MB 이하) | multipart: `receipt` (파일) | `{ recognizedAmount, success }` |
+| POST | /settlements/{podId}/confirm | 정산 확정 (팟당 1회) | `{ recognizedCost, commissionRate }` (원가: 원 단위 정수, 수고비율: 0~1, 0.01 단위) | `Settlement` |
+
+- **OCR 인식 실패는 에러가 아닙니다**: OCR 호출 실패·타임아웃·총액을 못 찾은 경우 모두 `200` · `{ "success": true, "data": { "recognizedAmount": null, "success": false }, "message": null }` → 프론트는 `data.success`로 수동 입력 폼 전환.
+- `Settlement` 응답 필드: `{ id, podId, receiptImageUrl, recognizedCost, commissionRate, finalAmount, participantCount, perPersonAmount, confirmed }` — `finalAmount = recognizedCost × (1 + commissionRate)` (원 단위 반올림), `perPersonAmount = finalAmount ÷ participantCount` (원 단위 올림), `participantCount`는 확정 시점 `Pod.participantCount` 스냅샷, `receiptImageUrl`은 현재 항상 `null`.
+- **거절 응답**: `400` · `{ "success": false, "data": null, "message": "..." }` (`code` 없음, `message`를 화면에 그대로 표시)
+
+| API | 조건 | message |
+| --- | --- | --- |
+| receipts | `receipt` 파트 누락 또는 빈 파일 | 영수증 사진을 선택해주세요. |
+| receipts | JPG/PNG 아님 (파일 시그니처로 판별) | JPG 또는 PNG 사진만 올릴 수 있어요. |
+| receipts | 10MB 초과 | 사진 용량은 10MB 이하만 올릴 수 있어요. |
+| confirm | 원가 누락·0 이하 | 영수증 금액은 0원보다 커야 해요. |
+| confirm | 원가에 소수점 | 영수증 금액은 원 단위 정수로 입력해주세요. |
+| confirm | 수고비율 누락·0~1 밖 | 수고비율은 0%에서 100% 사이여야 해요. |
+| confirm | 수고비율이 0.01 단위 아님 | 수고비율은 1% 단위로 입력해주세요. |
+| confirm | 없는 팟 (404 아님) | 팟을 찾을 수 없어요. |
+| confirm | 참여자 0명 | 참여자가 없는 팟은 정산할 수 없어요. |
+| confirm | 이미 확정된 팟 | 이미 정산이 확정된 팟이에요. |
+
+- JSON 형식이 깨졌거나 업로드가 15MB(multipart 한도)를 넘으면 공통 응답 래퍼가 아닌 Spring 기본 에러가 내려옵니다.
+- 자세한 예시: [handoff/settlement.md](./handoff/settlement.md)
 
 ## ④ 최저가 조회 (김민준)
 
