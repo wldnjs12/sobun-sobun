@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface BuildingRepository extends JpaRepository<Building, Long> {
 
-    Optional<Building> findByQrToken(String qrToken);
+    Optional<Building> findByBuildingKey(String buildingKey);
 }

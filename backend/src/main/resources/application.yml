@@ -35,5 +35,15 @@ naver:
   shopping:
     client-id: ${NAVER_SHOPPING_CLIENT_ID:}
     client-secret: ${NAVER_SHOPPING_CLIENT_SECRET:}
+
+# 주소+GPS 건물 인증 온보딩(① 지원). 키가 없으면 각 Config가 Stub 구현체를 자동 선택한다.
+juso:
+  api-key: ${JUSO_API_KEY:}
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY:}
+location-check:
+  # true면 GPS 2차 확인 시 요청 좌표 대신 고정 데모 좌표를 쓴다. 기본 꺼짐 — 운영/기본 환경에서는 항상 꺼져 있어야 한다.
+  demo-mode: ${LOCATION_CHECK_DEMO_MODE:false}
+
 # 실제 값은 커밋하지 말고 application-local.yml(gitignore 처리됨)에서 덮어써주세요.
 # 발급 방법: ../../../../../docs/API_KEYS.md
