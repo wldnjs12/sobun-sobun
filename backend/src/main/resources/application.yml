@@ -16,6 +16,13 @@ spring:
       hibernate:
         format_sql: true
 
+  # 영수증 업로드(③ 정산). 기본값 1MB는 휴대폰 사진에 너무 작다.
+  # 앱 검증 한도(10MB, SettlementService)보다 여유 있게 둬서 10MB 초과는 우리 쪽 400 메시지로 거절되게 한다.
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+
 server:
   port: 8080
 

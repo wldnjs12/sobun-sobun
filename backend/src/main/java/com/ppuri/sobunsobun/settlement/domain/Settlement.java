@@ -21,4 +21,21 @@ public class Settlement {
     private BigDecimal commissionRate;
     private BigDecimal finalAmount;      // recognizedCost * (1 + commissionRate)
     private Boolean confirmed = false;
+
+    /** 확정 시점의 참여자 수. 확정 뒤 팟 참여자 수가 바뀌어도 정산 결과가 흔들리지 않게 스냅샷으로 남긴다. */
+    private Integer participantCount;
+
+    /** 1인당 송금액. 정산 결과 화면에서 바로 쓰고, 계산 당시 반올림 결과를 그대로 보존한다. */
+    private BigDecimal perPersonAmount;
+
+    public Settlement(Long podId, BigDecimal recognizedCost, BigDecimal commissionRate, BigDecimal finalAmount,
+                      Integer participantCount, BigDecimal perPersonAmount) {
+        this.podId = podId;
+        this.recognizedCost = recognizedCost;
+        this.commissionRate = commissionRate;
+        this.finalAmount = finalAmount;
+        this.participantCount = participantCount;
+        this.perPersonAmount = perPersonAmount;
+        this.confirmed = true;
+    }
 }
