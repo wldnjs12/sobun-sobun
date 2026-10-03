@@ -1,5 +1,5 @@
 import { api } from '../../api/client.js'
-import { getMyUserId, rememberJoined } from '../../api/currentUser.js'
+import { getMyBuilding, getMyUserId, rememberJoined } from '../../api/currentUser.js'
 
 /**
  * 팟(②) 화면들이 쓰는 API 함수 모음. 백엔드: origin/feature/pod-realtime (docs/handoff/pod.md)
@@ -9,8 +9,22 @@ import { getMyUserId, rememberJoined } from '../../api/currentUser.js'
  * 백엔드에 필드가 추가되면 toPod()의 기본값 부분만 고치면 된다.
  */
 
-// TODO: 온보딩(①)에서 인증한 건물로 교체
-export const BUILDING = { id: 1, name: '신촌 청년드림빌' }
+/**
+ * 지금 사용자가 등록한 건물 (① 온보딩에서 저장).
+ * 여러 화면이 BUILDING.id / BUILDING.name 으로 읽고 있어서, 값 대신 "읽을 때마다 최신 값을 돌려주는" getter로 만들었다.
+ * (get 키워드: 속성처럼 읽지만 실제로는 함수가 실행됨 → 건물을 새로 등록하면 화면들이 바로 새 건물을 본다)
+ * 아직 등록 전이면 데모용 기본값을 쓰는데, App.jsx가 등록 전에는 이 화면들로 못 들어오게 막는다.
+ */
+const DEFAULT_BUILDING = { buildingId: 1, name: '제니스빌', dong: null }
+export const BUILDING = {
+  get id() {
+    return (getMyBuilding() ?? DEFAULT_BUILDING).buildingId
+  },
+  get name() {
+    const { name, dong } = getMyBuilding() ?? DEFAULT_BUILDING
+    return dong ? `${name} ${dong}` : name // 아파트면 "OO아파트 101동"
+  },
+}
 const DEFAULT_PICKUP_SPOT = '1층 무인락커'
 
 /** 서버 Pod 응답 → 화면용 객체 */

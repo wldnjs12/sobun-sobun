@@ -7,7 +7,7 @@ import styles from './JoinConfirmSheet.module.css'
  * 팟 상세 화면 위에 겹쳐 뜨고, 실제 참여 API 호출은 부모(PodDetailPage)의 onConfirm이 한다.
  * 이 컴포넌트는 "보여주기 + 동의 받기"만 담당해서 역할을 나눴다.
  */
-export default function JoinConfirmSheet({ pod, pricePerPerson, joining, error, onConfirm, onClose }) {
+export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checking, error, onConfirm, onClose }) {
   const [agreed, setAgreed] = useState(false)
 
   // ESC 키로도 닫히게
@@ -128,11 +128,11 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, error, 
           <button
             type="button"
             className={styles.confirmButton}
-            disabled={!agreed || joining}
+            disabled={!agreed || joining || checking}
             onClick={onConfirm}
           >
-            <Icon name={joining ? 'progress_activity' : 'check_circle'} size={18} className={joining ? styles.spin : ''} />
-            {joining ? '참여 처리 중…' : '참여 확정하기'}
+            <Icon name={joining || checking ? 'progress_activity' : 'check_circle'} size={18} className={joining || checking ? styles.spin : ''} />
+            {checking ? '위치를 확인하고 있어요…' : joining ? '참여 처리 중…' : '참여 확정하기'}
           </button>
         </div>
       </div>

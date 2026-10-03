@@ -2,9 +2,50 @@
 
 > ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: ①온보딩(QR)과 ④최저가는 기획 개편으로 삭제/교체됩니다. 이 문서는 과거 작업 히스토리로만 보존하며, 최신 기획은 [REPLAN_WORK_ASSIGNMENT.md](../REPLAN_WORK_ASSIGNMENT.md)·[design-changes.md](../design-changes.md)를 참고하세요.
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4) · 담당: 도우현_
+---
 
-## 이번 작업 요약
+## 🆕 기획 개편 후: ① 온보딩 프론트 (주소 + GPS)
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: 도우현 · 백엔드 계약: [API_SPEC.md](../API_SPEC.md) ①_
+
+### 한 일
+- **QR 인증 삭제**: `QrScanPage.jsx`, `VerifyLocationPage.jsx`, PR #9 데모 인증코드·복사 UI까지 전부 제거
+- **S1' 주소 검색** `/onboarding/address` (`AddressSearchPage.jsx`) — 입력 전 / 검색 중 / 결과 / 결과 없음
+- **S1'' 건물 확인·동 선택** `/onboarding/confirm` (`BuildingConfirmPage.jsx`) — 빌라(동 없음) / 아파트 동 목록 / 동 목록 없으면 직접 입력
+- **S2' GPS 인라인 확인 + S3 실패 바텀시트 3종** — `useLocationCheck.jsx` 훅 + `LocationCheckSheet.jsx`. 팟 개설(`POD_CREATE`)·참여 확정(`POD_JOIN`)에 연결
+- 등록한 건물을 "내 건물"로 저장(`api/currentUser.js`의 `setMyBuilding/getMyBuilding`) → `podApi.BUILDING`이 그 값을 읽음(헤더 건물명 등). 건물 미등록이면 `/home` 등 접근 시 시작 화면으로 (`App.jsx`의 `RequireBuilding`)
+- 시작 화면 문구 개편(우리 건물 이웃 · 화장지 30롤 예시), 팟 생성의 "최저가에서 가져왔어요" → "커뮤니티 제안에서 가져왔어요"
+- **버그 수정**: 팟 생성 금액 입력이 `step="100"`이라 21,990원 같은 실제 가격을 브라우저가 거절하고 제출이 안 되던 문제 → `step="1"`
+
+### ⚠️ 목업 상태 (백엔드 ① 완성 전)
+- `features/onboarding/onboardingApi.js` 맨 위 **`USE_MOCK = true`** — 최지원 ① PR 머지되면 **`false`로 한 줄만** 바꾸면 실제 API(`/auth/addresses/search`, `/auth/buildings/register`, `/auth/location-check`) 사용
+- 목업 주소: "인하로", "학익", "용현" 등으로 검색 (제니스빌·인하하우스·학익한마음아파트·용현그린아파트 — 가짜 주소). 그 밖에 **아무 주소나 입력해도 입력한 글자 그대로 후보 1개**가 나옴 ("아파트"가 들어 있으면 아파트로 보고 101~103동 목록)
+- 목업 등록은 어떤 건물이든 `buildingId: 1`로 묶음 (지금 팟 API가 건물 1번 기준이라)
+- GPS는 목업이어도 **브라우저 위치는 실제로 받음** → 권한 거부/위치 못 받음(b)(c)은 진짜로 확인 가능. 반경 밖(a)은 주소 뒤에 `?mockGps=out`을 붙여 연 탭에서 흉내 냄
+
+### 👉 김민준님(⑤ 커뮤니티 입장)에서 GPS 확인 쓰는 법
+```jsx
+import useLocationCheck from '../onboarding/useLocationCheck.jsx'
+
+const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
+<button disabled={checking} onClick={() => runWithLocationCheck('COMMUNITY_ENTER', enterCommunity)}>
+  {checking ? '위치를 확인하고 있어요…' : '커뮤니티 입장'}
+</button>
+{locationSheet}  {/* 실패 시 바텀시트 — 화면 어디든 한 번만 넣으면 됨 */}
+```
+- 통과하면 `enterCommunity()`가 실행되고, 실패하면 시트가 뜨고 [다시 확인]이 같은 동작을 다시 시도함. 결과는 캐시하지 않음(매번 확인)
+- 공구 제안 → 팟 생성으로 넘길 때: `navigate('/pods/new', { state: { title: '생수 2L 24병' } })` → 생성 화면에 품목이 채워지고 "커뮤니티 제안에서 가져왔어요" 표시
+
+### 남은 것 / 확인 필요
+- 하단 탭 `[팟·커뮤니티·내 팟·마이]` 변경은 공용 파일(`BottomNav.jsx`)이라 이번 PR에서 안 건드림 — 김민준님과 먼저 끝나는 쪽이 수정 (REPLAN 문서 규칙)
+- 백엔드 ① 붙으면: 실제 주소 API 응답 형태 확인, 다른 건물 팟 접근 시 403 화면 처리 필요
+- 검증: 헤드리스 Chrome으로 19개 항목 자동 확인 (빌라·아파트·동 직접입력 등록, 미등록 접근 차단, 팟 개설 GPS 통과 → 생성, 반경 밖·권한 거부·위치 못 받음 시트, 위치 잡힌 뒤 [다시 확인] → 참여 성공), JS 에러 없음
+
+---
+
+## (개편 전 기록) 이번 작업 요약
+
+_당시 최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4)_
 
 Stitch 디자인(`stitch_new_starter_project/`) 16개 화면을 모두 구현하고, 머지된 백엔드 3개(①②③)에 연동했다.
 

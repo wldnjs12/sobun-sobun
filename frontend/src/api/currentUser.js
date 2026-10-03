@@ -69,14 +69,25 @@ export function rememberJoined(podId) {
   if (!ids.includes(Number(podId))) write('localStorage', joinedKey(), JSON.stringify([...ids, Number(podId)]))
 }
 
-// ── 건물 인증(①) 여부 ──
-// 서버 인증 기록(BUILDING_AUTH)을 조회하는 API가 아직 없어서, 인증에 성공하면 이 브라우저에 기억해둔다.
-const verifiedKey = () => `sobun.verified.${getMyUserId()}`
+// ── 내 건물 (① 온보딩 1차: 주소 등록) ──
+// 주소를 검색해 건물을 등록하면 { buildingId, name, dong } 을 이 브라우저에 기억해둔다.
+// (로그인/세션이 아직 없어서 서버에서 "내 건물"을 다시 조회할 방법이 없음 — 세션 생기면 서버 값으로 교체)
+const buildingKey = () => `sobun.building.${getMyUserId()}`
 
-export function markVerified() {
-  write('localStorage', verifiedKey(), new Date().toISOString())
+export function setMyBuilding(building) {
+  write('localStorage', buildingKey(), JSON.stringify(building))
 }
 
+/** 등록한 건물. 아직 등록 안 했으면 null */
+export function getMyBuilding() {
+  try {
+    return JSON.parse(read('localStorage', buildingKey()))
+  } catch {
+    return null
+  }
+}
+
+/** 건물 등록(1차 인증)을 마쳤는지 */
 export function isVerified() {
-  return Boolean(read('localStorage', verifiedKey()))
+  return Boolean(getMyBuilding())
 }

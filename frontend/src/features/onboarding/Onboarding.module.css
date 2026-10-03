@@ -323,147 +323,7 @@
   text-decoration: underline;
 }
 
-/* ── 02 QR 스캔 ── */
-.viewfinder {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  max-height: 60vh;
-  overflow: hidden;
-  border-radius: 20px;
-  background: #1b2a3a;
-  box-shadow: var(--shadow-md);
-}
-
-.video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* 카메라 비율과 상관없이 틀을 꽉 채운다 */
-}
-
-.frame {
-  position: absolute;
-  inset: 25% 18%;
-}
-
-.corner {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  border: 4px solid var(--color-primary-fixed-dim);
-}
-
-.cornerTL {
-  top: 0;
-  left: 0;
-  border-right: none;
-  border-bottom: none;
-  border-top-left-radius: 14px;
-}
-
-.cornerTR {
-  top: 0;
-  right: 0;
-  border-left: none;
-  border-bottom: none;
-  border-top-right-radius: 14px;
-}
-
-.cornerBL {
-  bottom: 0;
-  left: 0;
-  border-right: none;
-  border-top: none;
-  border-bottom-left-radius: 14px;
-}
-
-.cornerBR {
-  right: 0;
-  bottom: 0;
-  border-left: none;
-  border-top: none;
-  border-bottom-right-radius: 14px;
-}
-
-.scanLine {
-  position: absolute;
-  left: 4%;
-  right: 4%;
-  height: 3px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--color-secondary-container), var(--color-primary), var(--color-secondary-container));
-  animation: scan 2s ease-in-out infinite alternate;
-}
-
-@keyframes scan {
-  from {
-    top: 6%;
-  }
-  to {
-    top: 94%;
-  }
-}
-
-.viewfinderHint {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  background: rgba(11, 28, 48, 0.7);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.cameraMessage {
-  position: absolute;
-  inset: auto 16px 16px;
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-lg);
-  background: rgba(11, 28, 48, 0.75);
-  color: #fff;
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: center;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.chipBlue {
-  background: var(--color-surface-container-high);
-  color: var(--color-primary);
-}
-
-.chipPeach {
-  background: var(--color-secondary-fixed);
-  color: var(--color-on-secondary-fixed);
-}
-
-.chipButter {
-  background: var(--color-tertiary-fixed);
-  color: var(--color-on-tertiary-fixed);
-}
-
+/* ── 공용 (주소 검색 · 건물 확인) ── */
 .sectionTitle {
   margin: 0 0 var(--space-xs);
   font-size: 22px;
@@ -506,75 +366,6 @@
   color: var(--color-primary);
 }
 
-.accordion {
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-}
-
-.accordionHead {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 14px var(--space-md);
-  border: none;
-  background: none;
-  color: var(--color-on-surface);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-}
-
-.accordionHead > span:last-child {
-  margin-left: auto;
-}
-
-.accordionBody {
-  margin: 0;
-  padding: 0 var(--space-md) var(--space-md);
-  color: var(--color-on-surface-variant);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.demoHint {
-  margin: 0 0 calc(var(--space-sm) * -1); /* 아래 버튼과 붙어 보이게 간격을 줄임 */
-  color: var(--color-outline);
-  font-size: 12px;
-  text-align: center;
-}
-
-.demoHint code {
-  padding: 1px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-container-high);
-  color: var(--color-primary);
-  font-family: inherit;
-  font-weight: 700;
-  user-select: all; /* 한 번 클릭하면 코드 전체가 선택돼서 복사하기 편함 */
-}
-
-.copyButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: 6px;
-  padding: 2px 8px;
-  border: 1px solid var(--color-primary-fixed-dim);
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-lowest);
-  color: var(--color-primary);
-  font-size: 11px;
-  font-weight: 700;
-  vertical-align: middle;
-}
-
-.manualForm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
 .fieldLabel {
   font-size: 12px;
   font-weight: 600;
@@ -596,55 +387,147 @@
   box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
 }
 
-/* ── 03 위치 확인 ── */
-.progress {
+.errorText {
+  margin: 0;
+  color: #ba1a1a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+/* ── S1' 주소 검색 ── */
+.searchBox {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 6px 6px 14px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+/* :focus-within — 안쪽 input에 커서가 있으면 바깥 상자 테두리를 강조 */
+.searchBox:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+.searchIcon {
+  color: var(--color-primary);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.searchButton {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.searchButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stateText {
+  margin: var(--space-md) 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-align: center;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  text-align: center;
+}
+
+.emptyState > span:first-child {
+  color: var(--color-primary-fixed-dim);
+}
+
+.emptyState strong {
+  color: var(--color-on-surface);
+  font-size: 15px;
+}
+
+.resultList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.progressStep {
-  flex: 1;
+.resultItem {
+  width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  color: var(--color-outline);
-  font-size: 12px;
-  font-weight: 700;
+  gap: 12px;
+  padding: 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-on-surface);
+  text-align: left;
 }
 
-.progressDot {
-  width: 32px;
-  height: 32px;
+.resultIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-highest);
-}
-
-.done {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-high);
   color: var(--color-primary);
 }
 
-.done .progressDot {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+.resultText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
 }
 
-.current {
-  color: var(--color-secondary);
+.resultText span {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
 }
 
-.current .progressDot {
-  background: var(--color-secondary);
-  color: var(--color-on-secondary);
-}
-
-.radar {
+/* ── S1'' 건물 확인 · 동 선택 ── */
+.confirmCard {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -652,37 +535,13 @@
   padding: var(--space-lg) var(--space-md);
   border-radius: 20px;
   background: var(--color-surface-container-lowest);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
-.radarRing {
-  width: 140px;
-  height: 140px;
-  margin-bottom: var(--space-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: radial-gradient(circle, var(--color-surface-container-high) 0%, var(--color-surface-container-low) 70%);
-}
-
-.radarPulse {
-  animation: radar 1.6s ease-out infinite;
-}
-
-@keyframes radar {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 97, 148, 0.35);
-  }
-  100% {
-    box-shadow: 0 0 0 28px rgba(0, 97, 148, 0);
-  }
-}
-
-.radarCore {
-  width: 76px;
-  height: 76px;
+.confirmIcon {
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -691,97 +550,51 @@
   color: var(--color-on-primary);
 }
 
-.radarTitle {
-  margin: 0;
+.confirmTitle {
+  margin: var(--space-xs) 0 0;
   font-size: 22px;
   font-weight: 700;
+  line-height: 30px;
 }
 
-.radarBody {
+.confirmAddress {
   margin: 0;
   color: var(--color-on-surface-variant);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
 }
 
-/* ── 04 인증 실패 ── */
-.failHero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  padding-top: var(--space-lg);
-  text-align: center;
-}
-
-.failIcon {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--color-secondary-fixed);
-  color: var(--color-secondary);
-}
-
-.failTitle {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
-}
-
-.tips {
+.dongSection {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
   padding: var(--space-md);
   border-radius: 16px;
-  background: var(--color-surface-container);
-}
-
-.tipsTitle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 var(--space-xs);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.tipItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-lg);
   background: var(--color-surface-container-lowest);
-  font-size: 13px;
+  box-shadow: var(--shadow-sm);
 }
 
-.tipItem p {
-  margin: 2px 0 0;
+.dongSection h3 {
+  margin: 0;
+}
+
+.dongGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+
+.dongChip {
+  padding: 12px 4px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
-  line-height: 1.5;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.tipIcon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-}
-
-.tipIconBlue {
-  background: var(--color-primary-fixed);
-  color: var(--color-primary);
-}
-
-.tipIconButter {
-  background: var(--color-tertiary-fixed);
-  color: var(--color-tertiary);
+.dongChipActive {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-sm);
 }
