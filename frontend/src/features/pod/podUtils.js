@@ -8,7 +8,18 @@ import { useEffect, useState } from 'react'
  *   - 현재 인원 + 1 → "내가 지금 참여하면 이 가격" (상세·참여 확인 화면)
  */
 export function calcPerPersonPrice(totalAmount, commissionRate, headCount) {
-  return Math.ceil((totalAmount * (1 + commissionRate)) / Math.max(headCount, 1))
+  return Math.ceil(totalWithCommission100(totalAmount, commissionRate) / (100 * Math.max(headCount, 1)))
+}
+
+/**
+ * 총액 × (1 + 수고비율)을 "100배 한 정수"로 계산한다.
+ * 그냥 totalAmount * 1.05 로 하면 컴퓨터는 1.05를 정확히 저장하지 못해서(부동소수점 오차)
+ * 1782.0000000002 같은 값이 나오고, 올림하면 1원이 더 붙는다 (백엔드 BigDecimal 결과와 어긋남).
+ * 수고비율을 정수 %로 바꿔 정수끼리만 곱하면 오차가 생기지 않는다. (백엔드도 1% 단위만 허용)
+ */
+export function totalWithCommission100(totalAmount, commissionRate) {
+  const percent = Math.round(commissionRate * 100)
+  return totalAmount * (100 + percent)
 }
 
 /** 혼자 샀을 때 가격 대비 몇 % 싸게 사는지. 비교 가격이 없으면 null. */
