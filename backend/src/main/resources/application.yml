@@ -40,10 +40,6 @@ naver:
   ocr:
     invoke-url: ${NAVER_OCR_INVOKE_URL:}
     secret-key: ${NAVER_OCR_SECRET_KEY:}
-  shopping:
-    client-id: ${NAVER_SHOPPING_CLIENT_ID:}
-    client-secret: ${NAVER_SHOPPING_CLIENT_SECRET:}
-
 # 주소+GPS 건물 인증 온보딩(① 지원). 키가 없으면 각 Config가 Stub 구현체를 자동 선택한다.
 juso:
   api-key: ${JUSO_API_KEY:}
