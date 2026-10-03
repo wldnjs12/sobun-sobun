@@ -59,6 +59,7 @@ Stitch 디자인(`stitch_new_starter_project/`) 16개 화면을 모두 구현하
 | 내 참여 팟 / 인증 여부 / 정산 결과를 다시 조회하는 API 없음 | 이 브라우저 localStorage에 기억 → **다른 기기의 참여자는 정산 결과를 못 봄** | `GET /pods?userId=`, `GET /settlements/{podId}` (②③) |
 | 보관함 번호·비밀번호 | "보관 후 알려드려요" | 저장/조회 API (③) |
 | `ProductSearchService` 스텁 | 최저가 화면에 에러 안내 | ④ 김민준 구현 |
+| QR 스캔 화면에 **데모 인증코드(`demo-qr-token`) + 복사 버튼** 노출 | 데모 편의용 (`QrScanPage.jsx`의 `DEMO_QR_TOKEN`, DB `qr_token`과 같아야 함) | **실서비스 전 반드시 제거** — QR 토큰을 화면에 공개하는 셈 |
 
 ## 다음 작업자 안내
 
