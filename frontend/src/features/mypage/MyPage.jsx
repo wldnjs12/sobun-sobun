@@ -128,13 +128,13 @@ export default function MyPage() {
 
         <section className={styles.settings}>
           <h2>계정 및 거점</h2>
-          <Link to="/onboarding/scan" className={styles.settingRow}>
+          <Link to="/onboarding/address" className={styles.settingRow}>
             <Icon name="door_front" size={22} className={styles.primaryIcon} />
             <div>
-              <strong>비대면 픽업 거점</strong>
-              <span>{BUILDING.name} 1층 무인락커</span>
+              <strong>내 건물</strong>
+              <span>{BUILDING.name}</span>
             </div>
-            <span className={styles.settingAction}>다시 인증</span>
+            <span className={styles.settingAction}>건물 변경</span>
           </Link>
         </section>
       </main>
