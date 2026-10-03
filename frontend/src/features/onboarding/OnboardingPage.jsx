@@ -5,13 +5,14 @@ import styles from './Onboarding.module.css'
 
 const STEPS = [
   { title: '입주민 매칭', sub: '자동 인원 모집' },
-  { title: '1층 보관', sub: '개별 소분 포장' },
+  { title: '1층 보관', sub: '묶음 그대로 나눔' },
   { title: '비대면 수령', sub: '얼굴 안 보고 픽업' },
 ]
 
 /**
  * 시작 화면 (디자인 핸드오프 S0 · Stitch 01번). 핵심 기능 ① 온보딩의 첫 화면.
  * 톤: "이웃과 친해지자"보다 "얼굴 안 봐도 되고, 돈 아낀다" (DESIGN_HANDOFF.md 톤앤매너)
+ * 2026-10-03 기획 개편: 대상 = 인하대 근처 이웃, 품목 = 생필품·가공식품, 인증 = 주소 등록 + GPS
  */
 export default function OnboardingPage() {
   const navigate = useNavigate()
@@ -20,9 +21,7 @@ export default function OnboardingPage() {
   return (
     <div className={styles.page}>
       <header className={styles.brandBar}>
-        <span className={styles.logo}>
-          <Icon name="grid_view" size={20} filled />
-        </span>
+        <img src="/logo.svg" alt="소분소분 로고" className={styles.logo} />
         <span className={styles.brandName}>소분소분</span>
         <span className={styles.brandTag}>오피스텔·빌라 특화</span>
       </header>
@@ -31,7 +30,7 @@ export default function OnboardingPage() {
         <section className={styles.hero}>
           <span className={styles.pill}>
             <Icon name="groups" size={16} />
-            1인 가구 전용 소분 공동구매
+            우리 건물 이웃 공동구매
           </span>
           <h1 className={styles.heroTitle}>
             대용량 가격으로,
@@ -39,7 +38,7 @@ export default function OnboardingPage() {
             <span className={styles.heroAccent}>필요한 만큼만.</span>
           </h1>
           <p className={styles.heroBody}>
-            같은 건물 사람들과 나누면 버리지 않고 코스트코·트레이더스 가격 그대로 알뜰하게 살 수 있어요.
+            화장지·생수 같은 생필품, 같은 건물 이웃과 나누면 코스트코·트레이더스 가격 그대로 알뜰하게 살 수 있어요.
           </p>
           <div className={styles.noContact}>
             <Icon name="lock_open" size={20} />
@@ -54,23 +53,23 @@ export default function OnboardingPage() {
             </span>
             <div>
               <div className={styles.cardEyebrow}>이렇게 아껴요 (예시)</div>
-              <div className={styles.cardTitle}>그릭요거트 대용량을 4명이 나누면</div>
+              <div className={styles.cardTitle}>화장지 30롤을 3명이 나누면</div>
             </div>
           </div>
           <div className={styles.compare}>
             <div className={styles.compareRow}>
-              <span>마트에서 소량으로 살 때</span>
-              <span className={styles.strike}>12,900원</span>
+              <span>마트에서 10롤만 살 때</span>
+              <span className={styles.strike}>11,900원</span>
             </div>
             <div className={styles.compareBar}>
               <span style={{ width: '100%' }} className={styles.compareBarGray} />
             </div>
             <div className={styles.compareRow}>
-              <span className={styles.compareAccent}>소분소분 4인 분할가</span>
-              <span className={styles.compareBig}>3,200원</span>
+              <span className={styles.compareAccent}>소분소분 3인 분할가</span>
+              <span className={styles.compareBig}>7,700원</span>
             </div>
             <div className={styles.compareBar}>
-              <span style={{ width: '25%' }} className={styles.compareBarBlue} />
+              <span style={{ width: '65%' }} className={styles.compareBarBlue} />
             </div>
           </div>
         </section>
@@ -101,13 +100,13 @@ export default function OnboardingPage() {
       </main>
 
       <div className={styles.ctaDock}>
-        <button type="button" className={styles.primaryButton} onClick={() => navigate('/onboarding/scan')}>
-          우리 건물 인증하기
+        <button type="button" className={styles.primaryButton} onClick={() => navigate('/onboarding/address')}>
+          우리 건물 등록하기
           <Icon name="arrow_forward" size={20} />
         </button>
         {alreadyVerified && (
           <Link to="/home" className={styles.textLink}>
-            이미 인증했어요 · 건물 홈으로
+            이미 등록했어요 · 건물 홈으로
           </Link>
         )}
       </div>

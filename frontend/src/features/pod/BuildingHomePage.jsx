@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AppHeader from '../../components/AppHeader.jsx'
 import BottomNav from '../../components/BottomNav.jsx'
 import Icon from '../../components/Icon.jsx'
+import { isBuildingAccessDenied } from '../../api/client.js'
 import PodCard from './PodCard.jsx'
 import EmptyPodState from './EmptyPodState.jsx'
 import { BUILDING, fetchBuildingPods } from './podApi.js'
@@ -32,7 +33,7 @@ export default function BuildingHomePage() {
   useEffect(() => {
     fetchBuildingPods(BUILDING.id)
       .then((data) => setPods(forceEmpty ? [] : data))
-      .catch((e) => setError(e.message))
+      .catch(setError) // 에러 객체째 보관 → 403(건물 소속 불일치) 구분용
       .finally(() => setLoading(false))
   }, [forceEmpty])
 
@@ -86,7 +87,15 @@ export default function BuildingHomePage() {
         </div>
 
         {loading && <p className={styles.message}>팟 목록을 불러오는 중이에요…</p>}
-        {error && <p className={styles.message}>목록을 불러오지 못했어요. ({error})</p>}
+        {/* 403 = 서버가 "이 건물 소속이 아니다"라고 판단 (예: 이 브라우저에 저장된 건물 정보가 서버와 다름) */}
+        {error && isBuildingAccessDenied(error) && (
+          <p className={styles.message}>
+            건물 정보가 서버와 맞지 않아요. <Link to="/onboarding/address">건물을 다시 등록해주세요</Link>
+          </p>
+        )}
+        {error && !isBuildingAccessDenied(error) && (
+          <p className={styles.message}>목록을 불러오지 못했어요. ({error.message})</p>
+        )}
 
         {!loading && !error && openPods.length === 0 && (
           <EmptyPodState onCreatePod={goToCreatePod} />

@@ -1,4 +1,6 @@
-const BASE_URL = '/api'
+// 로컬 개발: vite.config.js가 /api를 8080으로 프록시하므로 상대경로로 충분하다.
+// 배포(Vercel): 프론트와 백엔드가 다른 도메인이라 VITE_API_BASE_URL(백엔드 Railway 주소)을 origin으로 붙인다.
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api`
 
 /**
  * 모든 API 응답이 { success, data, message, code? } 형태(백엔드 ApiResponse)라고 가정하고
@@ -42,4 +44,13 @@ export const api = {
    */
   upload: (path, formData) =>
     request(path, { method: 'POST', body: formData, headers: { 'Content-Type': undefined } }),
+}
+
+/**
+ * "다른 건물 리소스에 접근해서 거절됐다"는 에러인지 (기획 개편: 건물 소속 검증).
+ * 서버 계약: 403 + code "BUILDING_ACCESS_DENIED" (docs/API_SPEC.md ②③⑤)
+ * 화면에서는 이게 true면 일반 에러 문구 대신 "다른 건물이에요" 안내 화면(AccessDeniedView)을 보여준다.
+ */
+export function isBuildingAccessDenied(error) {
+  return error?.code === 'BUILDING_ACCESS_DENIED' || error?.status === 403
 }

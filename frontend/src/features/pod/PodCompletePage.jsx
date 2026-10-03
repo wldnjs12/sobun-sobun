@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
+import { isBuildingAccessDenied } from '../../api/client.js'
+import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { closePod, fetchPod } from './podApi.js'
 import { getMyUserId } from '../../api/currentUser.js'
 import { calcPerPersonPrice } from './podUtils.js'
@@ -28,9 +30,11 @@ export default function PodCompletePage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchPod(podId).then(setPod).catch((e) => setError(e.message))
+    fetchPod(podId).then(setPod).catch(setError) // 에러 객체째 보관 → 403(다른 건물) 구분용
     // 팟장이 마감하면 서버가 closed=true 이벤트를 보내준다 → 다시 불러와서 화면 갱신
-    const client = connectPodSocket(podId, () => fetchPod(podId).then(setPod))
+    const client = connectPodSocket(podId, () => fetchPod(podId).then(setPod), {
+      onDenied: () => setError(Object.assign(new Error('다른 건물의 팟에는 접근할 수 없어요.'), { code: 'BUILDING_ACCESS_DENIED' })),
+    })
     return () => client.deactivate()
   }, [podId])
 
@@ -46,11 +50,13 @@ export default function PodCompletePage() {
     }
   }
 
+  if (isBuildingAccessDenied(error)) return <AccessDeniedView pageTitle="팟 모집 완료" what="팟" />
+
   if (error || !pod) {
     return (
       <div className={styles.page}>
         <PageHeader title="팟 모집 완료" />
-        <p className={styles.message}>{error ?? '불러오는 중이에요…'}</p>
+        <p className={styles.message}>{error?.message ?? '불러오는 중이에요…'}</p>
       </div>
     )
   }

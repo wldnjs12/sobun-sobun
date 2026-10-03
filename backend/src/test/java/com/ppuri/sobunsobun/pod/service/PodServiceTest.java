@@ -1,6 +1,8 @@
 package com.ppuri.sobunsobun.pod.service;
 
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
 import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
@@ -33,10 +35,12 @@ class PodServiceTest {
     @Mock
     private BuildingRepository buildingRepository;
     @Mock
+    private BuildingAccessService buildingAccessService;
+    @Mock
     private SimpMessagingTemplate messagingTemplate;
 
     private PodService newService() {
-        return new PodService(podRepository, podParticipantRepository, buildingRepository, messagingTemplate);
+        return new PodService(podRepository, podParticipantRepository, buildingRepository, buildingAccessService, messagingTemplate);
     }
 
     private PodCreateRequest newCreateRequest() {
@@ -50,6 +54,19 @@ class PodServiceTest {
 
         assertThatThrownBy(() -> podService.create(newCreateRequest()))
                 .isInstanceOf(IllegalArgumentException.class);
+
+        verify(podRepository, never()).save(any());
+    }
+
+    @Test
+    void 건물은_존재해도_대표가_그_건물_소속이_아니면_팟_생성이_거부된다() {
+        PodService podService = newService();
+        when(buildingRepository.existsById(1L)).thenReturn(true);
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(100L, 1L);
+
+        assertThatThrownBy(() -> podService.create(newCreateRequest()))
+                .isInstanceOf(BuildingAccessDeniedException.class);
 
         verify(podRepository, never()).save(any());
     }
@@ -80,11 +97,22 @@ class PodServiceTest {
                 .commissionRate(new BigDecimal("0.05")).build();
         when(podRepository.findByBuildingIdAndClosedFalseOrderByIdDesc(1L)).thenReturn(List.of(pod2, pod1));
 
-        List<PodResponse> result = podService.list(1L);
+        List<PodResponse> result = podService.list(1L, 999L);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).title()).isEqualTo("팟2");
         assertThat(result.get(1).title()).isEqualTo("팟1");
+    }
+
+    @Test
+    void 요청자가_그_건물_소속이_아니면_목록_조회가_거부된다() {
+        PodService podService = newService();
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(999L, 1L);
+
+        assertThatThrownBy(() -> podService.list(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
+
+        verify(podRepository, never()).findByBuildingIdAndClosedFalseOrderByIdDesc(any());
     }
 
     private Pod samplePod() {
@@ -124,6 +152,7 @@ class PodServiceTest {
     @Test
     void 참여하지_않은_사람은_보냈어요를_누를_수_없다() {
         PodService podService = newService();
+        when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
         when(podParticipantRepository.findByPodIdAndUserId(1L, 7L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> podService.markPaid(1L, 7L)).isInstanceOf(IllegalStateException.class);
@@ -135,5 +164,17 @@ class PodServiceTest {
         when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
 
         assertThatThrownBy(() -> podService.listParticipants(1L, 999L)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void 다른_건물_소속이면_팟_참여가_거부된다() {
+        PodService podService = newService();
+        when(podRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(samplePod()));
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(999L, 1L);
+
+        assertThatThrownBy(() -> podService.join(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
+
+        verify(podParticipantRepository, never()).save(any());
     }
 }

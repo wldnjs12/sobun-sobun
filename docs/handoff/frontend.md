@@ -2,9 +2,111 @@
 
 > ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: ①온보딩(QR)과 ④최저가는 기획 개편으로 삭제/교체됩니다. 이 문서는 과거 작업 히스토리로만 보존하며, 최신 기획은 [REPLAN_WORK_ASSIGNMENT.md](../REPLAN_WORK_ASSIGNMENT.md)·[design-changes.md](../design-changes.md)를 참고하세요.
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4) · 담당: 도우현_
+---
 
-## 이번 작업 요약
+## 🆕 기획 개편 후: ① 온보딩 프론트 (주소 + GPS)
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: 도우현 · 백엔드 계약: [API_SPEC.md](../API_SPEC.md) ①_
+
+### 한 일
+- **QR 인증 삭제**: `QrScanPage.jsx`, `VerifyLocationPage.jsx`, PR #9 데모 인증코드·복사 UI까지 전부 제거
+- **S1' 주소 검색** `/onboarding/address` (`AddressSearchPage.jsx`) — 입력 전 / 검색 중 / 결과 / 결과 없음
+- **S1'' 건물 확인·동 선택** `/onboarding/confirm` (`BuildingConfirmPage.jsx`) — 빌라(동 없음) / 아파트 동 목록 / 동 목록 없으면 직접 입력
+- **S2' GPS 인라인 확인 + S3 실패 바텀시트 3종** — `useLocationCheck.jsx` 훅 + `LocationCheckSheet.jsx`. 팟 개설(`POD_CREATE`)·참여 확정(`POD_JOIN`)에 연결
+- 등록한 건물을 "내 건물"로 저장(`api/currentUser.js`의 `setMyBuilding/getMyBuilding`) → `podApi.BUILDING`이 그 값을 읽음(헤더 건물명 등). 건물 미등록이면 `/home` 등 접근 시 시작 화면으로 (`App.jsx`의 `RequireBuilding`)
+- 시작 화면 문구 개편(우리 건물 이웃 · 화장지 30롤 예시), 팟 생성의 "최저가에서 가져왔어요" → "커뮤니티 제안에서 가져왔어요"
+- **버그 수정**: 팟 생성 금액 입력이 `step="100"`이라 21,990원 같은 실제 가격을 브라우저가 거절하고 제출이 안 되던 문제 → `step="1"`
+
+### ✅ 실제 서버 연결 (2026-10-03, PR #17 머지 후)
+- `features/onboarding/onboardingApi.js`의 **`USE_MOCK = false`** — 실제 API(`/auth/addresses/search`, `/auth/buildings/register`, `/auth/location-check`) 사용
+  - ⚠️ 실제 서버에서 `true`로 두면 안 됨: 목업 등록은 서버에 건물 소속이 안 남아서 팟 목록이 전부 403으로 막힘
+  - 백엔드에 주소·지오코딩 키가 없으면 서버가 Stub을 씀: 주소 검색은 고정 후보 2건(용현 한아름아파트·학익 다세대주택), 건물 좌표는 인하대(37.4502, 126.6558) → 크롬 Sensors로 이 좌표를 지정하면 GPS 통과
+  - 실제 서버로 데모 시나리오 확인: 등록 → GPS 통과 팟 개설 → 같은 건물 참여·실시간 → 다른 건물은 목록에 안 보이고 링크 접근 시 403 화면, WebSocket 구독 거부 후 재연결 안 함 → 다른 위치에서 개설 시 서버 OUT_OF_RANGE 시트
+- **🛠 로컬 DB에 예전(QR 시절) 건물 데이터가 있으면** 서버가 `building.building_key`(NOT NULL) 컬럼을 못 만들어 건물 등록이 JDBC 에러로 실패함. 데이터 지우지 않고 해결:
+  ```sql
+  ALTER TABLE building ADD COLUMN IF NOT EXISTS building_key varchar(255);
+  UPDATE building SET building_key = 'legacy-' || id WHERE building_key IS NULL;
+  ALTER TABLE building ALTER COLUMN building_key SET NOT NULL;
+  ```
+  실행 후 백엔드 재시작. (새로 만든 DB·배포 DB는 해당 없음)
+
+### (참고) 목업 모드 — 백엔드 없이 화면만 볼 때 `USE_MOCK = true`
+- 목업 주소: "인하로", "학익", "용현" 등으로 검색 (제니스빌·인하하우스·학익한마음아파트·용현그린아파트 — 가짜 주소). 그 밖에 **아무 주소나 입력해도 입력한 글자 그대로 후보 1개**가 나옴 ("아파트"가 들어 있으면 아파트로 보고 101~103동 목록)
+- 목업 등록은 어떤 건물이든 `buildingId: 1`로 묶음 (지금 팟 API가 건물 1번 기준이라)
+- GPS는 목업이어도 **브라우저 위치는 실제로 받음** → 권한 거부/위치 못 받음(b)(c)은 진짜로 확인 가능. 반경 밖(a)은 주소 뒤에 `?mockGps=out`을 붙여 연 탭에서 흉내 냄
+
+### 👉 김민준님(⑤ 커뮤니티 입장)에서 GPS 확인 쓰는 법
+```jsx
+import useLocationCheck from '../onboarding/useLocationCheck.jsx'
+
+const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
+<button disabled={checking} onClick={() => runWithLocationCheck('COMMUNITY_ENTER', enterCommunity)}>
+  {checking ? '위치를 확인하고 있어요…' : '커뮤니티 입장'}
+</button>
+{locationSheet}  {/* 실패 시 바텀시트 — 화면 어디든 한 번만 넣으면 됨 */}
+```
+- 통과하면 `enterCommunity()`가 실행되고, 실패하면 시트가 뜨고 [다시 확인]이 같은 동작을 다시 시도함. 결과는 캐시하지 않음(매번 확인)
+- 공구 제안 → 팟 생성으로 넘길 때: `navigate('/pods/new', { state: { title: '생수 2L 24병' } })` → 생성 화면에 품목이 채워지고 "커뮤니티 제안에서 가져왔어요" 표시
+
+### 남은 것 / 확인 필요
+- ✅ **하단 탭 `[팟·커뮤니티·내 팟·마이]` 변경 완료** (브랜치 `feature/bottom-nav-tabs`, 도우현이 맡기로 함)
+  - "내 팟" 탭 `/my-pods` (`features/mypage/MyPodsPage.jsx`) — 마이페이지의 참여 내역을 분리, 상태별 필터. 데이터는 `useMyPods.js` 훅으로 마이 탭과 공유
+  - "마이" 탭 — 요약 숫자 + "내 팟" 바로가기 + 내 건물 변경만 남김
+  - **"커뮤니티" 탭 `/community`는 임시 "준비 중" 화면**(`components/ComingSoonPage.jsx`) → **@김민준: 커뮤니티 화면이 생기면 `App.jsx`의 `/community` 라우트 element만 그 화면으로 바꾸면 됨** (탭 쪽은 손댈 필요 없음)
+  - 최저가 탭은 내림. `/products` 라우트·파일 삭제는 김민준님 커뮤니티 PR 담당 그대로
+- 백엔드 ① 붙으면: 실제 주소 API 응답 형태 확인
+- ✅ **다른 건물 접근 차단 화면 완료** (브랜치 `feature/building-access-denied`) — API_SPEC의 `403 BUILDING_ACCESS_DENIED` 계약 기준
+  - 팟 조회에 `userId` 추가: `GET /pods?buildingId=&userId=`, `GET /pods/{id}?userId=` (`podApi.js`) — 픽업 화면 등 `fetchPod`를 쓰는 곳은 자동 적용
+  - WebSocket 연결에 `X-User-Id` 헤더, 서버가 구독을 거부하면 재연결을 멈추고 `onDenied` 호출 (`api/socket.js`)
+  - 팟 상세·모집 완료: 403이면 "다른 건물의 팟이에요" 화면(`components/AccessDeniedView.jsx`). 건물 홈 목록 403이면 "건물 정보가 서버와 맞지 않아요 → 다시 등록" 안내
+  - **@홍수진·@문소원(③ 정산 화면), @김민준(⑤ 커뮤니티)도 같은 화면을 쓰면 됨:**
+    ```jsx
+    import { isBuildingAccessDenied } from '../../api/client.js'
+    import AccessDeniedView from '../../components/AccessDeniedView.jsx'
+    // 에러를 e.message가 아니라 e(객체)로 보관해야 구분 가능
+    if (isBuildingAccessDenied(error)) return <AccessDeniedView pageTitle="정산" what="팟" />   // 커뮤니티면 what="글"
+    ```
+  - ③ 정산 API(`settlementApi.js`)에 `userId` 쿼리 추가는 정산 담당 파일이라 안 건드림 — API_SPEC ③대로 `confirm`/`GET /settlements/{podId}`에 `?userId=` 필요
+  - 검증: 서버 403을 테스트에서 가로채 흉내 내어 확인 (팟 상세·모집 완료·목록 403 화면, 500은 기존 에러 문구 유지, userId 쿼리 전송). 실제 서버 403·WebSocket 구독 거부는 백엔드 가드 머지 후 재확인 필요
+- 검증: 헤드리스 Chrome으로 19개 항목 자동 확인 (빌라·아파트·동 직접입력 등록, 미등록 접근 차단, 팟 개설 GPS 통과 → 생성, 반경 밖·권한 거부·위치 못 받음 시트, 위치 잡힌 뒤 [다시 확인] → 참여 성공), JS 에러 없음
+
+---
+
+## 🆕 ⑤ 커뮤니티 프론트 + 온보딩 새 디자인 (Stitch s1_1·s1_2·s16·s17)
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/community-and-onboarding-design · 담당: 도우현 (팀 합의로 커뮤니티 프론트도 도우현, 백엔드는 김민준)_
+
+### 한 일
+- **S16 목록** `/community` · **S17 상세** `/community/posts/:id` · **S18 글쓰기** `/community/write` (`features/community/`)
+  - 카테고리 칩(전체/공구 제안/나눔/질문/자유), 검색(불러온 글 안에서 글자 필터 — 서버 검색 API 없음), 공구 제안 배너, 글쓰기 버튼
+  - 상세: "글쓴이"·"이웃 N" 익명 표시, 댓글, ⋯ 메뉴(내 것=삭제 / 남의 것=신고 → "신고했어요" 토스트), 공구 제안이면 [팟 개설하기] → `/pods/new`에 첫 줄을 품목명으로 채워 이동
+  - **입장 GPS 확인**(`COMMUNITY_ENTER`, `useCommunityEntry.js`): 탭으로 들어오거나 새로고침·링크로 열면 매번 확인, 상세에서 뒤로가기로 목록 복귀할 땐 다시 안 물음(React Router 이동 종류 POP/PUSH로 구분). 실패하면 글이 안 보이고 "위치 확인이 필요해요" + 실패 시트
+  - 403(다른 건물)이면 `AccessDeniedView`
+- **온보딩 새 디자인**: 주소 검색(s1_2), 건물 확인(s1_1) — 단계 표시, 건물 카드, 동 칩 + "직접입력", **이웃 약속 2개 동의해야 시작**
+- 디자인에서 뺀 것(근거 없는 숫자·기획 위반): **호수 입력**(기획상 호수 안 받음), "GPS 100% 일치·반경 50m", 이웃 수·진행 팟 수·좋아요·조회수·사진·매너온도
+- 하단 탭의 임시 "준비 중" 화면(`ComingSoonPage`) 삭제 → 실제 커뮤니티로 교체
+
+### ⚠️ 목업 상태 + 👉 @김민준(⑤ 백엔드) 맞춰주세요
+- `features/community/communityApi.js` 맨 위 **`USE_MOCK = true`** → ⑤ 백엔드 머지되면 `false`
+- 목업 샘플 글은 **처음 커뮤니티를 연 건물**의 글이 됨 (실제 건물 id는 등록 때 서버가 정해서 미리 모름). 다른 건물은 빈 커뮤니티로 시작 → 건물 분리가 보임. **데모 때는 데모 건물(팟장 폰)에서 커뮤니티를 먼저 열 것**
+- API_SPEC ⑤에 응답 필드가 다 적혀 있지 않아서 프론트가 아래 모양을 **가정**함. 백엔드를 이렇게 맞추거나, 다르면 알려주세요:
+  ```
+  CommunityPostSummary = { id, category, content, commentCount, createdAt, mine }
+  CommunityPostDetail  = { id, category, content, createdAt, mine, suggestable,
+                           comments: [{ id, content, createdAt, authorLabel, mine }] }
+  ```
+  - `authorLabel`: "글쓴이" / "이웃 1"… (API_SPEC 익명화 규칙), `mine`: 내 글·댓글 여부(삭제 버튼용). 작성자 id는 응답에 없음
+  - 제목 칸이 없어서 **content 첫 줄을 제목처럼** 보여줌
+- 목업은 서버 규칙을 흉내 냄(익명 번호 계산, 같은 사람 중복 신고 무시, 3회 신고 숨김, 내 글만 삭제). localStorage에 저장돼서 같은 브라우저의 다른 탭(`?user=2`)과 공유됨 → 다른 사용자 데모 가능
+
+### 검증
+- 헤드리스 Chrome 27개 항목: 온보딩(학익동 칩 검색 → 동 선택·직접입력 → 약속 미동의 시 비활성 → 등록), 커뮤니티(입장 GPS → 목록, 나눔 필터, 검색, 상세 익명 표시, 댓글 "이웃 2 (나)", 신고 토스트, 팟 개설 연결, 글쓰기 빈 내용 에러, 다른 사용자에게 보임, 3명 신고 → 숨김, 내 글 삭제, GPS 반경 밖 → 글 숨김 + 시트). JS 에러 없음
+
+---
+
+## (개편 전 기록) 이번 작업 요약
+
+_당시 최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4)_
 
 Stitch 디자인(`stitch_new_starter_project/`) 16개 화면을 모두 구현하고, 머지된 백엔드 3개(①②③)에 연동했다.
 
@@ -22,6 +124,8 @@ Stitch 디자인(`stitch_new_starter_project/`) 16개 화면을 모두 구현하
 | 13 | 비대면 픽업 | `/pods/:id/pickup` | `PickupPage.jsx` |
 | 14 | 최저가 조회 | `/products` | `features/products/ProductListPage.jsx` |
 | 15 | 마이페이지 | `/mypage` | `features/mypage/MyPage.jsx` |
+
+**앱 로고**: `frontend/public/logo.svg` (4칸 소분 큐브). 시작 화면(01) 왼쪽 위 + 브라우저 탭 아이콘(`index.html` favicon)에 사용. 16px 탭 아이콘에서는 여백 때문에 작게 보여서, 필요하면 여백 줄인 전용 버전을 따로 만들 것.
 
 **같이 고친 버그**
 - 실시간 갱신이 처음부터 연결 안 됨: 백엔드 `/ws-sobun`이 SockJS라 순수 WebSocket은 `/ws-sobun/websocket`으로 붙어야 함 (`api/socket.js`)

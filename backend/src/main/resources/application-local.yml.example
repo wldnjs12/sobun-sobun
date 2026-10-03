@@ -6,3 +6,9 @@ naver:
   ocr:
     invoke-url: "여기에_CLOVA_OCR_Invoke_URL"
     secret-key: "여기에_CLOVA_OCR_Secret_Key"
+juso:
+  api-key: "여기에_도로명주소_API_승인키(confmKey)"
+kakao:
+  rest-api-key: "여기에_카카오_REST_API_키"
+location-check:
+  demo-mode: false
