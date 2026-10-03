@@ -1,5 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
 import com.ppuri.sobunsobun.settlement.dto.ReceiptOcrResult;
@@ -20,7 +21,8 @@ class ReceiptRecognizeTest {
     private static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0};
 
     private static SettlementService serviceWith(ReceiptOcrClient ocrClient) {
-        return new SettlementService(ocrClient, mock(SettlementPodReader.class), mock(SettlementRepository.class));
+        return new SettlementService(ocrClient, mock(SettlementPodReader.class), mock(SettlementRepository.class),
+                mock(BuildingAccessService.class));
     }
 
     private static MockMultipartFile receipt(byte[] content) {

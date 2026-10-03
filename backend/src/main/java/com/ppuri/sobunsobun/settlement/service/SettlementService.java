@@ -1,5 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -8,6 +9,7 @@ import com.ppuri.sobunsobun.settlement.dto.SettlementConfirmRequest;
 import com.ppuri.sobunsobun.settlement.dto.SettlementResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -25,9 +28,13 @@ public class SettlementService {
 
     static final long MAX_RECEIPT_BYTES = 10L * 1024 * 1024; // 10MB
 
+    /** BuildingAccessService 기본 문구는 "팟" 기준이라 정산용 문구를 따로 넘긴다 */
+    static final String OTHER_BUILDING_MESSAGE = "다른 건물의 정산에는 접근할 수 없어요.";
+
     private final ReceiptOcrClient receiptOcrClient;
     private final SettlementPodReader podReader;
     private final SettlementRepository settlementRepository;
+    private final BuildingAccessService buildingAccessService;
 
     /**
      * 영수증 이미지 → OCR → 총액 추출.
@@ -63,21 +70,32 @@ public class SettlementService {
     /**
      * 대표가 확인(또는 수정)한 원가로 정산 확정.
      * 최종 금액 = 원가 × (1 + 수고비율), 1인당 = 최종 금액 ÷ 확정 참여자 수 (원 단위 올림, PodService 실시간 계산과 같은 방식)
+     *
+     * 검사 순서: 입력 → 팟 조회(404) → 건물 소속(403) → 대표(403) → 마감(400) → 참여자 수 → 중복 확정(400).
+     * 건물 가드를 중복 확정 검사보다 앞에 둬서, 다른 건물 사람에게 정산이 이미 있는지조차 알려주지 않는다.
      */
     @Transactional
-    public SettlementResponse confirm(Long podId, SettlementConfirmRequest request) {
+    public SettlementResponse confirm(Long podId, Long userId, SettlementConfirmRequest request) {
         BigDecimal cost = request == null ? null : request.recognizedCost();
         BigDecimal rate = request == null ? null : request.commissionRate();
         validateCost(cost);
         validateRate(rate);
 
-        PodSummary pod = podReader.findPod(podId)
-                .orElseThrow(() -> new SettlementException("팟을 찾을 수 없어요."));
+        PodSummary pod = findPodOrThrow(podId);
+        buildingAccessService.requireMembership(userId, pod.buildingId(), OTHER_BUILDING_MESSAGE);
+        // 팟 마감(Pod.close)의 "대표만 팟을 마감할 수 있습니다."와 같은 문구 톤. 상태는 건물 가드와 같은 403 (close는 409)
+        if (!Objects.equals(pod.hostUserId(), userId)) {
+            throw new SettlementException(HttpStatus.FORBIDDEN, "대표만 정산을 확정할 수 있습니다.");
+        }
+        // 마감 전에 확정하면 이후 참여·취소로 인원이 바뀌어 1인당 금액이 틀어진다
+        if (!pod.closed()) {
+            throw new SettlementException("마감된 팟만 정산을 확정할 수 있어요.");
+        }
         int participantCount = pod.participantCount();
         if (participantCount < 1) {
             throw new SettlementException("참여자가 없는 팟은 정산할 수 없어요.");
         }
-        // TODO: 같은 팟 중복 확정 처리 방식 미확정 — 현재는 이미 확정된 팟이면 거절
+        // 같은 팟은 한 번만 확정한다. DB 유니크 제약이 없어 동시 요청까지 막지는 못한다 (데모 이후 과제)
         if (settlementRepository.existsByPodIdAndConfirmedTrue(podId)) {
             throw new SettlementException("이미 정산이 확정된 팟이에요.");
         }
@@ -94,13 +112,24 @@ public class SettlementService {
 
     /**
      * 확정된 정산 결과 조회. 팟장이 아닌 참여자(다른 기기)도 결과 화면을 볼 수 있게 한다.
-     * 아직 확정 전이면(또는 없는 팟이면) null — 프론트는 이걸 "정산 대기" 상태로 보여준다.
+     * 아직 확정 전이거나 없는 팟이면 null — 프론트는 이걸 "정산 대기" 상태로 보여준다.
+     * 팟이 있으면 정산을 찾기 전에 건물 소속부터 확인한다 (다른 건물이면 403).
      */
     @Transactional(readOnly = true)
-    public SettlementResponse findConfirmed(Long podId) {
+    public SettlementResponse findConfirmed(Long podId, Long userId) {
+        Optional<PodSummary> pod = podReader.findPod(podId);
+        if (pod.isEmpty()) {
+            return null;
+        }
+        buildingAccessService.requireMembership(userId, pod.get().buildingId(), OTHER_BUILDING_MESSAGE);
         return settlementRepository.findFirstByPodIdAndConfirmedTrueOrderByIdDesc(podId)
                 .map(SettlementResponse::from)
                 .orElse(null);
+    }
+
+    private PodSummary findPodOrThrow(Long podId) {
+        return podReader.findPod(podId)
+                .orElseThrow(() -> new SettlementException(HttpStatus.NOT_FOUND, "팟을 찾을 수 없어요."));
     }
 
     /** 정률 수고비를 반영한 최종 정산 금액 계산. 원가 초과 청구를 시스템적으로 차단한다. */
