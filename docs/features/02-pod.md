@@ -36,7 +36,7 @@
 ## 실시간 통신 규약
 
 - 클라이언트는 `/ws-sobun` 엔드포인트로 STOMP 연결 후 `/topic/pods/{podId}`를 구독한다.
-- 서버는 참여/탈퇴/금액 변경 시마다 `PodAmountUpdateEvent { podId, participantCount, perPersonAmount }`를 해당 토픽으로 발행한다.
+- 서버는 참여/탈퇴/마감/금액 변경 시마다 `PodAmountUpdateEvent { podId, participantCount, perPersonAmount, closed }`를 해당 토픽으로 발행한다.
 - 연결이 끊겼다 재연결될 경우, 재연결 직후 REST `GET /pods/{id}`로 최신 상태를 한 번 동기화해야 한다(WebSocket은 놓친 이벤트를 재전송하지 않으므로).
 
 ## 엣지 케이스
@@ -48,6 +48,6 @@
 
 ## 관련 문서
 
-- API: [../API_SPEC.md](../API_SPEC.md) `POST /pods`, `POST /pods/{id}/join`, WebSocket `/ws-sobun`
+- API: [../API_SPEC.md](../API_SPEC.md) `POST /pods`, `GET /pods?buildingId=`, `POST /pods/{id}/join`, WebSocket `/ws-sobun`
 - 데이터 모델: [../ERD.md](../ERD.md) `POD`, `POD_PARTICIPANT`
 - 코드: `backend/.../pod/`, `frontend/src/features/pod/`, `frontend/src/api/socket.js`

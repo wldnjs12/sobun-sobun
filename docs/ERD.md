@@ -16,11 +16,13 @@ erDiagram
         string name
         double latitude
         double longitude
+        string qr_token UK "nullable"
+        datetime qr_token_expires_at "nullable, null이면 만료 없음"
     }
     BUILDING_AUTH {
         long id PK
-        long building_id FK
-        long user_id FK
+        long building_id FK "UK(building_id, user_id)"
+        long user_id FK "UK(building_id, user_id)"
         datetime verified_at
     }
     USER {
@@ -56,6 +58,8 @@ erDiagram
 
 ## 메모
 
-- `POD_PARTICIPANT`, `BUILDING_AUTH`는 아직 엔티티로 만들지 않았습니다 (담당자가 작업하며 추가).
+- `POD_PARTICIPANT`는 아직 엔티티로 만들지 않았습니다 (담당자가 작업하며 추가).
+- `BUILDING_AUTH`는 `auth/domain/BuildingAuth` 엔티티로 추가됐습니다. `(building_id, user_id)` 유니크라서 같은 사용자가 같은 건물에 다시 인증하면 새 행 없이 `verified_at`만 갱신됩니다. `USER` 엔티티가 아직 없어서 `building_id`/`user_id`는 DB FK 없이 id 값만 저장합니다 (`POD.building_id`와 같은 방식).
+- `BUILDING.qr_token`/`qr_token_expires_at`은 QR 인증용 컬럼입니다. 토큰이 없는 기존 건물 행을 위해 nullable이며, 만료 시각이 null이면 만료 없음(데모용 고정 QR)으로 취급합니다.
 - `POD.target_participant_count` 도달 시에만 마감합니다 (목표 금액 방식은 MVP에서 지원 안 함). `deadline`은 화면 표시/참고용이며, 기한이 지나도 자동으로 마감·취소되지 않습니다 — 마감은 대표의 수동 조작(`closed=true`)으로만 이뤄집니다.
 - 최저가 조회(`PRODUCT`)는 다른 도메인과 직접적인 FK 관계가 없는 독립 캐시 테이블로 둡니다.
