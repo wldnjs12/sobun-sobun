@@ -3,6 +3,8 @@ package com.ppuri.sobunsobun.pod.service;
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
+import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
+import com.ppuri.sobunsobun.pod.dto.ParticipantStatusResponse;
 import com.ppuri.sobunsobun.pod.dto.PodAmountUpdateEvent;
 import com.ppuri.sobunsobun.pod.dto.PodCreateRequest;
 import com.ppuri.sobunsobun.pod.dto.PodResponse;
@@ -37,6 +39,7 @@ public class PodService {
                 .targetParticipantCount(request.targetParticipantCount())
                 .commissionRate(request.commissionRateOrDefault())
                 .deadline(request.deadline())
+                .originalPrice(request.originalPrice())
                 .build();
         return PodResponse.from(podRepository.save(pod));
     }
@@ -84,6 +87,46 @@ public class PodService {
         return podRepository.findByBuildingIdAndClosedFalseOrderByIdDesc(buildingId).stream()
                 .map(PodResponse::from)
                 .toList();
+    }
+
+    /** 참여자 본인의 참여/송금/수령 상태 + 픽업 PIN. 참여 안 했으면 PIN 없이 joined=false만 내려준다. */
+    @Transactional(readOnly = true)
+    public MyParticipationResponse getMyParticipation(Long podId, Long userId) {
+        Pod pod = getPod(podId);
+        return podParticipantRepository.findByPodIdAndUserId(podId, userId)
+                .map(participant -> MyParticipationResponse.from(pod, participant))
+                .orElseGet(MyParticipationResponse::notJoined);
+    }
+
+    /** 대표가 보는 참여자별 송금/수령 현황 (대표 본인만 조회 가능). */
+    @Transactional(readOnly = true)
+    public List<ParticipantStatusResponse> listParticipants(Long podId, Long hostUserId) {
+        Pod pod = getPod(podId);
+        if (!pod.getHostUserId().equals(hostUserId)) {
+            throw new IllegalStateException("대표만 참여자 현황을 볼 수 있습니다.");
+        }
+        return podParticipantRepository.findByPodIdOrderByJoinedAt(podId).stream()
+                .map(ParticipantStatusResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public MyParticipationResponse markPaid(Long podId, Long userId) {
+        PodParticipant participant = getMyParticipant(podId, userId);
+        participant.markPaid();
+        return MyParticipationResponse.from(getPod(podId), participant);
+    }
+
+    @Transactional
+    public MyParticipationResponse markPickedUp(Long podId, Long userId) {
+        PodParticipant participant = getMyParticipant(podId, userId);
+        participant.markPickedUp();
+        return MyParticipationResponse.from(getPod(podId), participant);
+    }
+
+    private PodParticipant getMyParticipant(Long podId, Long userId) {
+        return podParticipantRepository.findByPodIdAndUserId(podId, userId)
+                .orElseThrow(() -> new IllegalStateException("참여하지 않은 팟입니다."));
     }
 
     private Pod getPodForUpdate(Long podId) {

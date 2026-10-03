@@ -85,8 +85,16 @@ public class SettlementService {
         BigDecimal perPersonAmount = calculatePerPersonAmount(exactFinalAmount, participantCount);
         BigDecimal finalAmount = exactFinalAmount.setScale(0, RoundingMode.HALF_UP);
 
+        String hostPaymentLink = request.hostPaymentLink();
         Settlement settlement = settlementRepository.save(
-                new Settlement(podId, cost, rate, finalAmount, participantCount, perPersonAmount));
+                new Settlement(podId, cost, rate, finalAmount, participantCount, perPersonAmount, hostPaymentLink));
+        return SettlementResponse.from(settlement);
+    }
+
+    /** 정산 결과 화면(12번) 재조회용 — 확정된 정산이 없으면(아직 업로드 전 등) SettlementException(404 아님, 400). */
+    public SettlementResponse getByPodId(Long podId) {
+        Settlement settlement = settlementRepository.findByPodIdAndConfirmedTrue(podId)
+                .orElseThrow(() -> new SettlementException("아직 확정된 정산이 없어요."));
         return SettlementResponse.from(settlement);
     }
 

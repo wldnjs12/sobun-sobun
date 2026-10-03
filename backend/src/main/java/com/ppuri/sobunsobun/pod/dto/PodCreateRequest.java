@@ -15,7 +15,9 @@ public record PodCreateRequest(
         @NotNull @Positive BigDecimal totalAmount,
         @NotNull @Positive Integer targetParticipantCount,
         BigDecimal commissionRate,
-        LocalDateTime deadline
+        LocalDateTime deadline,
+        /** "혼자 샀을 때" 비교 가격. 최저가 조회(④)에서 팟 생성으로 넘어올 때만 채워짐, 선택값. */
+        BigDecimal originalPrice
 ) {
     private static final BigDecimal DEFAULT_COMMISSION_RATE = new BigDecimal("0.05");
 

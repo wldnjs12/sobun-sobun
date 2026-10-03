@@ -2,6 +2,8 @@ package com.ppuri.sobunsobun.pod.service;
 
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
 import com.ppuri.sobunsobun.pod.domain.Pod;
+import com.ppuri.sobunsobun.pod.domain.PodParticipant;
+import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
 import com.ppuri.sobunsobun.pod.dto.PodCreateRequest;
 import com.ppuri.sobunsobun.pod.dto.PodResponse;
 import com.ppuri.sobunsobun.pod.repository.PodParticipantRepository;
@@ -14,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +40,7 @@ class PodServiceTest {
     }
 
     private PodCreateRequest newCreateRequest() {
-        return new PodCreateRequest(1L, 100L, "생수 30박스", new BigDecimal("30000"), 3, null, null);
+        return new PodCreateRequest(1L, 100L, "생수 30박스", new BigDecimal("30000"), 3, null, null, null);
     }
 
     @Test
@@ -82,5 +85,55 @@ class PodServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(0).title()).isEqualTo("팟2");
         assertThat(result.get(1).title()).isEqualTo("팟1");
+    }
+
+    private Pod samplePod() {
+        return Pod.builder()
+                .buildingId(1L).hostUserId(100L).title("팟1")
+                .totalAmount(new BigDecimal("10000")).targetParticipantCount(2)
+                .commissionRate(new BigDecimal("0.05")).build();
+    }
+
+    @Test
+    void 참여하지_않았으면_참여_상태는_joined_false이고_PIN이_없다() {
+        PodService podService = newService();
+        when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
+        when(podParticipantRepository.findByPodIdAndUserId(1L, 999L)).thenReturn(Optional.empty());
+
+        MyParticipationResponse response = podService.getMyParticipation(1L, 999L);
+
+        assertThat(response.joined()).isFalse();
+        assertThat(response.pickupPin()).isNull();
+    }
+
+    @Test
+    void 참여한_사람이_보냈어요를_누르면_paid가_true가_된다() {
+        PodService podService = newService();
+        Pod pod = samplePod();
+        PodParticipant participant = PodParticipant.builder().podId(1L).userId(7L).build();
+        when(podRepository.findById(1L)).thenReturn(Optional.of(pod));
+        when(podParticipantRepository.findByPodIdAndUserId(1L, 7L)).thenReturn(Optional.of(participant));
+
+        MyParticipationResponse response = podService.markPaid(1L, 7L);
+
+        assertThat(response.paid()).isTrue();
+        assertThat(response.pickedUp()).isFalse();
+        assertThat(response.pickupPin()).isEqualTo(pod.getPickupPin());
+    }
+
+    @Test
+    void 참여하지_않은_사람은_보냈어요를_누를_수_없다() {
+        PodService podService = newService();
+        when(podParticipantRepository.findByPodIdAndUserId(1L, 7L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> podService.markPaid(1L, 7L)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void 대표가_아니면_참여자_현황을_볼_수_없다() {
+        PodService podService = newService();
+        when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
+
+        assertThatThrownBy(() -> podService.listParticipants(1L, 999L)).isInstanceOf(IllegalStateException.class);
     }
 }
