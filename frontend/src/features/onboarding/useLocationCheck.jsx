@@ -13,6 +13,7 @@ import { checkLocation } from './onboardingApi.js'
  *   {locationSheet}   ← 실패했을 때 뜨는 바텀시트(S3). 화면 아무 데나 한 번 넣어두면 된다.
  *
  * 흐름: 위치 확인 → 통과하면 action() 실행 / 실패하면 바텀시트 → [다시 확인]을 누르면 같은 행동을 다시 시도
+ * runWithLocationCheck는 통과하면 true, 실패하면 false를 돌려준다 (커뮤니티 입장처럼 "막힌 상태"를 그려야 할 때 사용)
  * 원칙: 결과를 기억(캐시)하지 않고 매번 새로 확인한다 (docs/open-decisions.md 확정 사항).
  */
 export default function useLocationCheck() {
@@ -31,10 +32,11 @@ export default function useLocationCheck() {
       setChecking(false)
       // reason이 없는 에러 = 서버 연결 실패 등 → 위치를 못 받은 것과 같은 안내 + 원래 메시지
       setFailure({ reason: e.reason ?? 'unavailable', message: e.message })
-      return
+      return false
     }
     setChecking(false)
     await action() // 통과 → 원래 하려던 행동(개설·참여·입장)을 그대로 진행
+    return true
   }, [])
 
   const retry = () => {
