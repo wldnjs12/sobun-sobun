@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
+import { isBuildingAccessDenied } from '../../api/client.js'
+import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import JoinConfirmSheet from './JoinConfirmSheet.jsx'
 import useLocationCheck from '../onboarding/useLocationCheck.jsx'
 import { closePod, fetchPod, joinPod } from './podApi.js'
@@ -37,7 +39,8 @@ export default function PodDetailPage() {
   const myJoinPending = useRef(false)
 
   useEffect(() => {
-    fetchPod(podId).then(setPod).catch((e) => setError(e.message))
+    // 에러 메시지만이 아니라 객체를 통째로 보관한다 → 403(다른 건물)인지 구분해서 다른 화면을 보여주려고
+    fetchPod(podId).then(setPod).catch(setError)
 
     const client = connectPodSocket(podId, async (event) => {
       const before = latestPod.current
@@ -54,6 +57,9 @@ export default function PodDetailPage() {
         const priceAfter = calcPerPersonPrice(updated.totalAmount, updated.commissionRate, updated.participantCount + 1)
         setNotice(`방금 이웃 1명 참여로 ${(priceBefore - priceAfter).toLocaleString()}원 인하!`)
       }
+    }, {
+      // 실시간 구독을 서버가 거부 = 다른 건물 팟 (REST 403보다 먼저 올 수도 있어서 여기서도 처리)
+      onDenied: () => setError(Object.assign(new Error('다른 건물의 팟에는 접근할 수 없어요.'), { code: 'BUILDING_ACCESS_DENIED' })),
     })
     return () => client.deactivate()
   }, [podId])
@@ -62,7 +68,8 @@ export default function PodDetailPage() {
   // ① 2차 인증: 참여를 확정하기 직전에 GPS 확인 (훅이라서 아래의 early return보다 먼저 불러야 한다)
   const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
 
-  if (error) return <Fallback message={error} />
+  if (isBuildingAccessDenied(error)) return <AccessDeniedView pageTitle="팟 상세" what="팟" />
+  if (error) return <Fallback message={error.message} />
   if (!pod) return <Fallback message="팟 정보를 불러오는 중이에요…" />
 
   const isHost = pod.hostUserId === getMyUserId()

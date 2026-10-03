@@ -59,13 +59,14 @@ function toLocalDateTime(date) {
 
 /** 건물의 진행중(미마감) 팟 목록, 최신순 */
 export async function fetchBuildingPods(buildingId) {
-  const pods = await api.get(`/pods?buildingId=${buildingId}`)
+  // userId: 서버가 "요청한 사람이 정말 이 건물 소속인지" 확인하는 데 쓴다 (다르면 403)
+  const pods = await api.get(`/pods?buildingId=${buildingId}&userId=${getMyUserId()}`)
   return pods.map(toPod)
 }
 
 /** 팟 상세 */
 export async function fetchPod(podId) {
-  return toPod(await api.get(`/pods/${podId}`))
+  return toPod(await api.get(`/pods/${podId}?userId=${getMyUserId()}`))
 }
 
 /** 팟 참여 */
