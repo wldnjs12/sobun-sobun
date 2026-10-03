@@ -5,7 +5,7 @@ import styles from './BottomNav.module.css'
 const TABS = [
   { to: '/home', icon: 'home', label: '홈' },
   { to: '/products', icon: 'local_offer', label: '최저가' },
-  { to: '/mypage', icon: 'person', label: '마이' }, // TODO: 마이페이지 라우트 추가 필요
+  { to: '/mypage', icon: 'person', label: '마이' },
 ]
 
 /**
