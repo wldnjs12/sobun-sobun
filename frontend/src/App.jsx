@@ -9,7 +9,6 @@ import PodCompletePage from './features/pod/PodCompletePage.jsx'
 import SettlementPage from './features/settlement/SettlementPage.jsx'
 import SettlementResultPage from './features/settlement/SettlementResultPage.jsx'
 import PickupPage from './features/settlement/PickupPage.jsx'
-import ProductListPage from './features/products/ProductListPage.jsx'
 import MyPage from './features/mypage/MyPage.jsx'
 import MyPodsPage from './features/mypage/MyPodsPage.jsx'
 import CommunityListPage from './features/community/CommunityListPage.jsx'
@@ -51,8 +50,7 @@ export default function App() {
         <Route path="/settlements/:podId/result" element={<RequireBuilding><SettlementResultPage /></RequireBuilding>} />
         <Route path="/pods/:podId/pickup" element={<RequireBuilding><PickupPage /></RequireBuilding>} />
 
-        {/* ④ 최저가 (14) · 마이페이지 (15) */}
-        <Route path="/products" element={<RequireBuilding><ProductListPage /></RequireBuilding>} />
+        {/* 마이페이지 (15) · 내 팟 */}
         <Route path="/mypage" element={<RequireBuilding><MyPage /></RequireBuilding>} />
         <Route path="/my-pods" element={<RequireBuilding><MyPodsPage /></RequireBuilding>} />
 
