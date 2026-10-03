@@ -7,6 +7,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +44,7 @@ public class JusoAddressSearchClient implements AddressSearchClient {
                 .queryParam("countPerPage", 20)
                 .queryParam("keyword", keyword)
                 .queryParam("resultType", "json")
+                .encode(StandardCharsets.UTF_8)
                 .build()
                 .toUri();
 
