@@ -60,6 +60,37 @@ const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
 
 ---
 
+## 🆕 ⑤ 커뮤니티 프론트 + 온보딩 새 디자인 (Stitch s1_1·s1_2·s16·s17)
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/community-and-onboarding-design · 담당: 도우현 (팀 합의로 커뮤니티 프론트도 도우현, 백엔드는 김민준)_
+
+### 한 일
+- **S16 목록** `/community` · **S17 상세** `/community/posts/:id` · **S18 글쓰기** `/community/write` (`features/community/`)
+  - 카테고리 칩(전체/공구 제안/나눔/질문/자유), 검색(불러온 글 안에서 글자 필터 — 서버 검색 API 없음), 공구 제안 배너, 글쓰기 버튼
+  - 상세: "글쓴이"·"이웃 N" 익명 표시, 댓글, ⋯ 메뉴(내 것=삭제 / 남의 것=신고 → "신고했어요" 토스트), 공구 제안이면 [팟 개설하기] → `/pods/new`에 첫 줄을 품목명으로 채워 이동
+  - **입장 GPS 확인**(`COMMUNITY_ENTER`, `useCommunityEntry.js`): 탭으로 들어오거나 새로고침·링크로 열면 매번 확인, 상세에서 뒤로가기로 목록 복귀할 땐 다시 안 물음(React Router 이동 종류 POP/PUSH로 구분). 실패하면 글이 안 보이고 "위치 확인이 필요해요" + 실패 시트
+  - 403(다른 건물)이면 `AccessDeniedView`
+- **온보딩 새 디자인**: 주소 검색(s1_2), 건물 확인(s1_1) — 단계 표시, 건물 카드, 동 칩 + "직접입력", **이웃 약속 2개 동의해야 시작**
+- 디자인에서 뺀 것(근거 없는 숫자·기획 위반): **호수 입력**(기획상 호수 안 받음), "GPS 100% 일치·반경 50m", 이웃 수·진행 팟 수·좋아요·조회수·사진·매너온도
+- 하단 탭의 임시 "준비 중" 화면(`ComingSoonPage`) 삭제 → 실제 커뮤니티로 교체
+
+### ⚠️ 목업 상태 + 👉 @김민준(⑤ 백엔드) 맞춰주세요
+- `features/community/communityApi.js` 맨 위 **`USE_MOCK = true`** → ⑤ 백엔드 머지되면 `false`
+- API_SPEC ⑤에 응답 필드가 다 적혀 있지 않아서 프론트가 아래 모양을 **가정**함. 백엔드를 이렇게 맞추거나, 다르면 알려주세요:
+  ```
+  CommunityPostSummary = { id, category, content, commentCount, createdAt, mine }
+  CommunityPostDetail  = { id, category, content, createdAt, mine, suggestable,
+                           comments: [{ id, content, createdAt, authorLabel, mine }] }
+  ```
+  - `authorLabel`: "글쓴이" / "이웃 1"… (API_SPEC 익명화 규칙), `mine`: 내 글·댓글 여부(삭제 버튼용). 작성자 id는 응답에 없음
+  - 제목 칸이 없어서 **content 첫 줄을 제목처럼** 보여줌
+- 목업은 서버 규칙을 흉내 냄(익명 번호 계산, 같은 사람 중복 신고 무시, 3회 신고 숨김, 내 글만 삭제). localStorage에 저장돼서 같은 브라우저의 다른 탭(`?user=2`)과 공유됨 → 다른 사용자 데모 가능
+
+### 검증
+- 헤드리스 Chrome 27개 항목: 온보딩(학익동 칩 검색 → 동 선택·직접입력 → 약속 미동의 시 비활성 → 등록), 커뮤니티(입장 GPS → 목록, 나눔 필터, 검색, 상세 익명 표시, 댓글 "이웃 2 (나)", 신고 토스트, 팟 개설 연결, 글쓰기 빈 내용 에러, 다른 사용자에게 보임, 3명 신고 → 숨김, 내 글 삭제, GPS 반경 밖 → 글 숨김 + 시트). JS 에러 없음
+
+---
+
 ## (개편 전 기록) 이번 작업 요약
 
 _당시 최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-settlement-ui (← feature/pod-screens, PR #4)_
