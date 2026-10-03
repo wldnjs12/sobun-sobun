@@ -42,7 +42,20 @@ const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
   - "마이" 탭 — 요약 숫자 + "내 팟" 바로가기 + 내 건물 변경만 남김
   - **"커뮤니티" 탭 `/community`는 임시 "준비 중" 화면**(`components/ComingSoonPage.jsx`) → **@김민준: 커뮤니티 화면이 생기면 `App.jsx`의 `/community` 라우트 element만 그 화면으로 바꾸면 됨** (탭 쪽은 손댈 필요 없음)
   - 최저가 탭은 내림. `/products` 라우트·파일 삭제는 김민준님 커뮤니티 PR 담당 그대로
-- 백엔드 ① 붙으면: 실제 주소 API 응답 형태 확인, 다른 건물 팟 접근 시 403 화면 처리 필요
+- 백엔드 ① 붙으면: 실제 주소 API 응답 형태 확인
+- ✅ **다른 건물 접근 차단 화면 완료** (브랜치 `feature/building-access-denied`) — API_SPEC의 `403 BUILDING_ACCESS_DENIED` 계약 기준
+  - 팟 조회에 `userId` 추가: `GET /pods?buildingId=&userId=`, `GET /pods/{id}?userId=` (`podApi.js`) — 픽업 화면 등 `fetchPod`를 쓰는 곳은 자동 적용
+  - WebSocket 연결에 `X-User-Id` 헤더, 서버가 구독을 거부하면 재연결을 멈추고 `onDenied` 호출 (`api/socket.js`)
+  - 팟 상세·모집 완료: 403이면 "다른 건물의 팟이에요" 화면(`components/AccessDeniedView.jsx`). 건물 홈 목록 403이면 "건물 정보가 서버와 맞지 않아요 → 다시 등록" 안내
+  - **@홍수진·@문소원(③ 정산 화면), @김민준(⑤ 커뮤니티)도 같은 화면을 쓰면 됨:**
+    ```jsx
+    import { isBuildingAccessDenied } from '../../api/client.js'
+    import AccessDeniedView from '../../components/AccessDeniedView.jsx'
+    // 에러를 e.message가 아니라 e(객체)로 보관해야 구분 가능
+    if (isBuildingAccessDenied(error)) return <AccessDeniedView pageTitle="정산" what="팟" />   // 커뮤니티면 what="글"
+    ```
+  - ③ 정산 API(`settlementApi.js`)에 `userId` 쿼리 추가는 정산 담당 파일이라 안 건드림 — API_SPEC ③대로 `confirm`/`GET /settlements/{podId}`에 `?userId=` 필요
+  - 검증: 서버 403을 테스트에서 가로채 흉내 내어 확인 (팟 상세·모집 완료·목록 403 화면, 500은 기존 에러 문구 유지, userId 쿼리 전송). 실제 서버 403·WebSocket 구독 거부는 백엔드 가드 머지 후 재확인 필요
 - 검증: 헤드리스 Chrome으로 19개 항목 자동 확인 (빌라·아파트·동 직접입력 등록, 미등록 접근 차단, 팟 개설 GPS 통과 → 생성, 반경 밖·권한 거부·위치 못 받음 시트, 위치 잡힌 뒤 [다시 확인] → 참여 성공), JS 에러 없음
 
 ---

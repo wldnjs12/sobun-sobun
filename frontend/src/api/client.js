@@ -45,3 +45,12 @@ export const api = {
   upload: (path, formData) =>
     request(path, { method: 'POST', body: formData, headers: { 'Content-Type': undefined } }),
 }
+
+/**
+ * "다른 건물 리소스에 접근해서 거절됐다"는 에러인지 (기획 개편: 건물 소속 검증).
+ * 서버 계약: 403 + code "BUILDING_ACCESS_DENIED" (docs/API_SPEC.md ②③⑤)
+ * 화면에서는 이게 true면 일반 에러 문구 대신 "다른 건물이에요" 안내 화면(AccessDeniedView)을 보여준다.
+ */
+export function isBuildingAccessDenied(error) {
+  return error?.code === 'BUILDING_ACCESS_DENIED' || error?.status === 403
+}
