@@ -9,7 +9,16 @@ async function request(path, options = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
-  const json = await res.json()
+
+  // 백엔드가 꺼져 있거나 서버 오류 페이지(HTML)가 오면 JSON이 아니라서 res.json()이 터진다.
+  // 그대로 두면 "Unexpected token <" 같은 알아보기 힘든 에러가 화면에 나오므로 미리 바꿔준다.
+  let json
+  try {
+    json = await res.json()
+  } catch {
+    throw new Error(`서버에 연결하지 못했어요 (HTTP ${res.status}). 백엔드가 켜져 있는지 확인해주세요.`)
+  }
+
   if (!json.success) {
     throw new Error(json.message ?? '요청에 실패했습니다')
   }
@@ -19,4 +28,5 @@ async function request(path, options = {}) {
 export const api = {
   get: (path) => request(path),
   post: (path, body) => request(path, { method: 'POST', body: JSON.stringify(body) }),
+  delete: (path) => request(path, { method: 'DELETE' }),
 }

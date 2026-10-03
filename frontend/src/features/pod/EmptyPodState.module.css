@@ -1,0 +1,205 @@
+.card {
+  position: relative;
+  overflow: hidden; /* 모서리 밖으로 번지는 배경 빛(glow)을 카드 안에서 잘라낸다 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.glow {
+  position: absolute;
+  width: 144px;
+  height: 144px;
+  border-radius: var(--radius-full);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.glowTopLeft {
+  top: -48px;
+  left: -48px;
+  background: rgba(147, 204, 255, 0.3);
+}
+
+.glowBottomRight {
+  right: -40px;
+  bottom: -40px;
+  background: rgba(255, 220, 197, 0.4);
+}
+
+.illustration {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.illustrationCircle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-low);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transform: scale(0.95);
+}
+
+.illustrationInnerCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: rgba(211, 228, 254, 0.6);
+}
+
+.illustrationSvg {
+  position: relative;
+  width: 96px;
+  height: 96px;
+}
+
+.statusBadge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 220, 197, 0.5);
+  color: var(--color-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.heading {
+  position: relative;
+  margin: 0 0 var(--space-xs);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.025em;
+}
+
+.description {
+  position: relative;
+  max-width: 270px;
+  margin: 0 0 var(--space-md);
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.625;
+}
+
+.createButton {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 14px var(--space-md);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-md);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  transition: transform 0.1s;
+}
+
+.createButton:active {
+  transform: scale(0.98);
+}
+
+.voteLink {
+  position: relative;
+  margin-top: var(--space-md);
+  padding: var(--space-xs) 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.voteLink:hover {
+  text-decoration: underline;
+}
+
+/* ── 팁 박스 ── */
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 223, 159, 0.3);
+}
+
+.tipIcon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: rgba(249, 189, 34, 0.5);
+  color: var(--color-on-tertiary-fixed);
+}
+
+.tipHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-xs);
+}
+
+.tipTitle {
+  color: var(--color-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.tipTag {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(118, 87, 0, 0.1);
+  color: var(--color-tertiary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.tipBody {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.625;
+}
+
+.tipHighlight {
+  color: var(--color-on-surface);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--color-tertiary-fixed-dim);
+  text-decoration-thickness: 2px;
+}

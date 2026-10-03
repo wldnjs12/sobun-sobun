@@ -1,0 +1,285 @@
+/* 모바일 앱 화면처럼 보이도록 폭을 480px로 제한하고 가운데 정렬 */
+.page {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--color-surface);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--margin-mobile) 96px; /* 아래 96px: 고정된 하단 탭 바에 마지막 카드가 가려지지 않게 */
+}
+
+.message {
+  margin: var(--space-lg) 0;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ── 인증 상태 줄 ── */
+.statusStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.statusLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.statusBuilding {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.liveBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-fixed);
+  color: var(--color-on-secondary-fixed);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary);
+  animation: ping 1.5s ease-out infinite;
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ── 히어로 배너 ── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    to bottom right,
+    var(--color-primary),
+    var(--color-primary-container),
+    var(--color-primary-fixed-dim)
+  );
+  box-shadow: var(--shadow-md);
+  color: #fff;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.heroTag {
+  width: max-content;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.375;
+}
+
+.heroPerks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-sm);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.heroPerkIcon {
+  color: var(--color-tertiary-fixed);
+}
+
+.heroDot {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.heroGift {
+  position: absolute;
+  right: -12px;
+  bottom: -8px;
+  width: 112px;
+  height: 112px;
+  opacity: 0.95;
+  transform: rotate(6deg);
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+}
+
+/* ── 카테고리 칩 ── */
+.chipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  overflow-x: auto; /* 칩이 많아지면 가로로 스크롤 */
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.chips {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  transition: transform 0.1s;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chipActive {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.createChip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.createChip:hover {
+  background: var(--color-tertiary-fixed-dim);
+}
+
+.createChipIcon {
+  color: var(--color-tertiary);
+}
+
+/* ── 팟 카드 목록 ── */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ── 하단 제안 카드 ── */
+.suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: var(--space-xs) 0 var(--space-lg);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: rgba(220, 233, 255, 0.6);
+  box-shadow: var(--shadow-sm);
+}
+
+.suggestionText {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.suggestionIcon {
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.suggestionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.suggestionBody {
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.suggestionButton {
+  flex-shrink: 0;
+  padding: var(--space-sm) 14px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
