@@ -47,9 +47,11 @@
 | --- | --- | --- | --- | --- |
 | POST | /settlements/receipts | 영수증 업로드 → OCR 인식 (JPG/PNG, 10MB 이하) | multipart: `receipt` (파일) | `{ recognizedAmount, success }` |
 | POST | /settlements/{podId}/confirm | 정산 확정 (팟당 1회) | `{ recognizedCost, commissionRate }` (원가: 원 단위 정수, 수고비율: 0~1, 0.01 단위) | `Settlement` |
+| GET | /settlements/{podId} | 확정된 정산 결과 조회 (참여자·다른 기기용) | - | `Settlement` 또는 `null` |
 
 - **OCR 인식 실패는 에러가 아닙니다**: OCR 호출 실패·타임아웃·총액을 못 찾은 경우 모두 `200` · `{ "success": true, "data": { "recognizedAmount": null, "success": false }, "message": null }` → 프론트는 `data.success`로 수동 입력 폼 전환.
 - `Settlement` 응답 필드: `{ id, podId, receiptImageUrl, recognizedCost, commissionRate, finalAmount, participantCount, perPersonAmount, confirmed }` — `finalAmount = recognizedCost × (1 + commissionRate)` (원 단위 반올림), `perPersonAmount = finalAmount ÷ participantCount` (원 단위 올림), `participantCount`는 확정 시점 `Pod.participantCount` 스냅샷, `receiptImageUrl`은 현재 항상 `null`.
+- **결과 조회는 미확정도 에러가 아닙니다**: 아직 확정 전이거나 없는 팟이면 `200` · `{ "success": true, "data": null, "message": null }` → 프론트는 `data === null`이면 "정산 대기" 표시. 다시 조회할 때 금액은 DB 값 그대로라 `12915.00`처럼 소수점 둘째 자리까지 옵니다.
 - **거절 응답**: `400` · `{ "success": false, "data": null, "message": "..." }` (`code` 없음, `message`를 화면에 그대로 표시)
 
 | API | 조건 | message |

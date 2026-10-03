@@ -1,12 +1,12 @@
 # 핸드오프 — ③ 대표 수고비 정산 API (`feature/settlement`)
 
-담당: 문소원(백엔드) · 프론트 페어: 홍수진 · PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
+담당: 문소원(백엔드) · 프론트 페어: 홍수진 · PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
 
 _최종 갱신: 2026-10-03_
 
 ## 1. 한 줄 요약
 
-영수증 사진을 Naver Clova OCR(일반 도메인)로 읽어 총액을 뽑는 `POST /api/settlements/receipts`와, 대표가 확인한 원가에 수고비율을 반영해 1인당 금액을 확정하는 `POST /api/settlements/{podId}/confirm`을 구현했다. **OCR이 실패해도 에러가 아니라 `200` + `data.success=false`로 내려가서, 프론트가 수동 입력 폼으로 넘어갈 수 있다.**
+영수증 사진을 Naver Clova OCR(일반 도메인)로 읽어 총액을 뽑는 `POST /api/settlements/receipts`와, 대표가 확인한 원가에 수고비율을 반영해 1인당 금액을 확정하는 `POST /api/settlements/{podId}/confirm`, 확정된 결과를 다른 기기에서도 볼 수 있게 하는 `GET /api/settlements/{podId}`를 구현했다. **OCR이 실패해도 에러가 아니라 `200` + `data.success=false`로 내려가서, 프론트가 수동 입력 폼으로 넘어갈 수 있다.**
 
 ## 2. API 명세
 
@@ -71,7 +71,18 @@ Content-Type: application/json
 { "success": false, "data": null, "message": "이미 정산이 확정된 팟이에요." }
 ```
 
-### 2-3. 400 거절 케이스 (`code` 없음, `message`를 화면에 그대로 표시)
+### 2-3. 확정 결과 조회 `GET /api/settlements/{podId}`
+
+| 구분 | 내용 |
+| --- | --- |
+| 확정된 정산 있음 | `200` · `{ "success": true, "data": Settlement, "message": null }` (2-2 확정 응답과 같은 필드) |
+| **확정 전 / 없는 팟** | `200` · `{ "success": true, "data": null, "message": null }` |
+
+- 미확정을 에러가 아닌 `data: null`로 주는 이유: 공용 `client.js`는 `success=false`면 예외를 던진다. 정상 응답에 `null`을 줘야 화면이 에러 처리 없이 "정산 대기"를 바로 그릴 수 있다. 대신 "확정 전"과 "없는 팟"은 구분되지 않는다.
+- 다시 조회할 때 금액은 DB 값 그대로라 `12915.00`처럼 소수점 둘째 자리까지 온다 (확정 직후 응답은 `12915`). 프론트는 `Number()`로 변환해서 쓴다.
+- `pod_id` 유니크 제약이 없어 같은 팟의 정산이 2건일 수 있으므로, 가장 최근 확정 건 하나를 돌려준다.
+
+### 2-4. 400 거절 케이스 (`code` 없음, `message`를 화면에 그대로 표시)
 
 | API | 조건 | message |
 | --- | --- | --- |
@@ -101,15 +112,15 @@ Content-Type: application/json
 
 **파일** (`backend/src/main/java/com/ppuri/sobunsobun/settlement/` 기준)
 
-- `controller/SettlementController` — `/{podId}/confirm` 추가, `SettlementException`·`receipt` 파트 누락 → 400 변환
-- `service/SettlementService` — 파일 검증, OCR 호출 + 총액 추출, 확정 계산·검증·저장
+- `controller/SettlementController` — `POST /{podId}/confirm`, `GET /{podId}` 추가, `SettlementException`·`receipt` 파트 누락 → 400 변환
+- `service/SettlementService` — 파일 검증, OCR 호출 + 총액 추출, 확정 계산·검증·저장, 확정 결과 조회(`findConfirmed`)
 - `service/ReceiptOcrClient` (인터페이스), `NaverReceiptOcrClient`, `StubReceiptOcrClient`, `ReceiptOcrConfig` — 키가 있으면 Naver, 없으면 Stub
 - `service/ReceiptAmountExtractor` — OCR 텍스트에서 총액 추출 (정규식)
 - `service/PodParticipantCountReader` (인터페이스), `PodTableParticipantCountReader` — 참여자 수 조회 임시 구현 (5번)
-- `domain/Settlement` — 컬럼 3개 + 생성자 추가, `domain/SettlementRepository`, `domain/SettlementException` — 신규
+- `domain/Settlement` — 컬럼 3개 + 생성자 추가, `domain/SettlementRepository`(최근 확정 건 조회 `findFirstByPodIdAndConfirmedTrueOrderByIdDesc` 포함), `domain/SettlementException` — 신규
 - `dto/SettlementConfirmRequest`, `dto/SettlementResponse` — 신규 (`dto/ReceiptOcrResult`는 기존 그대로)
 - `backend/src/main/resources/application.yml` — multipart 한도 15MB (기본 1MB는 휴대폰 사진에 부족)
-- 테스트 31개: `ReceiptAmountExtractorTest`(6), `ReceiptOcrClientTest`(3), `ReceiptRecognizeTest`(8), `SettlementConfirmTest`(14)
+- 테스트 33개: `ReceiptAmountExtractorTest`(6), `ReceiptOcrClientTest`(3), `ReceiptRecognizeTest`(8), `SettlementConfirmTest`(14), `SettlementFindTest`(2)
 
 **다른 도메인 영향**
 
@@ -138,11 +149,13 @@ Content-Type: application/json
    curl -X POST http://localhost:8080/api/settlements/1/confirm -H "Content-Type: application/json" \
      -d '{"recognizedCost":12300,"commissionRate":0.05}'
    # 다시 확정 → 400 "이미 정산이 확정된 팟이에요."
+   # 결과 조회 → 확정 전이면 data: null, 확정 후면 위 결과 (금액은 12915.00 형식)
+   curl http://localhost:8080/api/settlements/1
    ```
    > 💡 Windows Git Bash에서는 curl 인자에 한글을 직접 넣으면 UTF-8로 전달되지 않아 `400 JSON parse error: Invalid UTF-8 middle byte`가 난다. 한글이 든 JSON은 UTF-8 파일로 저장해 `--data-binary @pod.json`으로 보내면 된다.
 5. **OCR 실패 흐름 확인**: 이미지가 아닌 파일을 `.jpg`로 바꿔 올리면 400, 진짜 사진인데 키가 잘못됐으면 200 + `data.success=false`.
 
-> ✅ 2026-10-03 `develop`(`f3d6307`) + 로컬 PostgreSQL + Stub OCR로 4번 흐름을 curl로 확인했다. 응답은 위 주석 그대로였다 (인식 12300, 확정 `finalAmount 12915` / `participantCount 3` / `perPersonAmount 4305`, 재확정 400). 이미지 아닌 파일, `receipt` 파트 누락, 없는 팟, 참여자 0명도 2-3의 400 메시지 그대로 나왔다.
+> ✅ 2026-10-03 `develop`(`f3d6307`) + 로컬 PostgreSQL + Stub OCR로 4번 흐름을 curl로 확인했다. 응답은 위 주석 그대로였다 (인식 12300, 확정 `finalAmount 12915` / `participantCount 3` / `perPersonAmount 4305`, 재확정 400). 이미지 아닌 파일, `receipt` 파트 누락, 없는 팟, 참여자 0명도 2-4의 400 메시지 그대로 나왔다. 결과 조회(`GET`)는 PR #7 브랜치에서 같은 방식으로 확인했다 (확정 전 `data: null` → 확정 후 결과 반환, 없는 팟 `data: null`).
 >
 > ⚠️ 같은 확인에서 **마감하지 않은 팟도 확정되고, 확정 뒤에도 참여가 된다**는 것을 확인했다 (팟장 1명 상태로 확정 → 1인당 10,500원 저장 → 이후 2번째 사용자 참여 성공, 정산은 1명 기준 그대로). 6번 "참여자 수" 항목 참고.
 >
@@ -180,6 +193,7 @@ Content-Type: application/json
 - **도우현 (프론트, 팟 화면)**
   - 팟장이 마감한 뒤 `/settlements/:podId`로 이동한다 (PR #4 `PodCompletePage`의 "영수증 올리고 정산 요청하기" 버튼). 경로 파라미터는 **팟 id**다.
   - 정산 참여자 수는 서버의 `participantCount`를 그대로 쓰기 때문에, 팟 생성 직후 팟장 참여(`joinPod`)가 실패해서 0명으로 남으면 마감도 정산도 안 된다.
+  - 정산 결과를 지금은 팟장 브라우저 localStorage(`getSavedSettlement`)에만 두고 있다. `GET /settlements/{podId}`로 바꿔야 다른 기기의 참여자도 결과를 본다. 바꿀 곳: `SettlementResultPage.jsx`(state 없을 때 조회, `null`이면 대기 화면), `SettlementPage.jsx`(진입 시 이미 정산했는지 확인), `MyPage.jsx`(팟별 정산 상태).
 
 ## 8. 다음 작업
 
@@ -190,3 +204,5 @@ Content-Type: application/json
 - [ ] 실제 Clova OCR 키로 영수증 몇 장 인식률 확인
 - [x] 로컬 DB에서 4번 전체 흐름 curl 확인 (Stub OCR 기준)
 - [ ] 정산 확정을 마감된 팟에만 허용할지 지원님과 결정
+- [x] 확정 결과 조회 API `GET /settlements/{podId}` (PR #7)
+- [ ] 프론트 3곳을 `getSavedSettlement` 대신 결과 조회 API로 전환 (도우현)
