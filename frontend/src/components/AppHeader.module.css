@@ -58,14 +58,16 @@
 }
 
 .profile {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   margin-left: var(--space-xs);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-fixed);
-  color: var(--color-primary);
+  border-radius: 10px; /* 로고가 둥근 사각형이라 원으로 자르지 않고 모서리만 맞춘다 */
   box-shadow: var(--shadow-sm);
+}
+
+.profileLogo {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
