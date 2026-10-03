@@ -20,9 +20,7 @@ export default function OnboardingPage() {
   return (
     <div className={styles.page}>
       <header className={styles.brandBar}>
-        <span className={styles.logo}>
-          <Icon name="grid_view" size={20} filled />
-        </span>
+        <img src="/logo.svg" alt="소분소분 로고" className={styles.logo} />
         <span className={styles.brandName}>소분소분</span>
         <span className={styles.brandTag}>오피스텔·빌라 특화</span>
       </header>
