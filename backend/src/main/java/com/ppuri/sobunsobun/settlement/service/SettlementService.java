@@ -26,7 +26,7 @@ public class SettlementService {
     static final long MAX_RECEIPT_BYTES = 10L * 1024 * 1024; // 10MB
 
     private final ReceiptOcrClient receiptOcrClient;
-    private final PodParticipantCountReader participantCountReader;
+    private final SettlementPodReader podReader;
     private final SettlementRepository settlementRepository;
 
     /**
@@ -71,8 +71,9 @@ public class SettlementService {
         validateCost(cost);
         validateRate(rate);
 
-        int participantCount = participantCountReader.findParticipantCount(podId)
+        PodSummary pod = podReader.findPod(podId)
                 .orElseThrow(() -> new SettlementException("팟을 찾을 수 없어요."));
+        int participantCount = pod.participantCount();
         if (participantCount < 1) {
             throw new SettlementException("참여자가 없는 팟은 정산할 수 없어요.");
         }

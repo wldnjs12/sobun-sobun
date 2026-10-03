@@ -22,7 +22,7 @@ class SettlementFindTest {
     private static final long POD_ID = 1L;
 
     @Mock
-    private PodParticipantCountReader participantCountReader;
+    private SettlementPodReader podReader;
 
     @Mock
     private SettlementRepository settlementRepository;
@@ -31,7 +31,7 @@ class SettlementFindTest {
 
     @BeforeEach
     void setUp() {
-        settlementService = new SettlementService(new StubReceiptOcrClient(), participantCountReader, settlementRepository);
+        settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository);
     }
 
     @Test

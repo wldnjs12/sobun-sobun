@@ -31,9 +31,11 @@ import static org.mockito.Mockito.verify;
 class SettlementConfirmTest {
 
     private static final long POD_ID = 1L;
+    private static final long BUILDING_ID = 10L;
+    private static final long HOST_USER_ID = 1L;
 
     @Mock
-    private PodParticipantCountReader participantCountReader;
+    private SettlementPodReader podReader;
 
     @Mock
     private SettlementRepository settlementRepository;
@@ -42,12 +44,17 @@ class SettlementConfirmTest {
 
     @BeforeEach
     void setUp() {
-        settlementService = new SettlementService(new StubReceiptOcrClient(), participantCountReader, settlementRepository);
+        settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository);
         lenient().when(settlementRepository.save(any(Settlement.class))).then(returnsFirstArg());
     }
 
+    /** 마감된 팟 (건물 가드·대표·마감 검사가 붙으면 이 기본값이 "통과하는 팟"이 된다) */
+    private static PodSummary closedPod(int participants) {
+        return new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, participants, true);
+    }
+
     private SettlementResponse confirm(String cost, String rate, int participants) {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(participants));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(participants)));
         return settlementService.confirm(POD_ID, new SettlementConfirmRequest(new BigDecimal(cost), new BigDecimal(rate)));
     }
 
@@ -145,14 +152,14 @@ class SettlementConfirmTest {
 
     @Test
     void 없는_팟이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.empty());
+        given(podReader.findPod(POD_ID)).willReturn(Optional.empty());
 
         assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")), "팟을 찾을 수 없어요.");
     }
 
     @Test
     void 참여자가_0명이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(0));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(0)));
 
         assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")),
                 "참여자가 없는 팟은 정산할 수 없어요.");
@@ -160,7 +167,7 @@ class SettlementConfirmTest {
 
     @Test
     void 이미_확정된_팟이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(3));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
         given(settlementRepository.existsByPodIdAndConfirmedTrue(POD_ID)).willReturn(true);
 
         assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")),
