@@ -88,6 +88,9 @@
 - **`CommunityPostDetail`**에 `suggestable: boolean`(category가 `GROUP_BUY_SUGGESTION`이면 true) — true면 프론트가 "이 품목으로 팟 열기" 버튼을 보여주고 `/pods/new`로 이동(이동 시 GPS 재확인).
 - **신고 자동숨김**: 신고 누적 3회(임시값) 이상이면 서버가 자동으로 `hidden=true` 처리, 목록/상세에서 제외.
 - 건물 소속이 아니면 전체 엔드포인트 403.
+- **`CommunityPostSummary`**: `{ id, category, preview(60자), commentCount(숨김 제외), suggestable, mine, createdAt }` — 작성자 정보 없음.
+- **`CommunityPostDetail`**: `{ id, category, authorLabel("글쓴이"), content, suggestable, mine, createdAt, comments: [{ id, authorLabel("글쓴이"\|"이웃 N"), content, mine, createdAt }] }` — 숨김 댓글 제외. `mine`은 요청한 사람이 쓴 것인지(삭제 버튼 노출용).
+- **에러 코드**: 없는/숨김 글·댓글 404 · 중복 신고·본인 글 신고 409 · 다른 건물·남의 글 삭제 403 · 빈 내용/길이 초과(글 2000자, 댓글 500자)/잘못된 카테고리 400. 구현 상세: [handoff/community.md](./handoff/community.md)
 
 ---
 필요에 따라 Swagger(springdoc-openapi)를 붙이면 이 표를 자동 문서로 대체할 수 있습니다.
