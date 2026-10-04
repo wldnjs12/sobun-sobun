@@ -1,6 +1,6 @@
 # 핸드오프: ⑤ 건물별 익명 커뮤니티
 
-_최종 갱신: 2026-10-04 · 브랜치: feature/community-api-connect (백엔드는 feature/community, PR #22)_
+_최종 갱신: 2026-10-04 · 브랜치: feature/server-timezone (프론트 연결: feature/community-api-connect · 백엔드: feature/community, PR #22)_
 
 담당: 김민준(백엔드) · 프론트: 도우현(팀 합의, `frontend/src/features/community/` — [handoff/frontend.md](./frontend.md)) · 관련 문서: [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md), [open-decisions](../open-decisions.md), [REPLAN_WORK_ASSIGNMENT](../REPLAN_WORK_ASSIGNMENT.md)
 
@@ -76,7 +76,7 @@ _최종 갱신: 2026-10-04 · 브랜치: feature/community-api-connect (백엔�
 - 입장 시 GPS 확인(`purpose=COMMUNITY_ENTER`)은 프론트가 ①의 `/api/auth/location-check`로 먼저 호출하는 구조 — 커뮤니티 API 자체는 GPS를 다시 확인하지 않음
 - 목록 조회 시 글마다 댓글 수를 따로 세는 쿼리가 나감(N+1). 건물 단위라 글 수가 적어 MVP에서는 문제없음, 많아지면 페이지네이션·집계 쿼리로 개선
 - 페이지네이션 없음
-- **시간대**: `createdAt`이 시간대 없는 `LocalDateTime`으로 내려옴. 브라우저는 이를 로컬(KST) 시각으로 해석하므로, 배포 서버가 UTC로 돌면 "N분 전"이 9시간 어긋남(미래 시각 → 항상 "방금 전"). 팟 마감시간도 같은 방식. 배포 서버 시간대 확인 후 필요하면 `TZ=Asia/Seoul` 설정
+- ~~**시간대**: 배포 서버(UTC)에서 "N분 전"이 9시간 어긋남~~ → 10/04 `SobunsobunApplication`에서 JVM 기본 시간대를 `Asia/Seoul`로 고정해 해결 (feature/server-timezone). 단, 그 전에 배포 DB에 저장된 시각은 UTC 그대로라 옛 글은 9시간 전으로 보일 수 있음
 - 코드 TODO: `CommunityController`의 `userId` 쿼리 파라미터는 로그인 세션 생기면 세션에서 꺼내도록 교체 (팟 API와 동일)
 
 ## 다음 작업자 안내
@@ -94,5 +94,5 @@ _최종 갱신: 2026-10-04 · 브랜치: feature/community-api-connect (백엔�
 - 프론트 확인: 백엔드 `bootRun` 후 `cd frontend && npm run dev` → 온보딩으로 건물 등록 → 하단 탭 "커뮤니티"
 - 다음 할 일
   1. **실서버 브라우저 확인** (Postgres 있는 PC에서): 글쓰기 → 댓글 → 댓글 삭제(화면 유지되는지) → 같은 글 중복 신고(409 안내 토스트) → 다른 `?user=`로 남의 글 신고 3회 → 목록에서 숨김
-  2. 배포 서버 시간대 확인 (위 제한사항 참고)
+  2. ~~배포 서버 시간대 확인~~ (10/04 서버에서 Asia/Seoul 고정으로 해결)
   3. ~~USE_MOCK=false 전환~~ (10/04 완료) · ~~최저가 프론트 삭제~~ (PR #25 완료)
