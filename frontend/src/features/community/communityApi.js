@@ -5,7 +5,8 @@ import { BUILDING } from '../pod/podApi.js'
 /**
  * ⑤ 건물별 익명 커뮤니티 API. 계약: docs/API_SPEC.md ⑤ (백엔드 담당: 김민준)
  *
- * TODO(⑤ 백엔드 머지되면): USE_MOCK을 false로 바꾸면 실제 서버를 쓴다.
+ * ⑤ 백엔드(PR #22)가 develop에 머지돼서 실제 서버를 쓴다 (USE_MOCK = false).
+ * 백엔드 없이 화면만 볼 때는 true로 바꾸면 아래 목업으로 동작한다.
  *
  * 응답 모양 (API_SPEC에 필드가 다 적혀 있지 않아서 프론트가 이렇게 가정함 — 백엔드와 맞출 것):
  *   CommunityPostSummary = { id, category, content, commentCount, createdAt, mine }
@@ -14,7 +15,7 @@ import { BUILDING } from '../pod/podApi.js'
  *   - authorLabel: 글쓴이는 "글쓴이", 나머지는 그 글 안에서 처음 등장한 순서대로 "이웃 1", "이웃 2"…
  *   - mine: 내가 쓴 글/댓글인지 (삭제 버튼 표시용). 실제 작성자 id는 응답에 절대 없다
  */
-const USE_MOCK = true
+const USE_MOCK = false
 
 export const CATEGORIES = [
   { key: 'GROUP_BUY_SUGGESTION', label: '공구 제안', emoji: '🔥' },
@@ -53,9 +54,14 @@ export async function addComment(postId, content) {
   return api.post(`/community/posts/${postId}/comments?userId=${me()}`, { content })
 }
 
+/**
+ * 댓글 삭제 후 갱신된 글 상세를 돌려준다.
+ * 서버 DELETE는 data 없이(null) 응답하므로, 화면이 바로 다시 그릴 수 있게 상세를 한 번 더 불러온다.
+ */
 export async function deleteComment(postId, commentId) {
   if (USE_MOCK) return mockDeleteComment(Number(postId), Number(commentId))
-  return api.delete(`/community/comments/${commentId}?userId=${me()}`)
+  await api.delete(`/community/comments/${commentId}?userId=${me()}`)
+  return fetchPost(postId)
 }
 
 export async function reportPost(postId) {

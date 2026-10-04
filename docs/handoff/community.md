@@ -1,10 +1,19 @@
-# 핸드오프: ⑤ 건물별 익명 커뮤니티 — 백엔드
+# 핸드오프: ⑤ 건물별 익명 커뮤니티
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/community_
+_최종 갱신: 2026-10-04 · 브랜치: feature/community-api-connect (백엔드는 feature/community, PR #22)_
 
 담당: 김민준(백엔드) · 프론트: 도우현(팀 합의, `frontend/src/features/community/` — [handoff/frontend.md](./frontend.md)) · 관련 문서: [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md), [open-decisions](../open-decisions.md), [REPLAN_WORK_ASSIGNMENT](../REPLAN_WORK_ASSIGNMENT.md)
 
 ## 이번 작업 요약
+
+### 2026-10-04 · 프론트 실서버 연결 (최지원, feature/community-api-connect)
+
+- `frontend/src/features/community/communityApi.js`의 `USE_MOCK`을 `false`로 변경 → 화면이 실제 `/api/community/**`를 호출
+- 목업 코드는 온보딩(`onboardingApi.js`)과 같은 방식으로 남겨둠 — 백엔드 없이 화면만 볼 때 `true`로 바꾸면 됨
+- **댓글 삭제 응답 차이 보정**: 화면(`CommunityDetailPage`)은 `deleteComment()`가 갱신된 글 상세를 돌려준다고 가정해 `setPost(...)`에 넣는데, 실제 `DELETE /comments/{id}`는 `data: null`. 그대로면 상세 화면이 깨지므로 API 함수에서 삭제 후 `fetchPost(postId)`로 상세를 다시 불러와 반환하도록 함 (화면 파일은 수정 없음)
+- 목록·상세·댓글 응답 필드(`content`, `preview`, `commentCount`, `authorLabel`, `mine`, `suggestable`, `createdAt`)는 백엔드 DTO와 일치 확인
+
+### 2026-10-03 · 백엔드 (김민준, feature/community, PR #22)
 
 - `backend/.../community/` 신규 — API 계약(API_SPEC ⑤)의 엔드포인트 8개 전부 구현
   - 엔티티: `CommunityPost`, `CommunityComment`, `CommunityReport`(대상+신고자 유니크 제약), enum `CommunityCategory`, `ReportTargetType`
@@ -35,6 +44,11 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/community_
 - 숨김 댓글 작성자도 번호를 계속 차지함 → 숨김이 생겨도 다른 사람 번호가 바뀌지 않음
 - 응답 코드: 없는/숨김 글·댓글 404, 중복·본인 신고 409, 다른 건물·건물 미등록 403(`code: BUILDING_ACCESS_DENIED`), 남의 글/댓글 삭제 403(code 없음 — 건물 문제가 아니므로 "다른 건물" 화면이 뜨면 안 됨), 입력값 오류 400 (모두 `{ success:false, message }` 형식)
 
+**프론트 연결(10/04) 대조 결과**
+- 일치: 엔드포인트 8개 경로·쿼리(`userId`, `buildingId`, `category`)와 응답 필드 모두 프론트 호출과 일치
+- 보정: 댓글 삭제 응답(`null`) ↔ 프론트 기대(상세) 차이 → 프론트 API 함수에서 재조회로 해결 (백엔드 계약은 그대로)
+- 미확인: 실제 서버를 띄운 브라우저 확인은 못 함 (작업 PC에 Postgres/Docker 없음). 프론트 빌드·백엔드 커뮤니티 테스트만 통과 확인
+
 **재확인 필요**
 - 댓글을 **삭제**하면 그 뒤 작성자들의 "이웃 N" 번호가 당겨질 수 있음 (ERD에 soft delete 컬럼이 없어 실제 삭제). 문제 되면 댓글에 `deleted` 플래그를 두는 방식으로 바꿀 수 있음
 - 숨김 처리된 글/댓글을 되살리는 기능(관리자 검토)은 없음 — MVP 범위 밖
@@ -62,6 +76,8 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/community_
 - 입장 시 GPS 확인(`purpose=COMMUNITY_ENTER`)은 프론트가 ①의 `/api/auth/location-check`로 먼저 호출하는 구조 — 커뮤니티 API 자체는 GPS를 다시 확인하지 않음
 - 목록 조회 시 글마다 댓글 수를 따로 세는 쿼리가 나감(N+1). 건물 단위라 글 수가 적어 MVP에서는 문제없음, 많아지면 페이지네이션·집계 쿼리로 개선
 - 페이지네이션 없음
+- **시간대**: `createdAt`이 시간대 없는 `LocalDateTime`으로 내려옴. 브라우저는 이를 로컬(KST) 시각으로 해석하므로, 배포 서버가 UTC로 돌면 "N분 전"이 9시간 어긋남(미래 시각 → 항상 "방금 전"). 팟 마감시간도 같은 방식. 배포 서버 시간대 확인 후 필요하면 `TZ=Asia/Seoul` 설정
+- 코드 TODO: `CommunityController`의 `userId` 쿼리 파라미터는 로그인 세션 생기면 세션에서 꺼내도록 교체 (팟 API와 동일)
 
 ## 다음 작업자 안내
 
@@ -75,6 +91,8 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/community_
   curl "localhost:8080/api/community/posts?buildingId=1&userId=200"
   ```
 - 실서버 확인 결과 (2026-10-03): 같은 건물 2명 글·댓글("이웃 1") 정상, 다른 건물 사용자의 상세·댓글·신고·목록 전부 403 `BUILDING_ACCESS_DENIED`, 건물 미등록 사용자 글쓰기 403, 같은 건물이어도 남의 글 삭제는 403(code 없음)
+- 프론트 확인: 백엔드 `bootRun` 후 `cd frontend && npm run dev` → 온보딩으로 건물 등록 → 하단 탭 "커뮤니티"
 - 다음 할 일
-  1. **@도우현**: 이 PR 머지 후 `frontend/src/features/community/communityApi.js`의 `USE_MOCK = false`로 바꾸면 실제 서버에 붙음 (엔드포인트·필드 이름 모두 프론트 가정과 일치 확인함)
-  2. `frontend/src/features/products/`(최저가 화면)·`/products` 라우트 삭제 — REPLAN_WORK_ASSIGNMENT상 김민준 담당으로 남아 있음, 프론트 담당이 바뀐 만큼 누가 할지 팀에서 정리 필요
+  1. **실서버 브라우저 확인** (Postgres 있는 PC에서): 글쓰기 → 댓글 → 댓글 삭제(화면 유지되는지) → 같은 글 중복 신고(409 안내 토스트) → 다른 `?user=`로 남의 글 신고 3회 → 목록에서 숨김
+  2. 배포 서버 시간대 확인 (위 제한사항 참고)
+  3. ~~USE_MOCK=false 전환~~ (10/04 완료) · ~~최저가 프론트 삭제~~ (PR #25 완료)
