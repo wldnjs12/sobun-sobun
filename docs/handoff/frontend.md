@@ -4,6 +4,27 @@
 
 ---
 
+## 🆕 상단 헤더 연결 + 알림 화면 (2026-10-04 · 최지원 · feature/header-navigation)
+
+헤더(`components/AppHeader.jsx`, 팟·커뮤니티·내 팟·마이 공통)의 건물명·알림·로고가 눌러도 아무 데도 안 가던 것을 연결.
+
+| 누르는 곳 | 이동 | 비고 |
+| --- | --- | --- |
+| 건물명 | `/onboarding/address` (주소 검색) | 다른 건물을 고르면 소속이 바뀜 — 서버 `POST /auth/buildings/register`가 이미 재등록(이사) 지원 |
+| 🔔 알림 | `/notifications` (신규) | 아래 참고 |
+| 로고 | `/home` (건물 홈) | 이전엔 `/mypage`였음 (송금 화면 PR에서 바꿨던 것) — 마이는 하단 탭으로 감 |
+
+**알림 화면 (`features/mypage/NotificationsPage.jsx`)**
+- 알림 전용 기획·디자인·API가 없어서, "내 팟" 탭과 같은 데이터(`useMyPods` = 이 브라우저에서 참여한 팟 + `GET /settlements/{podId}`)로 **지금 할 일이 있는 팟 소식**만 모아 보여줌. 새 백엔드 없음
+- 규칙(위에서부터 먼저 맞는 것): 정산 확정 → 팟장 "송금 현황 확인"(`/settlements/{id}/payments`), 참여자 "1인당 N원 송금해주세요"(`/settlements/{id}/result`) · 마감됨 → 팟장 "영수증 등록", 참여자 "정산 기다리는 중"(`/pods/{id}/complete`) · 인원 다 모임 → 팟장 "마감하세요", 참여자 "곧 마감"(`/pods/{id}`) · 모집 중이면 소식 없음
+- 한계: 푸시가 아니라 "현재 상태" 기준이라 시간·읽음 표시 없음. 내 팟과 마찬가지로 다른 기기에서 참여한 팟은 안 보임
+- `useMyPods` 결과에 `settlement` 필드 추가 (기존 `pod`, `status`는 그대로)
+- `AppHeader`는 공용 컴포넌트라 REPLAN_WORK_ASSIGNMENT 규칙대로 팀 채팅에 알릴 것
+
+**확인**: Vite 개발 서버 + 브라우저에서 API 응답을 가짜 데이터로 바꿔 확인 — 팟 5개(팟장 정산확정/참여자 정산확정/참여자 마감/팟장 인원 다 모임/모집 중)에서 소식 4개가 위 규칙대로 나오고 모집 중은 빠짐, 링크 경로 일치. 빈 상태 화면, 로고(마이→홈), 건물명(→주소 검색) 이동 확인. 실제 백엔드 연동 확인은 못 함 (작업 PC에 Postgres 없음)
+
+---
+
 ## 🆕 ④ 최저가 프론트 삭제
 
 _최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend · 담당: 도우현 (REPLAN 작업표의 "④최저가(프론트) 삭제")_
