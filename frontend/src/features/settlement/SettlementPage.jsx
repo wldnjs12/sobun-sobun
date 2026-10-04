@@ -12,7 +12,7 @@ import styles from './Settlement.module.css'
  * 핵심 기능 ③: 영수증 업로드(S9 · Stitch 10번) → 금액 확인(S10 · Stitch 11번).
  * 두 화면이 사진·금액을 이어서 쓰기 때문에 한 컴포넌트 안에서 step 값으로 바꿔 그린다.
  *   upload(사진 고르기) → recognizing(OCR 중) → review(금액 확인·수정) → 확정 → 결과 화면(12)
- * OCR이 실패하면 review로 넘어가되 금액 칸을 비워서 직접 입력하게 한다 (기획 문서 fallback).
+ * OCR이 실패하거나 사진 업로드 자체가 실패하면 review로 넘어가되 금액 칸을 비워서 직접 입력하게 한다 (기획 문서 fallback).
  */
 export default function SettlementPage() {
   const { podId } = useParams()
@@ -76,6 +76,19 @@ export default function SettlementPage() {
       setUploadError(err.message)
       setStep('upload')
     }
+  }
+
+  /**
+   * 사진 업로드 자체가 실패했을 때(형식·용량·서버 오류)도 정산이 막히지 않도록,
+   * OCR 실패와 같은 수동 입력 화면으로 보낸다 (03-settlement.md 필수 fallback).
+   * 실패한 사진은 금액 확인 화면에 보여주면 헷갈리니 지운다.
+   */
+  const enterAmountManually = () => {
+    setPreviewUrl(null)
+    setUploadError(null)
+    setOcrFailed(true)
+    setAmount('')
+    setStep('review')
   }
 
   const cost = Number(amount)
@@ -150,7 +163,14 @@ export default function SettlementPage() {
             </div>
           )}
 
-          {uploadError && <p className={styles.error}>{uploadError}</p>}
+          {uploadError && (
+            <>
+              <p className={styles.error}>{uploadError}</p>
+              <button type="button" className={styles.textButton} onClick={enterAmountManually}>
+                사진 없이 금액 직접 입력하기
+              </button>
+            </>
+          )}
 
           <section className={styles.tips}>
             <h3 className={styles.tipsTitle}>
