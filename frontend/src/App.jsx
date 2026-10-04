@@ -8,6 +8,7 @@ import PodDetailPage from './features/pod/PodDetailPage.jsx'
 import PodCompletePage from './features/pod/PodCompletePage.jsx'
 import SettlementPage from './features/settlement/SettlementPage.jsx'
 import SettlementResultPage from './features/settlement/SettlementResultPage.jsx'
+import PaymentStatusPage from './features/settlement/PaymentStatusPage.jsx'
 import PickupPage from './features/settlement/PickupPage.jsx'
 import MyPage from './features/mypage/MyPage.jsx'
 import MyPodsPage from './features/mypage/MyPodsPage.jsx'
@@ -48,6 +49,7 @@ export default function App() {
         {/* ③ 정산 (10 영수증 + 11 금액 확인 · 12 정산 결과 · 13 비대면 픽업) */}
         <Route path="/settlements/:podId" element={<RequireBuilding><SettlementPage /></RequireBuilding>} />
         <Route path="/settlements/:podId/result" element={<RequireBuilding><SettlementResultPage /></RequireBuilding>} />
+        <Route path="/settlements/:podId/payments" element={<RequireBuilding><PaymentStatusPage /></RequireBuilding>} />
         <Route path="/pods/:podId/pickup" element={<RequireBuilding><PickupPage /></RequireBuilding>} />
 
         {/* 마이페이지 (15) · 내 팟 */}

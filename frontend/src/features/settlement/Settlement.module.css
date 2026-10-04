@@ -634,3 +634,414 @@
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* ── 송금 (Stitch "stitch_new_starter_project 2" _1~_5) ── */
+
+/* _4 정산 확정: 송금 링크 입력 */
+.linkSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-md);
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.linkHelp {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.linkInput {
+  padding: 14px 16px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.linkInput:focus {
+  border-color: var(--color-primary);
+}
+
+.linkPreview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rememberRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rememberRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+/* 정산 결과 공통 추가분 */
+.resultCheckPaid {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.resultFormula {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.savingCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px var(--space-md);
+  border-radius: 16px;
+  background: var(--color-tertiary-fixed);
+  color: var(--color-on-tertiary-fixed);
+}
+
+.savingCard div {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.savingCard strong {
+  font-size: 16px;
+}
+
+/* 송금 카드 */
+.payCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+}
+
+.payHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.payHead > span:first-child {
+  color: var(--color-primary);
+}
+
+.payBadge,
+.payBadgeWait {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.payBadge {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.payBadgeWait {
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}
+
+.payLinkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: var(--radius-lg);
+  background: #0064ff; /* 토스·간편송금 버튼 느낌의 진한 파랑 */
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+}
+
+.accountLabel {
+  display: block;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.accountText {
+  font-size: 16px;
+  word-break: break-all;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-primary-fixed-dim);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.payEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-md) var(--space-sm);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  text-align: center;
+}
+
+.payEmpty > span:first-child {
+  color: var(--color-secondary);
+}
+
+.payEmpty p {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.payProgress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.payProgress li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-outline);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.payProgress li > span {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+}
+
+.payStepDone {
+  color: var(--color-primary) !important;
+}
+
+.payStepDone > span {
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary);
+}
+
+.payNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hostPayText {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container-low);
+  font-size: 15px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.dockNote {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* _3 송금 현황 (팟장) */
+.statusHero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: 20px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+}
+
+.statusPod {
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.statusBar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+}
+
+.statusBar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: width 0.5s;
+}
+
+.statusAmount {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+.statusAmount strong {
+  color: var(--color-primary);
+  font-size: 16px;
+}
+
+.refreshButton {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.statusList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-surface-container);
+}
+
+.statusRow:first-child {
+  border-top: none;
+}
+
+.statusAvatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.statusAvatarMe {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.statusName {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.statusName small {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+}
+
+.statusPaid,
+.statusWaiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusPaid {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.statusWaiting {
+  background: var(--color-secondary-fixed);
+  color: var(--color-secondary);
+}

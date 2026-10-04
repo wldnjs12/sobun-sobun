@@ -5,6 +5,7 @@ import Icon from '../../components/Icon.jsx'
 import { getMyUserId } from '../../api/currentUser.js'
 import { fetchPod } from '../pod/podApi.js'
 import { confirmSettlement, fetchSettlement, previewSettlement, recognizeReceipt } from './settlementApi.js'
+import { describePaymentLink, getSavedPaymentLink, savePaymentLink } from './paymentLink.js'
 import styles from './Settlement.module.css'
 
 /**
@@ -26,6 +27,9 @@ export default function SettlementPage() {
   const [amount, setAmount] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [confirmError, setConfirmError] = useState(null)
+  // 이웃들이 송금할 곳 (Stitch _4). 선택 항목 — 지난번에 "기본으로 사용"을 체크했으면 미리 채워둔다
+  const [paymentLink, setPaymentLink] = useState(getSavedPaymentLink)
+  const [rememberLink, setRememberLink] = useState(() => Boolean(getSavedPaymentLink()))
 
   const cameraInput = useRef(null)
   const albumInput = useRef(null)
@@ -83,7 +87,12 @@ export default function SettlementPage() {
     setConfirming(true)
     setConfirmError(null)
     try {
-      const settlement = await confirmSettlement(pod.id, { recognizedCost: cost, commissionRate: pod.commissionRate })
+      const settlement = await confirmSettlement(pod.id, {
+        recognizedCost: cost,
+        commissionRate: pod.commissionRate,
+        hostPaymentLink: paymentLink,
+      })
+      savePaymentLink(rememberLink ? paymentLink.trim() : '')
       navigate(`/settlements/${pod.id}/result`, { replace: true, state: { settlement } })
     } catch (err) {
       setConfirmError(err.message)
@@ -227,6 +236,33 @@ export default function SettlementPage() {
             </p>
           </section>
 
+          <section className={styles.linkSection}>
+            <div className={styles.breakdownHead}>
+              <h3>
+                <Icon name="account_balance_wallet" size={20} className={styles.primaryIcon} /> 내 송금 링크 또는 계좌
+              </h3>
+              <span className={styles.badge}>선택</span>
+            </div>
+            <p className={styles.linkHelp}>토스 송금 링크나 계좌번호를 적어두면 이웃들이 정산 화면에서 바로 송금해요.</p>
+            <input
+              className={styles.linkInput}
+              placeholder="예: toss.me/아이디 또는 카카오뱅크 3333-00-0000000"
+              value={paymentLink}
+              onChange={(e) => setPaymentLink(e.target.value)}
+              aria-label="송금 링크 또는 계좌"
+            />
+            {paymentLink.trim() && <LinkPreview link={paymentLink} />}
+            <label className={styles.rememberRow}>
+              <input type="checkbox" checked={rememberLink} onChange={(e) => setRememberLink(e.target.checked)} />
+              이 정보를 다음 정산에도 기본으로 사용
+            </label>
+          </section>
+
+          <p className={styles.note}>
+            <Icon name="lock" size={16} />
+            확정하면 금액은 수정할 수 없어요. 이웃들은 정산 결과 화면에서 1인 금액과 송금 정보를 보게 돼요.
+          </p>
+
           {confirmError && <p className={styles.error}>{confirmError}</p>}
 
           <button type="button" className={styles.textButton} onClick={() => setStep('upload')}>
@@ -250,6 +286,18 @@ export default function SettlementPage() {
         </div>
       )}
     </div>
+  )
+}
+
+/** 입력한 송금 정보가 이웃에게 어떤 버튼으로 보일지 미리보기 */
+function LinkPreview({ link }) {
+  const info = describePaymentLink(link)
+  if (!info) return null
+  return (
+    <p className={styles.linkPreview}>
+      <Icon name={info.type === 'link' ? info.icon : 'content_copy'} size={16} />
+      이웃에게는 {info.type === 'link' ? `[${info.label}] 버튼` : '계좌번호 + [복사] 버튼'}으로 보여요
+    </p>
   )
 }
 
