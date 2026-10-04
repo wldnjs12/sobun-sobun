@@ -4,6 +4,17 @@
 
 ---
 
+## 🆕 ④ 최저가 프론트 삭제
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend · 담당: 도우현 (REPLAN 작업표의 "④최저가(프론트) 삭제")_
+
+- `frontend/src/features/products/` 폴더(`ProductListPage.jsx`·`.module.css`)와 `App.jsx`의 `/products` 경로 삭제. 하단 탭에서는 이미 빠져 있었음
+- 예전 링크로 `/products`에 들어오면 없는 주소 규칙(`*` → `/`)에 따라 시작 화면으로 감
+- 최저가 **백엔드**(`product` 패키지) 삭제는 김민준 PR #22에서 진행 — 이 PR과 별개
+- 검증: 빌드 통과, `/products` 직접 접속 → `/`, 홈·하단 탭(팟/커뮤니티/내 팟/마이) 정상, JS 에러 없음
+
+---
+
 ## 🆕 기획 개편 후: ① 온보딩 프론트 (주소 + GPS)
 
 _최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: 도우현 · 백엔드 계약: [API_SPEC.md](../API_SPEC.md) ①_

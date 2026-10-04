@@ -1,5 +1,7 @@
 package com.ppuri.sobunsobun.settlement.service;
 
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -13,6 +15,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -21,39 +24,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/** 정산 확정(계산 + 입력 검증) 단위 테스트 */
+/** 정산 확정(계산 + 입력 검증 + 건물 소속·대표·마감 검사) 단위 테스트 */
 @ExtendWith(MockitoExtension.class)
 class SettlementConfirmTest {
 
     private static final long POD_ID = 1L;
+    private static final long BUILDING_ID = 10L;
+    private static final long HOST_USER_ID = 1L;
+    private static final long NEIGHBOR_USER_ID = 2L;     // 같은 건물, 대표 아님
+    private static final long OTHER_BUILDING_USER_ID = 99L;
 
     @Mock
-    private PodParticipantCountReader participantCountReader;
+    private SettlementPodReader podReader;
 
     @Mock
     private SettlementRepository settlementRepository;
+
+    @Mock
+    private BuildingAccessService buildingAccessService;
 
     private SettlementService settlementService;
 
     @BeforeEach
     void setUp() {
-        settlementService = new SettlementService(new StubReceiptOcrClient(), participantCountReader, settlementRepository);
+        settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository,
+                buildingAccessService);
         lenient().when(settlementRepository.save(any(Settlement.class))).then(returnsFirstArg());
     }
 
+    /** 대표가 확정할 수 있는 상태의 팟 (마감됨) */
+    private static PodSummary closedPod(int participants) {
+        return new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, participants, true);
+    }
+
+    private static SettlementConfirmRequest request() {
+        return new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05"));
+    }
+
     private SettlementResponse confirm(String cost, String rate, int participants) {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(participants));
-        return settlementService.confirm(POD_ID, new SettlementConfirmRequest(new BigDecimal(cost), new BigDecimal(rate)));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(participants)));
+        return settlementService.confirm(POD_ID, HOST_USER_ID,
+                new SettlementConfirmRequest(new BigDecimal(cost), new BigDecimal(rate)));
     }
 
     private void assertRejected(SettlementConfirmRequest request, String message) {
-        assertThatThrownBy(() -> settlementService.confirm(POD_ID, request))
-                .isInstanceOf(SettlementException.class)
+        assertRejected(HOST_USER_ID, request, HttpStatus.BAD_REQUEST, message);
+    }
+
+    private void assertRejected(long userId, SettlementConfirmRequest request, HttpStatus status, String message) {
+        assertThatThrownBy(() -> settlementService.confirm(POD_ID, userId, request))
+                .isInstanceOfSatisfying(SettlementException.class, e -> assertThat(e.getStatus()).isEqualTo(status))
                 .hasMessage(message);
         verify(settlementRepository, never()).save(any());
     }
@@ -66,6 +93,13 @@ class SettlementConfirmTest {
         assertThat(result.perPersonAmount()).isEqualByComparingTo("4305");
         assertThat(result.participantCount()).isEqualTo(3);
         assertThat(result.confirmed()).isTrue();
+    }
+
+    @Test
+    void 같은_건물_대표가_마감된_팟을_확정하면_건물_소속을_정산용_문구로_확인한다() {
+        confirm("12300", "0.05", 3);
+
+        verify(buildingAccessService).requireMembership(HOST_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
     }
 
     @Test
@@ -144,26 +178,63 @@ class SettlementConfirmTest {
     }
 
     @Test
-    void 없는_팟이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.empty());
+    void 없는_팟이면_404() {
+        given(podReader.findPod(POD_ID)).willReturn(Optional.empty());
 
-        assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")), "팟을 찾을 수 없어요.");
+        assertRejected(HOST_USER_ID, request(), HttpStatus.NOT_FOUND, "팟을 찾을 수 없어요.");
+    }
+
+    @Test
+    void 다른_건물_사용자면_403이고_저장되지_않는다() {
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
+        willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
+                .given(buildingAccessService)
+                .requireMembership(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+
+        assertThatThrownBy(() -> settlementService.confirm(POD_ID, OTHER_BUILDING_USER_ID, request()))
+                .isInstanceOf(BuildingAccessDeniedException.class)
+                .hasMessage("다른 건물의 정산에는 접근할 수 없어요.");
+        verify(settlementRepository, never()).save(any());
+    }
+
+    @Test
+    void 건물_가드가_중복_확정_검사보다_먼저_실행된다() {
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
+        willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
+                .given(buildingAccessService).requireMembership(anyLong(), anyLong(), any());
+
+        assertThatThrownBy(() -> settlementService.confirm(POD_ID, OTHER_BUILDING_USER_ID, request()))
+                .isInstanceOf(BuildingAccessDeniedException.class);
+        // 다른 건물 사람에게 "이미 확정됨" 여부를 알려주지 않도록 정산 존재 여부를 아예 조회하지 않는다
+        verify(settlementRepository, never()).existsByPodIdAndConfirmedTrue(any());
+    }
+
+    @Test
+    void 같은_건물이어도_대표가_아니면_403이고_저장되지_않는다() {
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
+
+        assertRejected(NEIGHBOR_USER_ID, request(), HttpStatus.FORBIDDEN, "대표만 정산을 확정할 수 있습니다.");
+    }
+
+    @Test
+    void 마감_전_팟이면_400() {
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, 3, false)));
+
+        assertRejected(HOST_USER_ID, request(), HttpStatus.BAD_REQUEST, "마감된 팟만 정산을 확정할 수 있어요.");
     }
 
     @Test
     void 참여자가_0명이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(0));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(0)));
 
-        assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")),
-                "참여자가 없는 팟은 정산할 수 없어요.");
+        assertRejected(request(), "참여자가 없는 팟은 정산할 수 없어요.");
     }
 
     @Test
     void 이미_확정된_팟이면_거절() {
-        given(participantCountReader.findParticipantCount(POD_ID)).willReturn(Optional.of(3));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
         given(settlementRepository.existsByPodIdAndConfirmedTrue(POD_ID)).willReturn(true);
 
-        assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05")),
-                "이미 정산이 확정된 팟이에요.");
+        assertRejected(request(), "이미 정산이 확정된 팟이에요.");
     }
 }

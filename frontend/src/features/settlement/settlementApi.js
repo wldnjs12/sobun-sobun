@@ -1,4 +1,5 @@
 import { api } from '../../api/client.js'
+import { getMyUserId } from '../../api/currentUser.js'
 import { calcPerPersonPrice, totalWithCommission100 } from '../pod/podUtils.js'
 
 /**
@@ -25,11 +26,11 @@ export async function recognizeReceipt(file) {
 }
 
 /**
- * 정산 확정. 결과를 이 브라우저에도 저장해둔다.
+ * 정산 확정. 결과를 이 브라우저에도 저장해둔다 (정산 결과를 다시 조회하는 API가 아직 없어서).
  * hostPaymentLink: 팟장이 남기는 송금 링크(토스·카카오페이) 또는 계좌번호. 선택이라 비워두면 null로 보낸다.
  */
 export async function confirmSettlement(podId, { recognizedCost, commissionRate, hostPaymentLink }) {
-  const settlement = await api.post(`/settlements/${podId}/confirm`, {
+  const settlement = await api.post(`/settlements/${podId}/confirm?userId=${getMyUserId()}`, {
     recognizedCost,
     commissionRate,
     hostPaymentLink: hostPaymentLink?.trim() || null,
@@ -66,7 +67,7 @@ export function getSavedSettlement(podId) {
  */
 export async function fetchSettlement(podId) {
   try {
-    const settlement = await api.get(`/settlements/${podId}`)
+    const settlement = await api.get(`/settlements/${podId}?userId=${getMyUserId()}`)
     if (!settlement) return null
     return {
       ...settlement,
