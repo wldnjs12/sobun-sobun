@@ -73,4 +73,5 @@ Railway·Vercel 둘 다 GitHub 연동 배포라서, 브랜치에 푸시하면 �
 | 프론트에서 API 호출이 CORS 에러로 막힘 | `ALLOWED_ORIGINS`에 Vercel 주소가 없거나 오타 | Railway Variables에서 값 확인 후 재배포 |
 | WebSocket이 연결되자마자 끊김 | `VITE_WS_BASE_URL`이 `ws://`(비보안)로 돼 있음 | `wss://`로 수정 |
 | Railway 배포 후 500/DB 에러 | Supabase URL에 `?sslmode=require`가 없음 | `SPRING_DATASOURCE_URL` 끝에 추가 |
+| 시각이 9시간 어긋남 ("N분 전"이 이상함) | 컨테이너 기본 시간대가 UTC | 백엔드가 시작 시 `Asia/Seoul`로 고정한다 (`SobunsobunApplication.SERVICE_TIME_ZONE`) — 따로 설정할 것 없음. 고정 이전에 저장된 데이터만 9시간 차이가 남는다 |
 | Railway 빌드가 느림(첫 배포) | Dockerfile이 Gradle 의존성을 매번 새로 받음 | 이후 배포부터는 Railway가 레이어 캐시를 재사용해서 빨라진다 |
