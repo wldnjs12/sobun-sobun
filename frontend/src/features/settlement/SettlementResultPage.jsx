@@ -78,6 +78,8 @@ export default function SettlementResultPage() {
   const { recognizedCost, commissionRate, finalAmount, participantCount, perPersonAmount, hostPaymentLink } = settlement
   const baseShare = Math.ceil(recognizedCost / participantCount)
   const feeShare = perPersonAmount - baseShare
+  // 팟 상세와 같은 계산 — 마트가가 없거나 절약이 없으면(영수증이 예상보다 비쌈) null이라 절약 카드를 숨긴다
+  const savingRate = pod ? calcDiscountRate(perPersonAmount, pod.originalPrice) : null
   const isHost = pod?.hostUserId === getMyUserId()
   const paid = Boolean(me?.paid)
   const payment = describePaymentLink(hostPaymentLink)
@@ -131,13 +133,13 @@ export default function SettlementResultPage() {
           {pod && <p className={styles.resultItem}>소분 품목 · {pod.title}</p>}
         </section>
 
-        {pod?.originalPrice && (
+        {savingRate !== null && (
           <section className={styles.savingCard}>
             <Icon name="savings" size={22} />
             <div>
               <span>혼자 마트에서 샀다면 {pod.originalPrice.toLocaleString()}원</span>
               <strong>
-                {(pod.originalPrice - perPersonAmount).toLocaleString()}원 절약! ({calcDiscountRate(perPersonAmount, pod.originalPrice)}%)
+                {(pod.originalPrice - perPersonAmount).toLocaleString()}원 절약! ({savingRate}%)
               </strong>
             </div>
           </section>

@@ -172,7 +172,7 @@ export default function PodDetailPage() {
             )}
           </div>
 
-          {pod.originalPrice && (
+          {discountRate !== null && (
             <div className={styles.breakdown}>
               <div className={styles.breakdownRow}>
                 <span className={styles.breakdownLabel}>

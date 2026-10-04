@@ -2,7 +2,7 @@
 
 > ⚠️ **참고**: 2026-10-03 기획 개편으로 ②③에 "건물 소속 검증"이 추가될 예정입니다. 이 문서의 나머지 내용(픽업PIN, 절약액, 정산 재조회)은 여전히 유효합니다.
 
-_최종 갱신: 2026-10-04 · 브랜치: feature/settlement-manual-entry (이전: feature/pod-settlement-backend-extras)_
+_최종 갱신: 2026-10-04 · 브랜치: feature/savings-display-guard (이전: feature/settlement-manual-entry, feature/pod-settlement-backend-extras)_
 
 PR #5(온보딩·정산·마이페이지 화면)가 먼저 develop에 머지돼서, 같은 화면을 중복 구현하지 않고 **백엔드 기능 추가 + 이미 머지된 화면에 연동**하는 것으로 범위를 좁혔습니다.
 
@@ -23,6 +23,13 @@ PR #5 코드/PR 본문에 직접 적혀 있던 요청사항을 그대로 해결�
 - `SettlementResultPage.jsx`: 기존엔 `localStorage`뿐이라 팟장 브라우저 아니면 결과를 못 봤음 → `GET /settlements/{podId}`로 서버 재조회하게 교체. `Pod.originalPrice` 있을 때만 절약액 카드 표시
 - `PickupPage.jsx`: "보관 후 알려드려요" placeholder(+ TODO 주석) → 실제 `pickupPin` 표시. "수령 완료"가 로컬 state뿐이었던 것 → `POST /pods/{id}/picked-up` 자가신고로 교체(DB에 남음)
 - `PodCreatePage.jsx`: "혼자 샀을 때 가격"(선택) 입력 필드 추가, `podApi.js`의 `originalPrice` placeholder(null 고정)를 실제 값으로 교체
+
+## 2026-10-04 · 음수 절약액 표시 수정 (최지원)
+
+- **문제**: 절약액을 `마트가 − 1인당 금액`으로 그대로 보여줘서, 영수증 금액이 예상보다 커 1인당 금액이 마트가 이상이면 팟 카드·팟 상세·정산 결과에 "-1,200원 절약! (-10%)" 같은 음수가 표시됨 (03-settlement 체크리스트 "절약액이 S6와 일관되게 표시되는가" 대조 중 발견)
+- **수정**: `podUtils.calcDiscountRate()`가 1인당 금액 ≥ 마트가면 `null` 반환 → 세 화면 모두 이 값이 `null`이면 절약 배지·취소선 마트가·절약 내역·정산 결과 절약 카드를 숨김. 팟 상세의 "마트가 N원" 참고 문구는 그대로 둠
+- 정산 결과는 팟 상세와 같은 함수로 계산하도록 `savingRate` 하나로 정리 (두 화면 일관성)
+- 확인: `calcDiscountRate(3000,4000)=25`, `(4000,4000)`·`(4400,4000)`·마트가 없음 → `null`, 프론트 빌드 통과. 브라우저 확인은 못 함 (작업 PC에 Postgres 없음)
 
 ## 2026-10-04 · 영수증 업로드 실패 시 수동 입력 fallback 보강 (최지원)
 

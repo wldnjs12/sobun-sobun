@@ -54,7 +54,7 @@ export default function PodCard({ pod, onJoin }) {
           <div className={styles.price}>
             {discountRate !== null && <span className={styles.discount}>{discountRate}%</span>}
             <span className={styles.perPerson}>{perPersonPrice.toLocaleString()}원</span>
-            {pod.originalPrice && (
+            {discountRate !== null && (
               <span className={styles.original}>{pod.originalPrice.toLocaleString()}원</span>
             )}
           </div>
