@@ -22,9 +22,13 @@ export function totalWithCommission100(totalAmount, commissionRate) {
   return totalAmount * (100 + percent)
 }
 
-/** 혼자 샀을 때 가격 대비 몇 % 싸게 사는지. 비교 가격이 없으면 null. */
+/**
+ * 혼자 샀을 때 가격 대비 몇 % 싸게 사는지.
+ * 비교 가격이 없거나, 1인당 금액이 마트가 이상이라 절약이 없으면 null
+ * (영수증 금액이 예상보다 크면 생길 수 있음 → 화면에 "-10% 절약" 같은 음수가 뜨지 않게 절약 표시를 숨긴다).
+ */
 export function calcDiscountRate(perPersonPrice, originalPrice) {
-  if (!originalPrice) return null
+  if (!originalPrice || perPersonPrice >= originalPrice) return null
   return Math.round((1 - perPersonPrice / originalPrice) * 100)
 }
 
