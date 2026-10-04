@@ -4,6 +4,17 @@
 
 ---
 
+## 🆕 ④ 최저가 프론트 삭제
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend · 담당: 도우현 (REPLAN 작업표의 "④최저가(프론트) 삭제")_
+
+- `frontend/src/features/products/` 폴더(`ProductListPage.jsx`·`.module.css`)와 `App.jsx`의 `/products` 경로 삭제. 하단 탭에서는 이미 빠져 있었음
+- 예전 링크로 `/products`에 들어오면 없는 주소 규칙(`*` → `/`)에 따라 시작 화면으로 감
+- 최저가 **백엔드**(`product` 패키지) 삭제는 김민준 PR #22에서 진행 — 이 PR과 별개
+- 검증: 빌드 통과, `/products` 직접 접속 → `/`, 홈·하단 탭(팟/커뮤니티/내 팟/마이) 정상, JS 에러 없음
+
+---
+
 ## 🆕 기획 개편 후: ① 온보딩 프론트 (주소 + GPS)
 
 _최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: 도우현 · 백엔드 계약: [API_SPEC.md](../API_SPEC.md) ①_
@@ -69,6 +80,32 @@ const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
   - ③ 정산 API(`settlementApi.js`)에 `userId` 쿼리 추가는 정산 담당 파일이라 안 건드림 — API_SPEC ③대로 `confirm`/`GET /settlements/{podId}`에 `?userId=` 필요
   - 검증: 서버 403을 테스트에서 가로채 흉내 내어 확인 (팟 상세·모집 완료·목록 403 화면, 500은 기존 에러 문구 유지, userId 쿼리 전송). 실제 서버 403·WebSocket 구독 거부는 백엔드 가드 머지 후 재확인 필요
 - 검증: 헤드리스 Chrome으로 19개 항목 자동 확인 (빌라·아파트·동 직접입력 등록, 미등록 접근 차단, 팟 개설 GPS 통과 → 생성, 반경 밖·권한 거부·위치 못 받음 시트, 위치 잡힌 뒤 [다시 확인] → 참여 성공), JS 에러 없음
+
+---
+
+## 🆕 ③ 송금 화면 (Stitch "stitch_new_starter_project 2" _1~_5) + 헤더 로고
+
+_최종 갱신: 2026-10-03 · 브랜치: feature/payment-screens · 담당: 도우현 (정산 UI 담당 홍수진이 보낸 디자인, 백엔드는 이미 있던 API 사용 — 서버 변경 없음)_
+
+### 한 일
+- **_4 정산 확정(팟장)** `SettlementPage` 금액 확인 단계: "내 송금 링크 또는 계좌 (선택)" 입력 → `confirm`의 `hostPaymentLink`로 전송. 입력 즉시 "이웃에게는 [토스로 송금] 버튼으로 보여요" 미리보기, "다음 정산에도 기본으로 사용" 체크 시 브라우저에 기억(`sobun.paymentLink.{userId}`)
+- **정산 결과** `SettlementResultPage` — 보는 사람별로 달라짐
+  - 참여자 _1: 내가 보낼 금액, 절약 금액, 송금 카드(토스/카카오페이 링크 버튼 또는 계좌번호+복사) + **[보냈어요]** → `POST /pods/{id}/paid`
+  - 참여자 _5: 팟장이 송금 정보를 안 남겼으면 "아직 등록하지 않았어요" + 새로고침, [보냈어요] 잠김
+  - 참여자 _2: 보낸 뒤 "송금 확인을 요청했어요 ✨" + 진행 단계 + [픽업 안내 보기] (상태는 `GET /pods/{id}/me`의 `paid`라 새로고침해도 유지)
+  - 팟장: 이웃에게 보이는 송금 정보 + [송금 현황 보기]
+- **_3 송금 현황(팟장 전용)** 새 화면 `/settlements/:podId/payments` (`PaymentStatusPage`) — `GET /pods/{id}/participants`로 "이웃 N명 중 M명 송금 완료", 진행 막대, 이웃별 보냈어요/대기 중. 실시간 이벤트가 없어서 **10초마다 다시 조회** + 수동 새로고침. userId 대신 "이웃 1, 2…"로 표시
+- `paymentLink.js`: 송금 정보 글자 → 버튼 종류 판별(toss→토스, kakaopay→카카오페이, 그 외 https→링크, 나머지→계좌). http/https만 링크로 엶(`javascript:` 차단). 복사는 http(휴대폰 내부망 접속)에서도 되게 예전 방식으로 대체
+- `podApi.js`에 `markPaid`, `fetchParticipants` 추가 / `settlementApi.confirmSettlement`에 `hostPaymentLink`
+- **헤더 로고**: `AppHeader` 우측 프로필(사람 아이콘) → 앱 로고(`/logo.svg`), 누르면 `/mypage`
+- 디자인에서 뺀 것: [콕 찌르기]·[미송금 이웃 일괄 알림]·[대표 알림 찌르기](알림 API 없음), 신뢰도 ★4.9, 에스크로 문구, D-1 마감
+
+### 알아둘 것
+- 앱은 실제 입금을 확인하지 않음 — [보냈어요]는 자가 신고, 팟장이 은행/토스 앱에서 직접 확인 (화면에 안내 문구 있음)
+- 송금 정보는 확정 때만 넣을 수 있음(서버에 수정 API 없음). 빠뜨리면 이웃은 [보냈어요]를 못 누름 → 팟장 결과 화면에 경고 표시
+
+### 검증
+- 로컬 백엔드(데모 모드) + 헤드리스 Chrome 14개 항목: 확정 전 참여자 안내, 링크 입력·미리보기·기본값 저장, 확정 후 팟장 화면, 송금 현황 0명→1명, 참여자 토스 링크(https·새 창), 보냈어요 → 송금 완료 화면, 새로고침 유지, 송금 정보 없음(_5) 잠김, 헤더 로고 → 마이페이지. JS 에러 없음
 
 ---
 

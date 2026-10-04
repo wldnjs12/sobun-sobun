@@ -6,10 +6,6 @@ naver:
   ocr:
     invoke-url: "여기에_CLOVA_OCR_Invoke_URL"
     secret-key: "여기에_CLOVA_OCR_Secret_Key"
-  shopping:
-    client-id: "여기에_네이버_쇼핑_Client_ID"
-    client-secret: "여기에_네이버_쇼핑_Client_Secret"
-
 juso:
   api-key: "여기에_도로명주소_API_승인키(confmKey)"
 kakao:
