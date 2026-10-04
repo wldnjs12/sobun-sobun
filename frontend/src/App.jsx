@@ -12,6 +12,7 @@ import PaymentStatusPage from './features/settlement/PaymentStatusPage.jsx'
 import PickupPage from './features/settlement/PickupPage.jsx'
 import MyPage from './features/mypage/MyPage.jsx'
 import MyPodsPage from './features/mypage/MyPodsPage.jsx'
+import NotificationsPage from './features/mypage/NotificationsPage.jsx'
 import CommunityListPage from './features/community/CommunityListPage.jsx'
 import CommunityDetailPage from './features/community/CommunityDetailPage.jsx'
 import CommunityWritePage from './features/community/CommunityWritePage.jsx'
@@ -55,6 +56,7 @@ export default function App() {
         {/* 마이페이지 (15) · 내 팟 */}
         <Route path="/mypage" element={<RequireBuilding><MyPage /></RequireBuilding>} />
         <Route path="/my-pods" element={<RequireBuilding><MyPodsPage /></RequireBuilding>} />
+        <Route path="/notifications" element={<RequireBuilding><NotificationsPage /></RequireBuilding>} />
 
         {/* ⑤ 커뮤니티: 목록(S16) · 상세(S17) · 글쓰기(S18). 들어올 때 GPS 확인(COMMUNITY_ENTER) */}
         <Route path="/community" element={<RequireBuilding><CommunityListPage /></RequireBuilding>} />
