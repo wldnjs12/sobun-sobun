@@ -13,6 +13,15 @@ git --version
 
 ## 1. PostgreSQL 설치 및 DB 생성
 
+**가장 간단한 방법: Docker** (Docker Desktop이 있으면 설치·계정 생성 없이 바로 됨)
+```bash
+# 저장소 루트에서 (docker-compose.yml)
+docker compose up -d     # 켜기 — 계정/DB(sobunsobun)가 application.yml 기본값과 같게 자동 생성됨
+docker compose stop      # 끄기 (데이터 유지)
+docker compose down -v   # 데이터까지 전부 지우고 처음부터
+```
+Docker로 띄웠다면 아래 Homebrew/psql 과정은 건너뛰고 2번으로 가면 됩니다. (이 Mac 기본 Java가 17이 아니면 백엔드 실행 시 `JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew bootRun`)
+
 **Mac (Homebrew)**
 ```bash
 brew install postgresql@16
@@ -95,7 +104,7 @@ npm run dev
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| `Connection to localhost:5432 refused` | PostgreSQL이 안 떠 있음 | `brew services start postgresql@16` |
+| `Connection to localhost:5432 refused` | PostgreSQL이 안 떠 있음 | `brew services start postgresql@16` (Docker면 `docker compose up -d`) |
 | `password authentication failed for user "sobunsobun"` | 1번에서 계정을 안 만들었거나 비밀번호가 다름 | 1번 다시 실행 |
 | Gradle sync가 계속 실패함 | 인터넷 연결 문제 또는 프록시 | 네트워크 확인, IntelliJ 재시작 |
 | 프론트에서 API 호출 시 CORS 에러 | 백엔드를 안 거치고 직접 포트로 호출함 | 반드시 `/api/...` 상대경로로 호출 (vite 프록시 사용) |
