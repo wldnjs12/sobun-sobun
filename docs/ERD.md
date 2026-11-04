@@ -1,11 +1,11 @@
 # ERD
 
-> **2026-11 개편**: 계정 테이블(`ACCOUNT`, `ACCOUNT_SESSION`) 추가, `POD`에 카테고리·미개봉 단위·상태 컬럼 추가, `USER`에 상세주소, `BUILDING`에 지번주소 추가. **(개편)** 표시 컬럼은 통합 시 이름이 확정될 수 있습니다. 의미와 규칙은 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) 7장.
+> **2026-11 개편**: 계정 테이블(`ACCOUNTS`, `SESSION_TOKENS`) 추가, `POD`에 카테고리·미개봉 단위·상태 컬럼 추가, `USER`에 상세주소, `BUILDING`에 지번주소 추가. **(개편)** 표시 컬럼은 통합 시 이름이 확정될 수 있습니다. 의미와 규칙은 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) 7장.
 
 ```mermaid
 erDiagram
-    ACCOUNT ||--o| USER : "id 공유 (건물 등록 시 생성)"
-    ACCOUNT ||--o{ ACCOUNT_SESSION : "로그인 세션"
+    ACCOUNTS ||--o| USER : "id 공유 (건물 등록 시 생성)"
+    ACCOUNTS ||--o{ SESSION_TOKENS : "로그인 세션"
     BUILDING ||--o{ POD : "개설 위치"
     BUILDING ||--o{ USER : "소속 주민"
     BUILDING ||--o{ COMMUNITY_POST : "작성 위치"
@@ -18,15 +18,16 @@ erDiagram
     COMMUNITY_POST ||--o{ COMMUNITY_REPORT : "신고(글)"
     COMMUNITY_COMMENT ||--o{ COMMUNITY_REPORT : "신고(댓글)"
 
-    ACCOUNT {
+    ACCOUNTS {
         long id PK "자동 생성, USER.id와 같은 값"
         string login_id UK "영문 소문자·숫자 4~20자"
         string password_hash "BCrypt"
         string nickname "2~10자, 본인에게만 노출"
         datetime created_at
     }
-    ACCOUNT_SESSION {
-        string token PK "랜덤 opaque 토큰"
+    SESSION_TOKENS {
+        long id PK
+        string token_hash "랜덤 opaque 토큰의 해시 (원문은 저장 안 함)"
         long account_id FK
         datetime created_at
         datetime expires_at "발급 + 30일"
@@ -43,7 +44,7 @@ erDiagram
         double longitude
     }
     USER {
-        long id PK "= ACCOUNT.id"
+        long id PK "= accounts.id"
         long building_id FK "not null"
         string detail_address "개편, nullable, 본인에게만 노출"
         datetime created_at
@@ -127,9 +128,9 @@ erDiagram
 
 ## 메모
 
-- **`ACCOUNT`와 `USER`를 나눈 이유**: `USER`는 "어느 건물 소속인가"이고 `building_id`가 not null이다. 계정은 건물 등록 전에도 있어야 하므로 따로 둔다. `ACCOUNT.id == USER.id`라서 기존 코드의 `userId`(Pod.hostUserId 등)를 그대로 쓸 수 있다. 기존 `users` 테이블 이름(PostgreSQL 예약어 `user` 회피)은 유지.
+- **`ACCOUNTS`와 `USER`를 나눈 이유**: `USER`는 "어느 건물 소속인가"이고 `building_id`가 not null이다. 계정은 건물 등록 전에도 있어야 하므로 따로 둔다. `accounts.id == users.id`라서 기존 코드의 `userId`(Pod.hostUserId 등)를 그대로 쓸 수 있다. 기존 `users` 테이블 이름(PostgreSQL 예약어 `user` 회피)은 유지.
 - **동네 판정**: 테이블에 "동네"를 저장하지 않는다. 요청할 때마다 내 `BUILDING` 좌표와 대상 `BUILDING` 좌표의 거리(≤ 1km)로 계산한다(`NeighborhoodService`). 그래서 `POD.building_id`, `COMMUNITY_POST.building_id`는 그대로 두면 된다.
-- **노출 금지 컬럼**: `BUILDING.road_address/jibun_address/name/dong/latitude/longitude`, `USER.detail_address`, `ACCOUNT.nickname`, `*.author_user_id`는 다른 사용자 응답에 넣지 않는다. 다른 사용자에게는 법정동 이름(도로명주소 괄호에서 추출)과 대략 거리만.
+- **노출 금지 컬럼**: `BUILDING.road_address/jibun_address/name/dong/latitude/longitude`, `USER.detail_address`, `ACCOUNTS.nickname`, `*.author_user_id`는 다른 사용자 응답에 넣지 않는다. 다른 사용자에게는 법정동 이름(도로명주소 괄호에서 추출)과 대략 거리만.
 - `BUILDING.building_key`는 서버가 계산하는 유니크 키. 상세주소는 키에 쓰지 않는다.
 - `LOCATION_CHECK`는 원본 좌표를 저장하지 않고 판정 결과·시각·목적만 남긴다(개인정보 보호).
 - 익명 닉네임("이웃 N"/"글쓴이")은 저장하지 않고 응답 조립 시점에 계산한다.

@@ -236,7 +236,7 @@ _작성: 2026-11-04 · 기준 브랜치: feature/household-replan_
 | 엔티티 | 핵심 필드 | 설명 |
 | --- | --- | --- |
 | **Account** (개편) | id, loginId(unique), passwordHash(BCrypt), nickname, createdAt | 로그인 계정. `Account.id == User.id` |
-| **AccountSession** (개편) | token(랜덤·opaque), accountId, expiresAt(30일), createdAt | 로그인 세션 토큰. 로그아웃 시 삭제. 테이블/클래스 이름은 통합 시 확정 |
+| **SessionToken** (개편) | tokenHash(랜덤 opaque 토큰의 해시), accountId, expiresAt(30일), createdAt | 로그인 세션(`session_tokens`). 로그아웃 시 삭제 |
 | **User** | id(=Account.id), buildingId, createdAt, (개편) detailAddress | "어느 건물 소속인가". 건물 등록 시 생성. 상세주소는 본인 응답에만 |
 | **Building** | id, name(선택), roadAddress, (개편) jibunAddress, buildingManagementNumber(bdMgtSn), dong, buildingKey(unique), latitude, longitude | 같은 건물 판정 단위. 빌라=bdMgtSn, 아파트=bdMgtSn+동 |
 | **LocationCheck** | userId, buildingId, purpose, success, checkedAt | GPS 판정 결과만 저장(원본 좌표 저장 안 함) |

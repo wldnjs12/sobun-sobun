@@ -34,7 +34,7 @@
 
 - 검증: `loginId` 영문 소문자·숫자 4~20자, `password` 8자 이상, `nickname` 2~10자. 아이디 중복 → 409 "이미 쓰고 있는 아이디예요".
 - 로그인 실패 → 401 "아이디 또는 비밀번호가 맞지 않아요" (어느 쪽이 틀렸는지 구분하지 않음).
-- 비밀번호는 BCrypt 해시로 저장(`spring-security-crypto`만 사용). 토큰은 랜덤 opaque 문자열, DB 저장, 30일 만료.
+- 비밀번호는 BCrypt 해시로 저장(`spring-security-crypto`만 사용). 토큰은 랜덤 opaque 문자열이고 DB(`session_tokens`)에는 해시로 저장, 30일 만료.
 - **`AccountMe`**:
   ```json
   {
@@ -156,18 +156,19 @@
 
 ```json
 {
-  "id": 12, "hostUserId": 7,
-  "category": "TISSUE", "title": "코스트코 휴지 30롤", "description": "코스트코 송도점, 3겹 30m",
+  "id": 12, "isHost": false,
+  "category": "TISSUE", "categoryLabel": "휴지·물티슈", "title": "코스트코 휴지 30롤", "description": "코스트코 송도점, 3겹 30m",
   "totalAmount": 21900, "totalUnits": 30, "unitLabel": "롤", "unitsPerPerson": 10,
   "targetParticipantCount": 3, "participantCount": 2,
   "commissionRate": 0.05, "perPersonAmount": 11498,
-  "deadline": "2026-11-10T20:00:00", "status": "OPEN", "closed": false,
+  "deadline": "2026-11-10T20:00:00", "deadlinePassed": false, "status": "OPEN", "closed": false,
   "originalPrice": null, "pickupNote": "1층 공동현관 앞",
   "neighborhoodName": "용현동", "distanceLabel": "약 400m"
 }
 ```
 
-- `buildingId`·건물명·주소는 다른 사용자 응답에서 빠집니다. 대표 판별 방식(`hostUserId` 유지 또는 `isHost` boolean)은 통합 시 확정.
+- 대표 판별은 `isHost`(보는 사람이 대표인지). 건물명·주소·좌표는 넣지 않습니다. `buildingId`/`hostUserId`가 응답에 남을지는 통합 시 확정.
+- `deadlinePassed`: 마감 예정일이 지났는지(표시용, 자동 마감 아님). 픽업 PIN은 이 응답에 없고 참여자 전용 `GET /pods/{id}/me`에만 있습니다.
 - `status`: `OPEN` / `CLOSED` / `CANCELLED`. `closed`는 호환용(`status != OPEN`).
 - `perPersonAmount` = 총액 × (1 + 수고비율) ÷ **현재 참여자 수**(대표 포함, 0이면 1로 계산), 원 단위 올림 — 기존 공식 그대로.
 
