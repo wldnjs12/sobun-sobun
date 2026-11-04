@@ -21,69 +21,103 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 핵심 기능 ⑤: 건물별 익명 커뮤니티 (김민준 담당). API 계약: docs/API_SPEC.md ⑤.
+ * 핵심 기능 ⑤: 동네 익명 커뮤니티 (김민준 담당). API 계약: docs/API_SPEC.md ⑤.
  * 입장 전 GPS 확인(purpose=COMMUNITY_ENTER)은 프론트가 ①의 /api/auth/location-check로 먼저 한다.
+ *
+ * 요청한 사람(userId): X-User-Id 헤더가 있으면 헤더를 쓰고, 없을 때만 예전 방식(?userId=)을 쓴다.
+ * 왜: 로그인 필터가 토큰을 확인한 뒤 X-User-Id 헤더를 "토큰 주인"으로 덮어쓰기 때문에, 헤더를 우선하면
+ * 쿼리에 남의 userId를 적어 보내도 사칭할 수 없다. 쿼리는 구버전 화면 호환용으로만 남겨 둔다.
  */
-// TODO(①온보딩 연동 전 임시): 실제 로그인 세션이 생기면 userId는 세션에서 꺼내도록 교체 (팟 API와 동일한 방식)
 @RestController
 @RequestMapping("/api/community")
 @RequiredArgsConstructor
 public class CommunityController {
 
+    static final String USER_HEADER = "X-User-Id";
+
     private final CommunityPostService postService;
     private final CommunityModerationService moderationService;
 
+    /** buildingId는 예전 화면 호환용으로 받기만 하고 쓰지 않는다 — 범위는 서버가 "내 동네(반경 1km)"로 정한다. */
     @GetMapping("/posts")
-    public ApiResponse<List<CommunityPostSummary>> list(@RequestParam Long buildingId,
-                                                        @RequestParam Long userId,
-                                                        @RequestParam(required = false) CommunityCategory category) {
-        return ApiResponse.ok(postService.list(buildingId, userId, category));
+    public ApiResponse<List<CommunityPostSummary>> list(@RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                                        @RequestParam(required = false) Long userId,
+                                                        @RequestParam(required = false) Long buildingId,
+                                                        @RequestParam(required = false) CommunityCategory category)
+            throws MissingServletRequestParameterException {
+        return ApiResponse.ok(postService.list(requester(headerUserId, userId), category));
     }
 
     @PostMapping("/posts")
-    public ApiResponse<CommunityPostDetail> create(@RequestParam Long userId,
-                                                   @Valid @RequestBody PostCreateRequest request) {
-        return ApiResponse.ok(postService.create(userId, request));
+    public ApiResponse<CommunityPostDetail> create(@RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                                   @RequestParam(required = false) Long userId,
+                                                   @Valid @RequestBody PostCreateRequest request)
+            throws MissingServletRequestParameterException {
+        return ApiResponse.ok(postService.create(requester(headerUserId, userId), request));
     }
 
     @GetMapping("/posts/{postId}")
-    public ApiResponse<CommunityPostDetail> getDetail(@PathVariable Long postId, @RequestParam Long userId) {
-        return ApiResponse.ok(postService.getDetail(postId, userId));
+    public ApiResponse<CommunityPostDetail> getDetail(@PathVariable Long postId,
+                                                      @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                                      @RequestParam(required = false) Long userId)
+            throws MissingServletRequestParameterException {
+        return ApiResponse.ok(postService.getDetail(postId, requester(headerUserId, userId)));
     }
 
     @DeleteMapping("/posts/{postId}")
-    public ApiResponse<Void> delete(@PathVariable Long postId, @RequestParam Long userId) {
-        postService.delete(postId, userId);
+    public ApiResponse<Void> delete(@PathVariable Long postId,
+                                    @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                    @RequestParam(required = false) Long userId)
+            throws MissingServletRequestParameterException {
+        postService.delete(postId, requester(headerUserId, userId));
         return ApiResponse.ok(null);
     }
 
     @PostMapping("/posts/{postId}/comments")
     public ApiResponse<CommunityPostDetail> addComment(@PathVariable Long postId,
-                                                       @RequestParam Long userId,
-                                                       @Valid @RequestBody CommentCreateRequest request) {
-        return ApiResponse.ok(postService.addComment(postId, userId, request));
+                                                       @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                                       @RequestParam(required = false) Long userId,
+                                                       @Valid @RequestBody CommentCreateRequest request)
+            throws MissingServletRequestParameterException {
+        return ApiResponse.ok(postService.addComment(postId, requester(headerUserId, userId), request));
     }
 
     @DeleteMapping("/comments/{commentId}")
-    public ApiResponse<Void> deleteComment(@PathVariable Long commentId, @RequestParam Long userId) {
-        postService.deleteComment(commentId, userId);
+    public ApiResponse<Void> deleteComment(@PathVariable Long commentId,
+                                           @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                           @RequestParam(required = false) Long userId)
+            throws MissingServletRequestParameterException {
+        postService.deleteComment(commentId, requester(headerUserId, userId));
         return ApiResponse.ok(null);
     }
 
     @PostMapping("/posts/{postId}/report")
-    public ApiResponse<Void> reportPost(@PathVariable Long postId, @RequestParam Long userId) {
-        moderationService.reportPost(postId, userId);
+    public ApiResponse<Void> reportPost(@PathVariable Long postId,
+                                        @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                        @RequestParam(required = false) Long userId)
+            throws MissingServletRequestParameterException {
+        moderationService.reportPost(postId, requester(headerUserId, userId));
         return ApiResponse.ok(null);
     }
 
     @PostMapping("/comments/{commentId}/report")
-    public ApiResponse<Void> reportComment(@PathVariable Long commentId, @RequestParam Long userId) {
-        moderationService.reportComment(commentId, userId);
+    public ApiResponse<Void> reportComment(@PathVariable Long commentId,
+                                           @RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
+                                           @RequestParam(required = false) Long userId)
+            throws MissingServletRequestParameterException {
+        moderationService.reportComment(commentId, requester(headerUserId, userId));
         return ApiResponse.ok(null);
     }
 
+    /** 헤더 우선, 없으면 쿼리. 둘 다 없으면 400 (아래 handleBadRequest). */
+    static Long requester(Long headerUserId, Long queryUserId) throws MissingServletRequestParameterException {
+        if (headerUserId != null) return headerUserId;
+        if (queryUserId != null) return queryUserId;
+        throw new MissingServletRequestParameterException("userId", "Long");
+    }
+
     // 아래 핸들러는 이 컨트롤러에서 난 예외만 처리한다.
-    // 404(없는 글)·409(중복 신고 등)·403 BUILDING_ACCESS_DENIED(다른 건물)는 GlobalExceptionHandler가 처리.
+    // 404(없는 글)·409(중복 신고 등)·403 BUILDING_ACCESS_DENIED(동네 밖)는 GlobalExceptionHandler가 처리.
 
     @ExceptionHandler(CommunityForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)

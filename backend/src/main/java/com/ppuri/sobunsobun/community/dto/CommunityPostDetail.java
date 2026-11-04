@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * 글 상세(S17). 실제 작성자 ID는 절대 담지 않는다 — 닉네임("글쓴이"/"이웃 N")은 응답을 만들 때마다 계산한다.
  * suggestable=true(공구 제안)면 프론트가 "이 품목으로 팟 열기" 버튼을 보여준다.
+ * neighborhoodName·distanceLabel: 글쓴이 건물 대신 보여주는 대략 위치 (PostLocation 참고).
  */
 public record CommunityPostDetail(
         Long id,
@@ -17,6 +18,8 @@ public record CommunityPostDetail(
         boolean suggestable,
         boolean mine,
         LocalDateTime createdAt,
+        String neighborhoodName,
+        String distanceLabel,
         List<CommunityCommentResponse> comments
 ) {
 }

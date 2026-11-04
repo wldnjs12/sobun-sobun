@@ -44,7 +44,8 @@ class CommunityControllerTest {
     @Test
     void 글_상세_응답에는_실제_작성자_ID가_없고_익명_닉네임만_있다() throws Exception {
         given(postService.getDetail(1L, 200L)).willReturn(new CommunityPostDetail(
-                1L, CommunityCategory.GROUP_BUY_SUGGESTION, "글쓴이", "생수 같이 사실 분", true, false, LocalDateTime.now(),
+                1L, CommunityCategory.GROUP_BUY_SUGGESTION, "글쓴이", "휴지 30롤 같이 사실 분", true, false, LocalDateTime.now(),
+                "용현동", "약 300m",
                 List.of(new CommunityCommentResponse(10L, "이웃 1", "저요!", true, LocalDateTime.now()))));
 
         mockMvc.perform(get("/api/community/posts/1").param("userId", "200"))
@@ -52,19 +53,23 @@ class CommunityControllerTest {
                 .andExpect(jsonPath("$.data.authorLabel").value("글쓴이"))
                 .andExpect(jsonPath("$.data.suggestable").value(true))
                 .andExpect(jsonPath("$.data.comments[0].authorLabel").value("이웃 1"))
+                .andExpect(jsonPath("$.data.neighborhoodName").value("용현동"))
+                .andExpect(jsonPath("$.data.distanceLabel").value("약 300m"))
                 .andExpect(content().string(not(containsString("authorUserId"))))
-                .andExpect(content().string(not(containsString("userId"))));
+                .andExpect(content().string(not(containsString("userId"))))
+                .andExpect(content().string(not(containsString("buildingId")))) // 글쓴이 건물을 알 수 있는 값은 내려가지 않는다
+                .andExpect(content().string(not(containsString("roadAddress"))));
     }
 
     @Test
-    void 다른_건물_접근은_403과_BUILDING_ACCESS_DENIED_코드를_돌려준다() throws Exception {
-        given(postService.getDetail(1L, 900L)).willThrow(new BuildingAccessDeniedException("우리 건물 커뮤니티만 볼 수 있어요."));
+    void 동네_밖_접근은_403과_BUILDING_ACCESS_DENIED_코드를_돌려준다() throws Exception {
+        given(postService.getDetail(1L, 900L)).willThrow(new BuildingAccessDeniedException("우리 동네(반경 1km) 이웃의 글만 볼 수 있어요."));
 
         mockMvc.perform(get("/api/community/posts/1").param("userId", "900"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("BUILDING_ACCESS_DENIED")) // 프론트가 이 코드로 "다른 건물" 화면을 띄움
-                .andExpect(jsonPath("$.message").value("우리 건물 커뮤니티만 볼 수 있어요."));
+                .andExpect(jsonPath("$.message").value("우리 동네(반경 1km) 이웃의 글만 볼 수 있어요."));
     }
 
     @Test
@@ -111,7 +116,7 @@ class CommunityControllerTest {
     @Test
     void 글_작성은_userId와_본문을_서비스로_넘긴다() throws Exception {
         given(postService.create(eq(100L), any())).willReturn(new CommunityPostDetail(
-                5L, CommunityCategory.FREE, "글쓴이", "안녕하세요", false, true, LocalDateTime.now(), List.of()));
+                5L, CommunityCategory.FREE, "글쓴이", "안녕하세요", false, true, LocalDateTime.now(), "용현동", "같은 건물", List.of()));
 
         mockMvc.perform(post("/api/community/posts").param("userId", "100")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,5 +124,23 @@ class CommunityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(5))
                 .andExpect(jsonPath("$.data.mine").value(true));
+    }
+
+    @Test
+    void X_User_Id_헤더가_있으면_쿼리의_userId보다_우선한다() throws Exception {
+        // 로그인 필터가 헤더를 토큰 주인으로 덮어쓰므로, 쿼리에 남의 id를 적어도 헤더 주인으로 처리돼야 사칭이 막힌다
+        given(postService.list(100L, null)).willReturn(List.of());
+
+        mockMvc.perform(get("/api/community/posts").header("X-User-Id", "100").param("userId", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        org.mockito.Mockito.verify(postService).list(100L, null);
+    }
+
+    @Test
+    void 요청자를_알_수_없으면_400() throws Exception {
+        mockMvc.perform(get("/api/community/posts"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }
