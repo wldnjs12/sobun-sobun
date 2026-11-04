@@ -1,7 +1,8 @@
 package com.ppuri.sobunsobun.pod.domain;
 
 /**
- * 팟 카테고리 (2026-11 기획 개편: 생활용품 전용, 식품·식재료는 취급하지 않음).
+ * 팟 카테고리 (2026-11 기획 개편). 생필품 + 밀봉 가공식품(생수·라면 등 미개봉 상온 보관)까지 허용.
+ * 신선 식재료는 위생·보관 리스크가 커서 카테고리 자체를 두지 않는다.
  * DB에는 이름(TISSUE 등)을 문자열로 저장하고, 화면에는 label을 보여준다.
  */
 public enum PodCategory {
@@ -11,6 +12,7 @@ public enum PodCategory {
     KITCHEN("주방용품"),
     CLEANING("청소용품"),
     DAILY("생활잡화"),
+    PROCESSED_FOOD("생수·가공식품"),
     ETC("기타");
 
     private final String label;

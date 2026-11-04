@@ -1,11 +1,11 @@
 package com.ppuri.sobunsobun.pod.service;
 
-import com.ppuri.sobunsobun.auth.domain.Building;
-import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
+import com.ppuri.sobunsobun.auth.domain.User;
+import com.ppuri.sobunsobun.auth.domain.UserRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.auth.domain.LocationCheckPurpose;
 import com.ppuri.sobunsobun.auth.service.LocationCheckException;
 import com.ppuri.sobunsobun.auth.service.LocationCheckService;
-import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodCategory;
@@ -41,7 +41,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * 공통 준비(setUp)에서 "내 건물 = 1번, 용현동"을 깔아두기 때문에 테스트마다 안 쓰는 stub이 생긴다.
+ * 공통 준비(setUp)에서 "모든 사용자의 건물 = 1번"을 깔아두기 때문에 테스트마다 안 쓰는 stub이 생긴다.
  * 그래서 LENIENT(안 쓴 stub이 있어도 실패하지 않음)로 둔다.
  */
 @ExtendWith(MockitoExtension.class)
@@ -56,25 +56,21 @@ class PodServiceTest {
     @Mock
     private PodParticipantRepository podParticipantRepository;
     @Mock
-    private BuildingRepository buildingRepository;
+    private UserRepository userRepository;
     @Mock
-    private NeighborhoodService neighborhoodService;
+    private BuildingAccessService buildingAccessService;
     @Mock
     private LocationCheckService locationCheckService;
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
     private PodService podService;
-    private Building myBuilding;
 
     @BeforeEach
     void setUp() {
-        podService = new PodService(podRepository, podParticipantRepository, buildingRepository, neighborhoodService,
+        podService = new PodService(podRepository, podParticipantRepository, userRepository, buildingAccessService,
                 locationCheckService, messagingTemplate);
-        myBuilding = new Building("테스트빌라", "인천광역시 미추홀구 인하로 100 (용현동)", "bd1", null, "bd1", 37.45, 126.65);
-        ReflectionTestUtils.setField(myBuilding, "id", 1L);
-        when(neighborhoodService.findMyBuilding(anyLong())).thenReturn(Optional.of(myBuilding));
-        when(buildingRepository.findAllById(any())).thenReturn(List.of(myBuilding));
+        when(userRepository.findById(anyLong())).thenAnswer(inv -> Optional.of(new User(inv.getArgument(0), 1L)));
         when(podRepository.save(any(Pod.class))).thenAnswer(inv -> {
             Pod p = inv.getArgument(0);
             ReflectionTestUtils.setField(p, "id", 1L);
@@ -116,8 +112,6 @@ class PodServiceTest {
         assertThat(response.buildingId()).isEqualTo(1L);
         assertThat(response.participantCount()).isEqualTo(1);
         assertThat(response.categoryLabel()).isEqualTo("휴지·물티슈");
-        assertThat(response.neighborhoodName()).isEqualTo("용현동");
-        assertThat(response.distanceLabel()).isEqualTo("같은 건물");
         assertThat(response.status()).isEqualTo("OPEN");
         verify(podParticipantRepository).save(any(PodParticipant.class));
     }
@@ -132,7 +126,7 @@ class PodServiceTest {
 
     @Test
     void 건물_등록_전이면_개설이_거절된다() {
-        when(neighborhoodService.findMyBuilding(HOST)).thenReturn(Optional.empty());
+        when(userRepository.findById(HOST)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> podService.create(createRequest(30, 10, 3), HOST))
                 .isInstanceOf(BuildingAccessDeniedException.class);
@@ -151,15 +145,14 @@ class PodServiceTest {
         verify(podRepository, never()).save(any());
     }
 
-    // ── 목록: 동네 범위·검색·필터 ──
+    // ── 목록: 내 건물·검색·필터 ──
 
     @Test
-    void 목록은_동네_건물의_팟만_조회하고_검색어와_카테고리로_거른다() {
-        when(neighborhoodService.nearbyBuildingIds(NEIGHBOR)).thenReturn(List.of(1L, 2L));
+    void 목록은_내_건물_팟만_조회하고_검색어와_카테고리로_거른다() {
         Pod tissue = pod(1L, "깨끗한나라 화장지 30롤", null, PodCategory.TISSUE, LocalDateTime.now().plusDays(1));
         Pod wipes = pod(2L, "물티슈 10팩", "화장지랑 같이 쓰기 좋아요", PodCategory.TISSUE, LocalDateTime.now().plusDays(2));
         Pod detergent = pod(3L, "액체세제 3L", null, PodCategory.LAUNDRY, LocalDateTime.now().plusDays(3));
-        when(podRepository.findByBuildingIdInOrderByIdDesc(List.of(1L, 2L))).thenReturn(List.of(detergent, wipes, tissue));
+        when(podRepository.findByBuildingIdOrderByIdDesc(1L)).thenReturn(List.of(detergent, wipes, tissue));
 
         List<PodResponse> byKeyword = podService.list(NEIGHBOR, "화장지", null, null, null);
         assertThat(byKeyword).extracting(PodResponse::id).containsExactly(1L, 2L); // 제목·설명 모두 검색, 마감 임박순
@@ -170,12 +163,11 @@ class PodServiceTest {
 
     @Test
     void 기본_목록은_모집중만_보여주고_ALL이면_모집중을_먼저_보여준다() {
-        when(neighborhoodService.nearbyBuildingIds(NEIGHBOR)).thenReturn(List.of(1L));
         Pod open = pod(1L, "휴지", null, PodCategory.TISSUE, LocalDateTime.now().plusDays(1));
         Pod cancelled = pod(2L, "세제", null, PodCategory.LAUNDRY, LocalDateTime.now().plusDays(1));
         cancelled.cancel(HOST);
         Pod expired = pod(3L, "샴푸", null, PodCategory.BATH, LocalDateTime.now().minusHours(1));
-        when(podRepository.findByBuildingIdInOrderByIdDesc(List.of(1L))).thenReturn(List.of(expired, cancelled, open));
+        when(podRepository.findByBuildingIdOrderByIdDesc(1L)).thenReturn(List.of(expired, cancelled, open));
 
         assertThat(podService.list(NEIGHBOR, null, null, "OPEN", null)).extracting(PodResponse::id).containsExactly(1L);
         assertThat(podService.list(NEIGHBOR, null, null, "ALL", null)).extracting(PodResponse::id)
@@ -184,34 +176,34 @@ class PodServiceTest {
 
     @Test
     void 건물_등록_전이면_목록이_비어있다() {
-        when(neighborhoodService.nearbyBuildingIds(NEIGHBOR)).thenReturn(List.of());
+        when(userRepository.findById(NEIGHBOR)).thenReturn(Optional.empty());
 
         assertThat(podService.list(NEIGHBOR, null, null, null, null)).isEmpty();
-        verify(podRepository, never()).findByBuildingIdInOrderByIdDesc(any());
+        verify(podRepository, never()).findByBuildingIdOrderByIdDesc(any());
     }
 
     @Test
     void 모르는_카테고리로_조회하면_400_규칙_위반이다() {
-        assertThatThrownBy(() -> podService.list(NEIGHBOR, null, "FOOD", null, null))
+        assertThatThrownBy(() -> podService.list(NEIGHBOR, null, "FRESH", null, null))
                 .isInstanceOf(PodRuleViolationException.class);
     }
 
     // ── 상세·참여 ──
 
     @Test
-    void 동네_밖이면_상세_조회가_거부된다() {
+    void 다른_건물이면_상세_조회가_거부된다() {
         when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
-        doThrow(new BuildingAccessDeniedException("우리 동네(반경 1km) 밖의 공동구매예요."))
-                .when(neighborhoodService).requireNeighbor(999L, 1L);
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(999L, 1L);
 
         assertThatThrownBy(() -> podService.getDetail(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
     }
 
     @Test
-    void 동네_밖이면_팟_참여가_거부된다() {
+    void 다른_건물이면_팟_참여가_거부된다() {
         when(podRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(samplePod()));
-        doThrow(new BuildingAccessDeniedException("우리 동네(반경 1km) 밖의 공동구매예요."))
-                .when(neighborhoodService).requireNeighbor(999L, 1L);
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(999L, 1L);
 
         assertThatThrownBy(() -> podService.join(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
 
@@ -256,6 +248,15 @@ class PodServiceTest {
         when(podRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(pod));
 
         assertThatThrownBy(() -> podService.join(1L, NEIGHBOR)).hasMessageContaining("취소된");
+    }
+
+    @Test
+    void 다른_건물이면_보냈어요_신고가_거부된다() {
+        when(podRepository.findById(1L)).thenReturn(Optional.of(samplePod()));
+        doThrow(new BuildingAccessDeniedException("다른 건물의 팟에는 접근할 수 없어요."))
+                .when(buildingAccessService).requireMembership(999L, 1L);
+
+        assertThatThrownBy(() -> podService.markPaid(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
     }
 
     @Test

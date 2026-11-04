@@ -1,10 +1,10 @@
 package com.ppuri.sobunsobun.pod.service;
 
-import com.ppuri.sobunsobun.auth.domain.Building;
-import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
 import com.ppuri.sobunsobun.auth.domain.LocationCheckPurpose;
 import com.ppuri.sobunsobun.auth.service.LocationCheckService;
-import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
+import com.ppuri.sobunsobun.auth.domain.User;
+import com.ppuri.sobunsobun.auth.domain.UserRepository;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodCategory;
@@ -37,8 +37,7 @@ import java.util.Optional;
 /**
  * 팟 개설·조회·참여·수정·취소·마감.
  *
- * 접근 범위(2026-11 기획 개편): 같은 건물 → **동네(내 건물 반경 1km)**. 판정은 NeighborhoodService가 한다.
- * 단, 이미 참여했거나 대표인 팟은 (이사 등으로 동네가 바뀌어도) 계속 볼 수 있다 — 정산·픽업을 끝내야 하니까.
+ * 접근 범위: **같은 건물 소속만** (BuildingAccessService.requireMembership). 다른 건물 팟은 ID로 직접 접근해도 403.
  */
 @Service
 @RequiredArgsConstructor
@@ -48,21 +47,20 @@ public class PodService {
 
     private final PodRepository podRepository;
     private final PodParticipantRepository podParticipantRepository;
-    private final BuildingRepository buildingRepository;
-    private final NeighborhoodService neighborhoodService;
+    private final UserRepository userRepository;
+    private final BuildingAccessService buildingAccessService;
     private final LocationCheckService locationCheckService;
     private final SimpMessagingTemplate messagingTemplate;
 
     /** 개설 + 대표 자동 참여(participantCount = 1). 대표 = 요청자, 건물 = 요청자의 등록 건물. */
     @Transactional
     public PodResponse create(PodCreateRequest request, Long hostUserId) {
-        Building myBuilding = neighborhoodService.findMyBuilding(hostUserId)
-                .orElseThrow(() -> new BuildingAccessDeniedException(NO_BUILDING_MESSAGE));
-        locationCheckService.requireRecentPass(hostUserId, myBuilding.getId(), LocationCheckPurpose.POD_CREATE);
+        Long myBuildingId = myBuildingId(hostUserId);
+        locationCheckService.requireRecentPass(hostUserId, myBuildingId, LocationCheckPurpose.POD_CREATE);
         Pod.validateUnits(request.totalUnits(), request.unitsPerPerson(), request.targetParticipantCount(), request.unitLabel());
 
         Pod pod = Pod.builder()
-                .buildingId(myBuilding.getId())
+                .buildingId(myBuildingId)
                 .hostUserId(hostUserId)
                 .category(request.category())
                 .title(request.title().trim())
@@ -90,7 +88,7 @@ public class PodService {
         if (podParticipantRepository.existsByPodIdAndUserId(podId, userId)) {
             throw new IllegalStateException("이미 참여한 팟입니다.");
         }
-        neighborhoodService.requireNeighbor(userId, pod.getBuildingId());
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         // 예전 프론트는 개설 직후 대표를 따로 join시켰다. 개설할 때 이미 위치를 확인했으므로 대표는 위치 재확인 면제
         if (!pod.isHost(userId)) {
             locationCheckService.requireRecentPass(userId, pod.getBuildingId(), LocationCheckPurpose.POD_JOIN);
@@ -104,6 +102,7 @@ public class PodService {
     @Transactional
     public PodResponse cancelJoin(Long podId, Long userId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         if (pod.isHost(userId)) {
             throw new IllegalStateException("대표는 참여를 취소할 수 없어요. 대신 모집 취소를 이용해주세요.");
         }
@@ -119,6 +118,7 @@ public class PodService {
     @Transactional
     public PodResponse close(Long podId, Long hostUserId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         pod.close(hostUserId);
         broadcast(pod);
         return toResponse(pod, hostUserId);
@@ -128,6 +128,7 @@ public class PodService {
     @Transactional
     public PodResponse cancel(Long podId, Long hostUserId) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         pod.cancel(hostUserId);
         broadcast(pod);
         return toResponse(pod, hostUserId);
@@ -137,6 +138,7 @@ public class PodService {
     @Transactional
     public PodResponse update(Long podId, Long hostUserId, PodUpdateRequest request) {
         Pod pod = getPodForUpdate(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         boolean hasOthers = podParticipantRepository.findByPodIdOrderByJoinedAt(podId).stream()
                 .anyMatch(p -> !Objects.equals(p.getUserId(), pod.getHostUserId()));
         pod.update(hostUserId, hasOthers, request.toChange());
@@ -152,7 +154,7 @@ public class PodService {
     }
 
     /**
-     * 동네 홈 목록. 동네(반경 1km) 건물들의 팟 중 필터에 맞는 것만.
+     * 건물 홈 목록. 내 건물 팟 중 필터에 맞는 것만.
      *
      * @param keyword  제목·설명에 포함된 글자(대소문자 무시). 비우면 전체
      * @param category PodCategory 이름. 비우거나 ALL이면 전체
@@ -163,8 +165,8 @@ public class PodService {
     public List<PodResponse> list(Long userId, String keyword, String category, String status, String sort) {
         PodCategory categoryFilter = PodCategory.fromParam(category);
         boolean openOnly = parseOpenOnly(status);
-        List<Long> nearby = neighborhoodService.nearbyBuildingIds(userId);
-        if (nearby.isEmpty()) return List.of();
+        Optional<Long> myBuilding = userRepository.findById(userId).map(User::getBuildingId);
+        if (myBuilding.isEmpty()) return List.of();
 
         boolean newest = "NEWEST".equalsIgnoreCase(sort);
         String needle = keyword == null || keyword.isBlank() ? null : keyword.trim().toLowerCase(Locale.ROOT);
@@ -177,7 +179,7 @@ public class PodService {
         }
         order = order.thenComparing(Pod::getId, Comparator.nullsLast(Comparator.reverseOrder()));
 
-        List<Pod> pods = podRepository.findByBuildingIdInOrderByIdDesc(nearby).stream()
+        List<Pod> pods = podRepository.findByBuildingIdOrderByIdDesc(myBuilding.get()).stream()
                 .filter(p -> !openOnly || recruiting(p, now))
                 .filter(p -> categoryFilter == null || p.getCategory() == categoryFilter)
                 .filter(p -> needle == null || contains(p.getTitle(), needle) || contains(p.getDescription(), needle))
@@ -212,18 +214,17 @@ public class PodService {
     @Transactional(readOnly = true)
     public MyParticipationResponse getMyParticipation(Long podId, Long userId) {
         Pod pod = getPod(podId);
-        Optional<PodParticipant> mine = podParticipantRepository.findByPodIdAndUserId(podId, userId);
-        if (mine.isEmpty()) {
-            requireAccess(pod, userId);
-            return MyParticipationResponse.notJoined();
-        }
-        return MyParticipationResponse.from(pod, mine.get());
+        requireAccess(pod, userId);
+        return podParticipantRepository.findByPodIdAndUserId(podId, userId)
+                .map(participant -> MyParticipationResponse.from(pod, participant))
+                .orElseGet(MyParticipationResponse::notJoined);
     }
 
     /** 대표가 보는 참여자별 송금/수령 현황 (대표 본인만 조회 가능). */
     @Transactional(readOnly = true)
     public List<ParticipantStatusResponse> listParticipants(Long podId, Long hostUserId) {
         Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(hostUserId, pod.getBuildingId());
         if (!pod.isHost(hostUserId)) {
             throw new PodForbiddenException("대표만 참여자 현황을 볼 수 있습니다.");
         }
@@ -235,6 +236,7 @@ public class PodService {
     @Transactional
     public MyParticipationResponse markPaid(Long podId, Long userId) {
         Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         PodParticipant participant = getMyParticipant(podId, userId);
         participant.markPaid();
         return MyParticipationResponse.from(pod, participant);
@@ -243,15 +245,22 @@ public class PodService {
     @Transactional
     public MyParticipationResponse markPickedUp(Long podId, Long userId) {
         Pod pod = getPod(podId);
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
         PodParticipant participant = getMyParticipant(podId, userId);
         participant.markPickedUp();
         return MyParticipationResponse.from(pod, participant);
     }
 
-    /** 대표·참여자는 항상 통과, 그 외에는 동네 이웃이어야 한다 (아니면 403). */
+    /** 같은 건물 소속이 아니면 403 (BuildingAccessDeniedException) */
     private void requireAccess(Pod pod, Long userId) {
-        if (pod.isHost(userId) || podParticipantRepository.existsByPodIdAndUserId(pod.getId(), userId)) return;
-        neighborhoodService.requireNeighbor(userId, pod.getBuildingId());
+        buildingAccessService.requireMembership(userId, pod.getBuildingId());
+    }
+
+    /** 요청자의 등록 건물. 건물 등록 전이면 403. 본문의 buildingId는 믿지 않는다. */
+    private Long myBuildingId(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getBuildingId)
+                .orElseThrow(() -> new BuildingAccessDeniedException(NO_BUILDING_MESSAGE));
     }
 
     private static boolean parseOpenOnly(String status) {
@@ -274,30 +283,12 @@ public class PodService {
     }
 
     private PodResponse toResponse(Pod pod, Long viewerId) {
-        return toResponses(List.of(pod), viewerId).get(0);
+        return PodResponse.of(pod, viewerId, LocalDateTime.now());
     }
 
-    /** 위치 문구(법정동·대략 거리)를 붙여 응답으로 바꾼다. 건물은 한 번에 모아서 조회한다. */
     private List<PodResponse> toResponses(List<Pod> pods, Long viewerId) {
-        if (pods.isEmpty()) return List.of();
-        Map<Long, Building> buildings = new HashMap<>();
-        buildingRepository.findAllById(pods.stream().map(Pod::getBuildingId).filter(Objects::nonNull).distinct().toList())
-                .forEach(b -> buildings.put(b.getId(), b));
-        Long myBuildingId = neighborhoodService.findMyBuilding(viewerId).map(Building::getId).orElse(null);
-        Map<Long, String> distanceCache = new HashMap<>();
         LocalDateTime now = LocalDateTime.now();
-
-        return pods.stream().map(pod -> {
-            Building b = buildings.get(pod.getBuildingId());
-            String neighborhoodName = b == null ? null : NeighborhoodService.neighborhoodName(b.getRoadAddress());
-            String distanceLabel = pod.getBuildingId() == null ? null : distanceCache.computeIfAbsent(pod.getBuildingId(), id -> {
-                boolean same = id.equals(myBuildingId);
-                Double meters = same ? null : neighborhoodService.distanceMeters(viewerId, id);
-                return Objects.toString(NeighborhoodService.roughDistanceLabel(meters, same), "");
-            });
-            return PodResponse.of(pod, viewerId, neighborhoodName,
-                    distanceLabel == null || distanceLabel.isEmpty() ? null : distanceLabel, now);
-        }).toList();
+        return pods.stream().map(pod -> PodResponse.of(pod, viewerId, now)).toList();
     }
 
     private PodParticipant getMyParticipant(Long podId, Long userId) {

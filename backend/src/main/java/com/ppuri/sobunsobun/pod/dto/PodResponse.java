@@ -9,8 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 컨트롤러가 내려주는 팟 응답. 엔티티를 직접 노출하지 않기 위한 DTO.
  *
- * 위치 정보는 neighborhoodName(법정동 이름, 예 "용현동")과 distanceLabel(대략 거리, 예 "약 300m")만 내려준다.
- * 대표 건물의 도로명주소·건물명·동·호수는 절대 넣지 않는다 (2026-11 기획 개편 위치 노출 정책).
+ * 팟은 같은 건물 이웃끼리만 보므로 위치 정보(주소·호수 등)는 넣지 않는다.
  * pickupPin도 여기엔 없다 — 참여자 전용이라 MyParticipationResponse에만 있다.
  */
 public record PodResponse(
@@ -35,16 +34,14 @@ public record PodResponse(
         Boolean closed,
         String status,
         String pickupNote,
-        BigDecimal originalPrice,
-        String neighborhoodName,
-        String distanceLabel
+        BigDecimal originalPrice
 ) {
-    /** 보는 사람(viewerId) 기준 정보 없이 만들 때(테스트 등). 위치 문구는 비어 있다. */
+    /** 보는 사람(viewerId) 정보 없이 만들 때(테스트 등) */
     public static PodResponse from(Pod pod) {
-        return of(pod, null, null, null, LocalDateTime.now());
+        return of(pod, null, LocalDateTime.now());
     }
 
-    public static PodResponse of(Pod pod, Long viewerId, String neighborhoodName, String distanceLabel, LocalDateTime now) {
+    public static PodResponse of(Pod pod, Long viewerId, LocalDateTime now) {
         return new PodResponse(
                 pod.getId(),
                 pod.getBuildingId(),
@@ -67,9 +64,7 @@ public record PodResponse(
                 pod.getClosed(),
                 pod.getStatus().name(),
                 pod.getPickupNote(),
-                pod.getOriginalPrice(),
-                neighborhoodName,
-                distanceLabel
+                pod.getOriginalPrice()
         );
     }
 }
