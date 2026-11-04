@@ -1,7 +1,9 @@
 package com.ppuri.sobunsobun.pod.websocket;
 
-import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
+import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
+import com.ppuri.sobunsobun.pod.domain.Pod;
+import com.ppuri.sobunsobun.pod.repository.PodParticipantRepository;
 import com.ppuri.sobunsobun.pod.repository.PodRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -16,8 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * STOMP 구독 시점에 건물 소속을 확인한다. /topic/pods/{id} 구독 요청이 들어오면 그 팟의 buildingId와
- * CONNECT 시점에 받은 X-User-Id의 소속을 비교해서, 다른 건물이면 구독을 거부한다 (기획 개편: 건물 소속 검증).
+ * STOMP 구독 시점에 접근 권한을 확인한다. /topic/pods/{id} 구독 요청이 들어오면 CONNECT 시점에 받은 X-User-Id가
+ * 그 팟의 대표·참여자이거나 동네(반경 1km) 이웃인지 확인하고, 아니면 구독을 거부한다 (2026-11: 건물 → 동네 단위).
  */
 @Component
 @RequiredArgsConstructor
@@ -27,8 +29,11 @@ public class PodSubscriptionInterceptor implements ChannelInterceptor {
     private static final String USER_ID_HEADER = "X-User-Id";
     private static final String SESSION_USER_ID_KEY = "userId";
 
+    // PodService를 주입하지 않는 이유: PodService → SimpMessagingTemplate → WebSocket 설정 → 이 인터셉터로
+    // 빈 생성이 순환해서 앱이 안 뜬다. 그래서 저장소와 NeighborhoodService만 직접 쓴다.
     private final PodRepository podRepository;
-    private final BuildingAccessService buildingAccessService;
+    private final PodParticipantRepository podParticipantRepository;
+    private final NeighborhoodService neighborhoodService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -67,9 +72,12 @@ public class PodSubscriptionInterceptor implements ChannelInterceptor {
         }
 
         Long podId = Long.valueOf(matcher.group(1));
-        Long buildingId = podRepository.findById(podId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팟입니다: " + podId))
-                .getBuildingId();
-        buildingAccessService.requireMembership(userId, buildingId, "다른 건물의 팟 채널은 구독할 수 없어요.");
+        Pod pod = podRepository.findById(podId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팟입니다: " + podId));
+        // 대표·참여자는 항상 구독 가능 (정산·픽업까지 실시간 갱신을 받아야 하므로)
+        if (pod.isHost(userId) || podParticipantRepository.existsByPodIdAndUserId(podId, userId)) {
+            return;
+        }
+        neighborhoodService.requireNeighbor(userId, pod.getBuildingId(), "우리 동네 밖의 팟 채널은 구독할 수 없어요.");
     }
 }
