@@ -36,6 +36,8 @@
    | `JUSO_API_KEY` / `KAKAO_REST_API_KEY` | (선택) 발급받았으면 입력 | 없으면 Stub 구현체가 데모 응답을 돌려준다 — [API_KEYS.md](./API_KEYS.md) |
    | `NAVER_OCR_INVOKE_URL` / `NAVER_OCR_SECRET_KEY` | (선택) | 영수증 OCR, 없으면 Stub |
    | `LOCATION_CHECK_DEMO_MODE` | (선택) `true`면 GPS 2차 확인이 항상 통과(고정 데모 좌표) | 데모 리허설용, 기본 꺼짐 |
+   | `ADDRESS_DEMO_FALLBACK` | (선택) `true`면 주소 API 오류·타임아웃 시 데모 건물 목록으로 대체 | 시연용, 기본 꺼짐 |
+   | `DEMO_SEED` | (선택) `true`면 기동 시 1회 시연용 건물·팟 시드 생성 | 시연용, 기본 꺼짐 — 운영 DB에선 켜지 말 것 |
 
    `PORT`는 Railway가 자동으로 주입하므로 직접 설정하지 않는다 (`application.yml`의 `server.port: ${PORT:8080}`이 받는다).
 4. 배포가 끝나면 **Settings → Networking → Generate Domain**으로 퍼블릭 URL을 받는다 (예: `https://sobunsobun-backend.up.railway.app`). 이 주소를 메모해둔다 — 3번 Vercel 설정에 쓴다.

@@ -1,8 +1,7 @@
 # ① 주소+GPS 건물 인증 온보딩
 
-담당: 최지원(백엔드) + 도우현(프론트) · 관련 화면: [S1, S1-2, S2, S3](../DESIGN_HANDOFF.md)
+> 기준 문서는 [docs/PRODUCT_SPEC.md](../PRODUCT_SPEC.md)입니다. 이 문서는 기능 배경·세부 규칙 참고용이며, 충돌하면 PRODUCT_SPEC을 따릅니다. 관련 화면: [DESIGN_HANDOFF S1~S3](../DESIGN_HANDOFF.md)
 
-> ⚠️ **기획 개편(2026-10-03)**: QR 인증을 완전히 없애고 "주소 입력(1차, 가입 시 1회) + GPS(2차, 행동 직전마다)"로 바꿨습니다. 과거 QR 버전은 [handoff/qr-auth.md](../handoff/qr-auth.md)에 기록으로만 남아있습니다. 담당자도 문소원·김민준 → **최지원·도우현**으로 바뀌었습니다 — 자세한 사유는 [REPLAN_WORK_ASSIGNMENT.md](../REPLAN_WORK_ASSIGNMENT.md).
 
 ## 왜 필요한가 (근거)
 
@@ -22,7 +21,7 @@ QR은 고정 QR이 캡처·공유되면 건물 밖 사람도 들어올 수 있�
 
 ## 비즈니스 규칙
 
-- 허용 반경: **100m**(`LocationCheckService.ALLOWED_RADIUS_METERS`, 임시값 — [open-decisions.md](../open-decisions.md)).
+- 허용 반경: **100m**(`LocationCheckService.ALLOWED_RADIUS_METERS`, 시연 장소 실측 후 조정).
 - 거리 계산은 Haversine 공식, **반드시 서버에서 판정**(프론트 판정 결과를 신뢰하지 않음).
 - GPS 판정 결과는 **캐시하지 않고 매번 재확인**(2026-10-03 확정).
 - 위치 개인정보: 원본 좌표는 저장하지 않고, 판정 결과(성공/실패, 시각, 목적)만 `LOCATION_CHECK`에 기록.

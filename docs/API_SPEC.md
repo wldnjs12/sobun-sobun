@@ -3,14 +3,14 @@
 베이스 URL: `/api` · 모든 응답은 `{ "success": boolean, "data": ..., "message": string|null }` 형태(`ApiResponse<T>`).
 실패 사유별로 프론트가 분기해야 하는 API는 실패 시 `code`(string)를 추가로 내려줍니다 (없으면 JSON에서 생략).
 
-> **2026-11 개편**: 계정(로그인) 추가, 주소 검색 페이지·지번·상세주소, 팟 카테고리·미개봉 단위 필드·수정/취소/검색, 팟·커뮤니티 범위를 "같은 건물"에서 "동네(반경 1km)"로 확장했습니다. **(2026-11 개편)** 표시가 붙은 부분은 새 계약이며, 정확한 필드 이름은 통합 시점에 최종 확정될 수 있습니다. 제품 규칙 전체는 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md).
+> **2026-11 개편**: 계정(로그인) 추가, 주소 검색 페이지·지번·상세주소, 팟 카테고리·미개봉 단위 필드·수정/취소/검색, 품목에 밀봉 가공식품 카테고리 추가. 범위는 기존과 같이 **건물 단위 격리**입니다. **(2026-11 개편)** 표시가 붙은 부분은 새 계약이며, 정확한 필드 이름은 통합 시점에 최종 확정될 수 있습니다. 제품 규칙 전체는 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md).
 
 ## 공통 규칙
 
 | 상황 | HTTP | code | 비고 |
 | --- | --- | --- | --- |
 | 토큰 없음/만료/잘못됨 (인증 필요 경로) | 401 | `UNAUTHORIZED` | (2026-11 개편) |
-| 동네 밖·건물 미등록 상태로 리소스 접근 | 403 | `BUILDING_ACCESS_DENIED` | 기존 code 그대로 사용 |
+| 다른 건물·건물 미등록 상태로 리소스 접근 (ID 직접 접근 포함) | 403 | `BUILDING_ACCESS_DENIED` | 기존 code 그대로 사용 |
 | GPS 반경 밖 / 최근 위치 확인 없음 | 400 | `OUT_OF_RANGE` / `LOCATION_CHECK_REQUIRED` | |
 | 없는 리소스 | 404 | - | `IllegalArgumentException` |
 | 상태 충돌(이미 마감, 이미 참여, 인원 가득 등) | 409 | - | `IllegalStateException` |
@@ -46,7 +46,7 @@
     }
   }
   ```
-  건물 등록 전이면 `"building": null` → 프론트는 주소 검색 화면으로 보냅니다. 상세주소·도로명주소는 **본인 응답에만** 들어갑니다.
+  건물 등록 전이면 `"building": null` → 프론트는 주소 검색 화면으로 보냅니다. 상세주소·도로명주소는 **본인 응답에만** 들어갑니다. `neighborhoodName`은 도로명주소 괄호의 법정동(본인 화면 표시용).
 
 ## ① 주소+GPS 건물 인증
 
@@ -90,19 +90,18 @@
 
 ## ② 팟 개설·참여·실시간 정산
 
-### 동네 범위 (2026-11 개편)
+### 건물 단위 격리
 
-- 팟 목록·상세·참여는 **같은 건물이 아니라 동네(내 건물 반경 1km)** 안의 팟이 대상입니다. 접근 가드는 `NeighborhoodService.requireNeighbor(userId, pod.buildingId)` — 밖이면 403 `BUILDING_ACCESS_DENIED`, message "우리 동네(반경 1km) 밖의 공동구매예요."
-- 다른 사용자에게 보이는 위치 정보는 `neighborhoodName`(법정동, 예 "용현동")과 `distanceLabel`(대략 거리)뿐입니다. 팟 응답에는 건물명·도로명주소·동·좌표를 넣지 않습니다.
-- `distanceLabel` 규칙(`NeighborhoodService.roughDistanceLabel`): 같은 건물 → "같은 건물", 100m 미만 → "100m 이내", 1km 미만 → 100m 단위 반올림("약 300m"), 1km 이상 → "약 1.2km".
+- 팟 목록·상세·참여·마감·참여 현황, WebSocket 구독은 **같은 건물 소속**만 가능합니다. 가드는 `BuildingAccessService.requireMembership(userId, pod.buildingId)` — 다르면 403 `BUILDING_ACCESS_DENIED`, message "다른 건물의 팟에는 접근할 수 없어요." ID를 알고 직접 호출해도 같습니다.
+- 다른 사용자에게 보이는 위치 정보는 건물 이름(+아파트 동)까지입니다. 도로명주소·지번·상세주소·좌표는 팟 응답에 넣지 않습니다.
 
 ### 엔드포인트
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
 | POST | /pods | 팟 개설 (최근 `POD_CREATE` 위치 확인 필요) | `PodCreateRequest` | `Pod` |
-| GET | /pods?keyword=&category= | **(2026-11 개편)** 내 동네의 모집 중 팟 목록, 최신순 | 쿼리: keyword?(제목·설명), category?(`PodCategory`) | `Pod[]` |
-| GET | /pods/{id} | 팟 상세 (동네 밖이면 403) | - | `Pod` |
+| GET | /pods?keyword=&category= | **(2026-11 개편)** 우리 건물의 모집 중 팟 목록, 최신순 | 쿼리: keyword?(제목·설명), category?(`PodCategory`) | `Pod[]` |
+| GET | /pods/{id} | 팟 상세 (다른 건물이면 403) | - | `Pod` |
 | PATCH | /pods/{id} | **(2026-11 개편)** 팟 수정 — 대표만, 대표 외 참여자가 없을 때만 | `PodCreateRequest`와 같은 필드 | `Pod` |
 | POST | /pods/{id}/cancel | **(2026-11 개편)** 팟 취소 — 대표만, 마감 전 | - | `Pod` |
 | POST | /pods/{id}/join | 참여 (대표가 아니면 최근 `POD_JOIN` 위치 확인 필요) | - | `Pod` |
@@ -112,9 +111,9 @@
 | GET | /pods/{id}/participants | 참여자별 송금/수령 현황 (대표만) | - | `ParticipantStatusResponse[]` |
 | POST | /pods/{id}/paid | "보냈어요" 자가 신고 | - | `MyParticipationResponse` |
 | POST | /pods/{id}/picked-up | "수령 완료" 자가 신고 | - | `MyParticipationResponse` |
-| WS | /ws-sobun (STOMP) | 실시간 채널. `connectHeaders`에 `X-User-Id` | 구독: `/topic/pods/{id}` (동네 밖이면 구독 거부) | `PodAmountUpdateEvent` |
+| WS | /ws-sobun (STOMP) | 실시간 채널. `connectHeaders`에 `X-User-Id` | 구독: `/topic/pods/{id}` (다른 건물이면 구독 거부) | `PodAmountUpdateEvent` |
 
-- 기존 `GET /pods?buildingId=&userId=`는 `GET /pods?keyword=&category=`로 바뀝니다(동네는 서버가 요청자 기준으로 계산).
+- 기존 `GET /pods?buildingId=&userId=`에 `keyword`·`category`가 추가됩니다. 요청자의 건물은 서버가 토큰 사용자 기준으로 확인하며, `buildingId` 쿼리가 남을지는 통합 시 확정(남더라도 내 건물이 아니면 403).
 - 요청자 식별은 토큰(→ `X-User-Id`)으로 합니다. 개설 요청의 `buildingId`/`hostUserId`는 서버가 내 계정·내 건물로 채웁니다(통합 시 확정).
 - 대표는 개설 직후 자동으로 첫 참여자가 됩니다. 그래서 `targetParticipantCount`·`participantCount`에는 **대표가 포함**됩니다.
 
@@ -139,7 +138,7 @@
 
 | 필드 | 필수 | 규칙 |
 | --- | --- | --- |
-| category | ✅ | `TISSUE`(휴지·물티슈) · `LAUNDRY`(세제·세탁) · `BATH`(샴푸·욕실) · `KITCHEN`(주방용품) · `CLEANING`(청소용품) · `DAILY`(생활잡화) · `ETC`(기타) |
+| category | ✅ | `TISSUE`(휴지·물티슈) · `LAUNDRY`(세제·세탁) · `BATH`(샴푸·욕실) · `KITCHEN`(주방용품) · `CLEANING`(청소용품) · `DAILY`(생활잡화) · `PROCESSED_FOOD`(생수·가공식품, 밀봉·상온만) · `ETC`(기타) |
 | title | ✅ | |
 | description | | 최대 500자. 제품 설명·구매처 |
 | totalAmount | ✅ | 양수 |
@@ -150,7 +149,7 @@
 | commissionRate | | 비우면 0.05 |
 | deadline | | 표시용, 자동 마감 없음 |
 | originalPrice | | "혼자 샀을 때" 비교 가격, 절약액 카드용 |
-| pickupNote | | 최대 100자. 대략적인 장소만 ("상세 주소는 적지 마세요" 안내) |
+| pickupNote | | 최대 100자. 대략적인 장소만 ("호수 같은 상세 주소는 적지 마세요" 안내) |
 
 ### `Pod` 응답 (2026-11 개편)
 
@@ -162,12 +161,11 @@
   "targetParticipantCount": 3, "participantCount": 2,
   "commissionRate": 0.05, "perPersonAmount": 11498,
   "deadline": "2026-11-10T20:00:00", "deadlinePassed": false, "status": "OPEN", "closed": false,
-  "originalPrice": null, "pickupNote": "1층 공동현관 앞",
-  "neighborhoodName": "용현동", "distanceLabel": "약 400m"
+  "originalPrice": null, "pickupNote": "1층 공동현관 앞"
 }
 ```
 
-- 대표 판별은 `isHost`(보는 사람이 대표인지). 건물명·주소·좌표는 넣지 않습니다. `buildingId`/`hostUserId`가 응답에 남을지는 통합 시 확정.
+- 대표 판별은 `isHost`(보는 사람이 대표인지). 도로명주소·좌표는 넣지 않습니다. `buildingId`/`hostUserId`가 응답에 남을지는 통합 시 확정.
 - `deadlinePassed`: 마감 예정일이 지났는지(표시용, 자동 마감 아님). 픽업 PIN은 이 응답에 없고 참여자 전용 `GET /pods/{id}/me`에만 있습니다.
 - `status`: `OPEN` / `CLOSED` / `CANCELLED`. `closed`는 호환용(`status != OPEN`).
 - `perPersonAmount` = 총액 × (1 + 수고비율) ÷ **현재 참여자 수**(대표 포함, 0이면 1로 계산), 원 단위 올림 — 기존 공식 그대로.
@@ -188,22 +186,22 @@
 
 - OCR 인식 실패는 200 + `data.success=false` → 프론트가 수동 입력으로 전환. 파일 자체가 잘못되면 400.
 - 1인당 = 영수증 금액 × (1 + 수고비율) ÷ 확정 시점 참여자 수, 원 단위 올림. 참여자 수·1인당 금액은 스냅샷으로 저장.
-- **(2026-11 개편) 접근 권한**: 정산 조회·확정은 **그 팟의 대표·참여자만**. 그 외는 403.
+- **접근 권한**: 같은 건물 소속만(다른 건물 403), 확정은 대표만.
 - 세부 규칙: [handoff/settlement.md](./handoff/settlement.md).
 
 ## ④ ~~최저가 조회~~ — 삭제됨
 
 코드에서 제거됨. 과거 계약은 Git 히스토리로만 남습니다.
 
-## ⑤ 동네 익명 커뮤니티
+## ⑤ 건물별 익명 커뮤니티
 
 입장 시 ①의 GPS 확인(`purpose=COMMUNITY_ENTER`)을 먼저 통과해야 합니다.
 
-> **(2026-11 개편) 동네 범위**: 같은 건물이 아니라 동네(반경 1km) 안의 글이 보입니다. 목록 쿼리의 `buildingId`는 없어지고 서버가 요청자의 동네를 계산합니다(통합 시 확정).
+> 같은 건물 주민만 볼 수 있습니다(다른 건물 글은 ID로 직접 접근해도 403).
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| GET | /community/posts?category= | 글 목록 (동네, 숨김글 제외) | 쿼리: category? | `CommunityPostSummary[]` |
+| GET | /community/posts?buildingId=&category= | 글 목록 (우리 건물, 숨김글 제외) | 쿼리: buildingId, category? | `CommunityPostSummary[]` |
 | POST | /community/posts | 글 작성 | `{ category, content }` | `CommunityPostDetail` |
 | GET | /community/posts/{id} | 글 상세 + 댓글 | - | `CommunityPostDetail` |
 | DELETE | /community/posts/{id} | 글 삭제 (본인만) | - | - |
@@ -218,4 +216,4 @@
 - **신고 자동숨김**: 신고 3회 이상이면 `hidden=true`, 목록·상세에서 제외.
 - **`CommunityPostSummary`**: `{ id, category, content, preview(60자), commentCount, suggestable, mine, createdAt }` — 작성자 정보 없음.
 - **`CommunityPostDetail`**: `{ id, category, authorLabel, content, suggestable, mine, createdAt, comments: [{ id, authorLabel, content, mine, createdAt }] }`.
-- **에러 코드**: 없는/숨김 글 404 · 중복 신고·본인 글 신고 409 · 동네 밖·건물 미등록 403(`BUILDING_ACCESS_DENIED`) · 남의 글 삭제 403 · 빈 내용/길이 초과(글 2000자, 댓글 500자)/잘못된 카테고리 400. 구현 상세: [handoff/community.md](./handoff/community.md)
+- **에러 코드**: 없는/숨김 글 404 · 중복 신고·본인 글 신고 409 · 다른 건물·건물 미등록 403(`BUILDING_ACCESS_DENIED`) · 남의 글 삭제 403 · 빈 내용/길이 초과(글 2000자, 댓글 500자)/잘못된 카테고리 400. 구현 상세: [handoff/community.md](./handoff/community.md)

@@ -1,14 +1,14 @@
 ---
 description: 이번 세션 작업 내용을 docs/handoff/ 문서로 정리하고 커밋합니다
-argument-hint: "[기능 키워드 (예: pod, auth, settlement, product) — 생략 시 변경 파일로 자동 추정]"
+argument-hint: "[기능 키워드 (예: pod, auth, settlement, community) — 생략 시 변경 파일로 자동 추정]"
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git add:*), Bash(git commit:*), Read, Write, Edit, Glob
 ---
 
 지금까지 이 브랜치에서 한 작업을 `docs/handoff/` 문서로 남기고 커밋해줘.
 
 1. `git branch --show-current`로 브랜치 확인. `main`이나 `develop`이면 멈추고 "feature/기능명 브랜치에서 작업해주세요"라고 알려줘.
-2. 어떤 기능인지 정해 (인자($ARGUMENTS) 우선, 없으면 변경 파일 경로로 추정 — `/spec-check`와 동일한 매핑). 슬러그를 정해(`pod`, `auth`, `settlement`, `product` 등).
-3. `git log develop..HEAD --oneline`, `git diff develop...HEAD --stat`로 이번 브랜치의 전체 변경 내역을 파악해. 이미 `/spec-check`를 돌렸다면 그 결과를 재사용하고, 아니었다면 간단히 다시 대조해봐 (`docs/features/`, `docs/API_SPEC.md`, `docs/ERD.md` 기준).
+2. 어떤 기능인지 정해 (인자($ARGUMENTS) 우선, 없으면 변경 파일 경로로 추정 — `/spec-check`와 동일한 매핑). 슬러그를 정해(`pod`, `auth`, `settlement`, `community` 등).
+3. `git log develop..HEAD --oneline`, `git diff develop...HEAD --stat`로 이번 브랜치의 전체 변경 내역을 파악해. 이미 `/spec-check`를 돌렸다면 그 결과를 재사용하고, 아니었다면 간단히 다시 대조해봐 (`docs/PRODUCT_SPEC.md`, `docs/features/`, `docs/API_SPEC.md`, `docs/ERD.md` 기준).
 4. `docs/handoff/README.md`의 템플릿 형식으로 `docs/handoff/<슬러그>.md`를 작성해. **이미 파일이 있으면 새로 만들지 말고 내용을 최신 상태로 갱신**해 (최종 갱신 날짜/브랜치도 갱신):
    - 이번 작업 요약
    - 기획 대비 확인 결과 (일치 / 의도적 단순화(이유) / 미확인)

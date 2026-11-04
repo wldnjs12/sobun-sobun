@@ -4,7 +4,7 @@
 
 - `main` : 배포/데모용. 직접 커밋 금지.
 - `develop` : 팀 통합 브랜치. 모든 기능 브랜치는 여기서 갈라지고 여기로 합쳐진다.
-- `feature/기능명` : 실제 작업 브랜치. 예) `feature/qr-auth`, `feature/pod-realtime`, `feature/settlement-ocr`, `feature/product-search`
+- `feature/기능명` : 실제 작업 브랜치. 예) `feature/account-login`, `feature/pod-realtime`, `feature/settlement-ocr`, `feature/address-search`
 
 ### 작업 순서 (매번 동일)
 
@@ -16,7 +16,7 @@ git checkout -b feature/내가-할-작업
 # ...작업...
 
 git add .
-git commit -m "feat: QR 스캔 후 위치 검증 API 연동"
+git commit -m "feat: 팟 개설 전 GPS 위치 확인 연동"
 git push origin feature/내가-할-작업
 # 이후 GitHub에서 develop으로 Pull Request 생성
 ```
@@ -43,7 +43,7 @@ chore: 설정/빌드 관련 변경
 3. PR을 올릴 땐 제목을 커밋 컨벤션과 동일한 형식으로 작성한다.
 4. 막히면 부끄러워하지 말고 팀 채팅에 바로 질문하기.
 
-⚠️ **주의**: GitHub 저장소 자체에는 브랜치 보호 규칙을 걸어두지 않았습니다 (걸면 오히려 번거로워질 것 같아서 팀이 함께 내린 결정). 그래서 실수로 `main`이나 `develop`에 바로 커밋/푸시하는 것도 기술적으로는 막히지 않아요 — 아래 Claude Code 훅이 어느 정도 도와주지만 100% 강제 장치는 아닙니다. "직접 안 건드리기"는 결국 도구가 아니라 팀 약속으로 지켜주셔야 합니다. 특히 데모 직전(10/2~10/3)엔 다들 조심해주세요.
+⚠️ **주의**: GitHub 저장소 자체에는 브랜치 보호 규칙을 걸어두지 않았습니다 (걸면 오히려 번거로워질 것 같아서 팀이 함께 내린 결정). 그래서 실수로 `main`이나 `develop`에 바로 커밋/푸시하는 것도 기술적으로는 막히지 않아요 — 아래 Claude Code 훅이 어느 정도 도와주지만 100% 강제 장치는 아닙니다. "직접 안 건드리기"는 결국 도구가 아니라 팀 약속으로 지켜주셔야 합니다. 특히 데모 직전엔 다들 조심해주세요.
 
 ## 코드 리뷰 원칙
 
