@@ -6,6 +6,7 @@ import { connectPodSocket } from '../../api/socket.js'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { closePod, fetchPod } from './podApi.js'
+import { fetchSettlement } from '../settlement/settlementApi.js'
 import { calcPerPersonPrice } from './podUtils.js'
 import styles from './PodCompletePage.module.css'
 
@@ -18,8 +19,8 @@ const STEPS = [
 
 /**
  * 팟 모집 완료 (Stitch 09번). 목표 인원이 다 모였을 때 보여준다.
- * 대표은 여기서 ① 모집 마감 → ② 영수증 업로드(③ 정산, /settlements/:podId) 순서로 진행한다.
- * 참여자 화면은 대표이 마감하면 실시간으로 바뀐다.
+ * 대표는 여기서 ① 모집 마감 → ② 영수증 업로드(③ 정산, /settlements/:podId) 순서로 진행한다.
+ * 참여자 화면은 대표가 마감하면 실시간으로 바뀐다.
  */
 export default function PodCompletePage() {
   const { podId } = useParams()
@@ -28,11 +29,23 @@ export default function PodCompletePage() {
   const [closing, setClosing] = useState(false)
   const [askClose, setAskClose] = useState(false)
   const [closeError, setCloseError] = useState(null)
+  const [settlement, setSettlement] = useState(null)
   const navigate = useNavigate()
+
+  // 정산 확정은 실시간 이벤트가 없어서, 마감된 팟이면 정산 여부를 10초마다 다시 확인한다.
+  // 확정되면 "영수증 올리면…" 안내 대신 정산 결과/송금 현황으로 가는 버튼을 보여준다.
+  const closed = pod?.closed
+  useEffect(() => {
+    if (!closed || settlement) return undefined
+    const check = () => fetchSettlement(podId).then((s) => s && setSettlement(s)).catch(() => {})
+    check()
+    const timerId = setInterval(check, 10000)
+    return () => clearInterval(timerId)
+  }, [podId, closed, settlement])
 
   useEffect(() => {
     fetchPod(podId).then(setPod).catch(setError) // 에러 객체째 보관 → 403(다른 건물) 구분용
-    // 대표이 마감하면 서버가 closed=true 이벤트를 보내준다 → 다시 불러와서 화면 갱신
+    // 대표가 마감하면 서버가 closed=true 이벤트를 보내준다 → 다시 불러와서 화면 갱신
     const client = connectPodSocket(podId, () => fetchPod(podId).then(setPod), {
       onDenied: () => setError(Object.assign(new Error('다른 건물의 팟에는 접근할 수 없어요.'), { code: 'BUILDING_ACCESS_DENIED' })),
     })
@@ -107,9 +120,11 @@ export default function PodCompletePage() {
           </span>
           <h2 className={styles.heroTitle}>{headCount}명이 함께 나눠요!</h2>
           <p className={styles.heroBody}>
-            {pod.closed
-              ? '대표이 상품을 구매하고 영수증을 올리면 정산이 시작돼요.'
-              : '대표이 모집을 마감하면 구매가 시작돼요.'}
+            {settlement
+              ? '정산이 확정됐어요. 정산 결과를 확인해주세요.'
+              : pod.closed
+              ? '대표가 상품을 구매하고 영수증을 올리면 정산이 시작돼요.'
+              : '대표가 모집을 마감하면 구매가 시작돼요.'}
           </p>
 
           <div className={styles.avatars}>
@@ -129,7 +144,7 @@ export default function PodCompletePage() {
         <section className={styles.card}>
           <ol className={styles.stepper}>
             {STEPS.map((step, i) => {
-              // 모집완료는 항상 끝난 단계, 구매진행은 대표이 마감한 뒤부터 진행 중
+              // 모집완료는 항상 끝난 단계, 구매진행은 대표가 마감한 뒤부터 진행 중
               const state = i === 0 ? 'done' : i === 1 && pod.closed ? 'current' : 'todo'
               return (
                 <li key={step.label} className={`${styles.step} ${styles[state]}`}>
@@ -230,7 +245,30 @@ export default function PodCompletePage() {
             )}
           </section>
         )}
-        {isHost && pod.closed && (
+        {settlement && (
+          <section className={styles.hostCard}>
+            <div className={styles.hostHeader}>
+              <span className={styles.hostEmoji}>🧾</span>
+              <div>
+                <h4 className={styles.hostTitle}>정산이 확정됐어요</h4>
+                <p className={styles.hostBody}>
+                  {isHost
+                    ? '이웃들이 [보냈어요]를 눌렀는지 송금 현황에서 확인하세요.'
+                    : `내 몫 ${settlement.perPersonAmount?.toLocaleString()}원을 송금하고 [보냈어요]를 눌러주세요.`}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={styles.hostButton}
+              onClick={() => navigate(isHost ? `/settlements/${pod.id}/payments` : `/settlements/${pod.id}/result`)}
+            >
+              <Icon name={isHost ? 'fact_check' : 'payments'} size={20} />
+              {isHost ? '송금 현황 보기' : '정산 결과 보고 송금하기'}
+            </button>
+          </section>
+        )}
+        {isHost && pod.closed && !settlement && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
               <span className={styles.hostEmoji}>🛍️</span>
@@ -248,16 +286,16 @@ export default function PodCompletePage() {
             </button>
           </section>
         )}
-        {!isHost && (
+        {!isHost && !settlement && (
           <section className={styles.card}>
             <div className={styles.cardTitle}>
               <Icon name="hourglass_top" size={20} className={styles.primaryIcon} />
-              {pod.closed ? '대표이 구매 중이에요' : '대표의 마감을 기다리는 중'}
+              {pod.closed ? '대표가 구매 중이에요' : '대표의 마감을 기다리는 중'}
             </div>
             <p className={styles.bodyText}>
               {pod.closed
-                ? '대표이 영수증을 올리면 최종 정산 금액을 알려드릴게요. 따로 하실 일은 없어요.'
-                : '대표이 모집을 마감하면 이 화면이 자동으로 바뀌어요.'}
+                ? '대표가 영수증을 올리면 최종 정산 금액을 알려드릴게요. 따로 하실 일은 없어요.'
+                : '대표가 모집을 마감하면 이 화면이 자동으로 바뀌어요.'}
             </p>
           </section>
         )}
