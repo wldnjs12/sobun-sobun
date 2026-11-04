@@ -59,9 +59,9 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
               )}
             </div>
             <div className={styles.itemInfo}>
-              <span className={styles.itemLabel}>선택 소분 규격 · {pod.unitLabel}</span>
+              <span className={styles.itemLabel}>{pod.categoryLabel ?? '기타'} · {pod.shareLabel}</span>
               <div className={styles.itemTitle}>{pod.title}</div>
-              <div className={styles.itemDesc}>{headCount}명이 나눠서 1인분씩 받아요</div>
+              <div className={styles.itemDesc}>미개봉 상태로 {pod.shareLabel}씩 받아요</div>
             </div>
           </div>
 
@@ -84,7 +84,7 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
             </div>
             <div className={styles.costRow}>
               <span>배송비</span>
-              <span className={styles.costFree}>0원 (직접 픽업)</span>
+              <span className={styles.costFree}>없음 (건물 안 픽업)</span>
             </div>
           </div>
 
@@ -106,16 +106,16 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
               <Icon name="pin_drop" size={20} />
             </span>
             <div>
-              <div className={styles.pickupLabel}>픽업 거점 확인</div>
-              <div className={styles.pickupSpot}>{pod.pickupSpot}</div>
-              <div className={styles.pickupHint}>비대면 수령 (정산 후 안내)</div>
+              <div className={styles.pickupLabel}>픽업 안내</div>
+              <div className={styles.pickupSpot}>{pod.pickupNote || '정산할 때 대표가 알려드려요'}</div>
+              <div className={styles.pickupHint}>같은 건물 이웃끼리 주고받아요</div>
             </div>
           </div>
 
           {/* 팟 정책: 마감 전까지는 참여 취소 가능, 마감 후에는 불가 (docs/features/02-pod.md) */}
           <label className={styles.agree}>
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            팟이 마감된 뒤에는 참여를 취소할 수 없다는 점에 동의합니다.
+            대표가 마감한 뒤에는 참여를 취소할 수 없다는 점에 동의해요.
           </label>
 
           {error && <p className={styles.error}>{error}</p>}
