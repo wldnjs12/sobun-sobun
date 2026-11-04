@@ -3,6 +3,7 @@ package com.ppuri.sobunsobun.global.exception;
 import com.ppuri.sobunsobun.global.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.ppuri.sobunsobun.auth.service.AccountException;
 import com.ppuri.sobunsobun.auth.service.LocationCheckException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,5 +35,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(LocationCheckException.class)
     public ResponseEntity<ApiResponse<Void>> handleLocationCheck(LocationCheckException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getCode(), e.getMessage()));
+    }
+
+    /** 계정 실패(아이디 중복 409 · 로그인 실패 401 · 로그인 필요 401) → 상태 코드 + code 그대로. */
+    @ExceptionHandler(AccountException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccount(AccountException e) {
+        return ResponseEntity.status(e.getStatus()).body(ApiResponse.fail(e.getCode(), e.getMessage()));
     }
 }
