@@ -1,5 +1,5 @@
 import { Client } from '@stomp/stompjs'
-import { getMyUserId } from './currentUser.js'
+import { getMyUserId, getToken } from './currentUser.js'
 
 /**
  * 팟 실시간 정산 갱신용 STOMP 클라이언트.
@@ -16,7 +16,8 @@ export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
     // 백엔드가 /ws-sobun 을 SockJS로 열어둬서(WebSocketConfig의 .withSockJS()),
     // 순수 WebSocket으로 붙으려면 끝에 /websocket 을 붙여야 한다. 없으면 연결 자체가 실패한다.
     brokerURL: `${WS_BASE_URL}/ws-sobun/websocket`,
-    connectHeaders: { 'X-User-Id': String(getMyUserId()) },
+    // Authorization은 서버가 아직 확인하지 않지만(핸드셰이크는 기존 동작 유지), 나중에 서버가 토큰으로 검증하도록 미리 보낸다
+    connectHeaders: { 'X-User-Id': String(getMyUserId()), Authorization: `Bearer ${getToken() ?? ''}` },
     reconnectDelay: 3000,
     onConnect: () => {
       client.subscribe(`/topic/pods/${podId}`, (message) => {
