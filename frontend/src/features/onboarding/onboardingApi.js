@@ -15,23 +15,35 @@ import { getMyUserId, setMyBuilding } from '../../api/currentUser.js'
 const USE_MOCK = false
 
 /**
- * 주소 후보 검색.
- * 결과: AddressCandidate[] = { roadAddress, buildingName, bdMgtSn, isApartment, dongOptions: string[] }
+ * 주소 후보 검색 (한 페이지씩).
+ * 결과: { items: AddressCandidate[], totalCount, page, hasMore }
+ *   AddressCandidate = { roadAddress, jibunAddress, buildingName, displayName, neighborhoodName,
+ *                        bdMgtSn, isApartment, dongOptions: string[] }
+ *   - buildingName은 주택·빌라면 빈 문자열("")일 수 있다 → 화면에는 displayName(예: "인하로 45")을 쓴다.
+ * 실패하면 error.code: 'INVALID_KEYWORD'(400, 검색어 문제) | 'ADDRESS_API_UNAVAILABLE'(503) | 'ADDRESS_API_ERROR'(502)
  */
-export async function searchAddresses(keyword) {
-  if (USE_MOCK) return mockSearch(keyword)
-  return api.get(`/auth/addresses/search?keyword=${encodeURIComponent(keyword)}`)
+export async function searchAddresses(keyword, page = 1) {
+  if (USE_MOCK) return mockSearch(keyword, page)
+  return api.get(`/auth/addresses/search?keyword=${encodeURIComponent(keyword)}&page=${page}`)
 }
 
-/** 건물 확정 등록 → 결과 { buildingId, name, dong } 를 "내 건물"로 저장 */
-export async function registerBuilding({ roadAddress, bdMgtSn, buildingName, dong }) {
+/**
+ * 건물 확정 등록 → 결과 { buildingId, name, dong, roadAddress, neighborhoodName, detailAddress } 를 "내 건물"로 저장.
+ * detailAddress(호수·층)는 선택값이고 본인만 보는 값이다 — 서버는 다른 사용자 응답에 절대 넣지 않는다.
+ */
+export async function registerBuilding({ roadAddress, jibunAddress, bdMgtSn, buildingName, displayName, dong, detailAddress }) {
+  const body = {
+    roadAddress,
+    jibunAddress: jibunAddress || null,
+    bdMgtSn,
+    buildingName: buildingName || null,
+    displayName: displayName || null,
+    dong: dong || null,
+    detailAddress: detailAddress?.trim() || null,
+  }
   const building = USE_MOCK
-    ? await mockRegister({ buildingName, dong })
-    : await api.post(
-        '/auth/buildings/register',
-        { roadAddress, bdMgtSn, buildingName, dong: dong || null },
-        { headers: { 'X-User-Id': String(getMyUserId()) } },
-      )
+    ? await mockRegister(body)
+    : await api.post('/auth/buildings/register', body, { headers: { 'X-User-Id': String(getMyUserId()) } })
   setMyBuilding(building)
   return building
 }
@@ -40,8 +52,12 @@ export async function registerBuilding({ roadAddress, bdMgtSn, buildingName, don
  * GPS 2차 확인. purpose: 'POD_CREATE' | 'POD_JOIN' | 'COMMUNITY_ENTER'
  * 통과하면 그냥 끝나고, 실패하면 error.reason 이 붙은 에러를 던진다:
  *   'outOfRange'  — 서버 판정: 등록한 건물 반경 밖 (code OUT_OF_RANGE)
- *   'denied'      — 브라우저 위치 권한 거부 (서버까지 안 감)
- *   'unavailable' — 위치를 못 받음: 타임아웃·신호 약함 (서버까지 안 감)
+ *   'denied'      — 브라우저 위치 권한 거부 (Geolocation code 1, 서버까지 안 감)
+ *   'insecure'    — https가 아닌 주소라 브라우저가 위치를 아예 막음 (서버까지 안 감)
+ *   'unsupported' — 이 브라우저/기기에 위치 기능이 없음
+ *   'unavailable' — 위치를 알 수 없음: 신호 약함·GPS 꺼짐 (Geolocation code 2)
+ *   'timeout'     — 시간 안에 위치를 못 받음 (Geolocation code 3)
+ *   'server'      — 서버가 다른 이유로 거절(건물 미등록 등)하거나 연결 실패. 메시지는 서버 문구 그대로
  */
 export async function checkLocation(purpose) {
   const { latitude, longitude } = await getCurrentPosition()
@@ -56,88 +72,102 @@ export async function checkLocation(purpose) {
       )
     }
   } catch (e) {
-    if (e.code === 'OUT_OF_RANGE') throw Object.assign(new Error(e.message), { reason: 'outOfRange' })
-    throw e // 그 밖의 서버 에러(연결 실패 등)는 그대로
+    const reason = e.code === 'OUT_OF_RANGE' ? 'outOfRange' : 'server'
+    throw Object.assign(new Error(e.message), { reason, code: e.code, status: e.status })
   }
 }
 
-/** 브라우저에서 현재 위치를 받는다. 실패 원인을 reason으로 구분해서 던진다. */
-function getCurrentPosition() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(Object.assign(new Error('이 기기에서는 위치를 확인할 수 없어요.'), { reason: 'unavailable' }))
-      return
-    }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude }),
-      // code 1 = 사용자가 권한 거부, 2 = 위치를 알 수 없음, 3 = 시간 초과
-      (err) => reject(Object.assign(new Error(err.message), { reason: err.code === 1 ? 'denied' : 'unavailable' })),
-      // 정확도 우선, 10초 안에 못 찾으면 실패, 예전에 저장된 위치는 쓰지 않음 (매번 재확인 원칙)
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    )
-  })
+const locationError = (reason, message) => Object.assign(new Error(message), { reason })
+
+/** Geolocation API를 Promise로 감싼다 (콜백 → await로 쓰려고). */
+function requestPosition(options) {
+  return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options))
+}
+
+/**
+ * 브라우저에서 현재 위치를 받는다. 실패 원인을 reason으로 구분해서 던진다.
+ * 정확도 우선(GPS)으로 먼저 시도하고, 시간 초과면 와이파이·기지국 기반(저정확도)으로 한 번 더 시도한다 —
+ * 실내에서는 GPS가 안 잡혀도 와이파이 위치는 금방 나오는 경우가 많아서. 예전에 저장된 위치는 쓰지 않는다(매번 재확인 원칙).
+ */
+async function getCurrentPosition() {
+  // 브라우저는 https(또는 localhost)가 아닌 주소에서 위치 기능을 막는다. 이때는 권한 거부(code 1)처럼 보여서 원인을 헷갈리기 쉽다.
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    throw locationError('insecure', '보안 연결(https)이 아니라서 위치를 확인할 수 없어요.')
+  }
+  if (!navigator.geolocation) {
+    throw locationError('unsupported', '이 브라우저에서는 위치를 확인할 수 없어요.')
+  }
+  try {
+    const { coords } = await requestPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+    return { latitude: coords.latitude, longitude: coords.longitude }
+  } catch (err) {
+    // code 1 = 사용자가 권한 거부, 2 = 위치를 알 수 없음, 3 = 시간 초과
+    if (err.code === 1) throw locationError('denied', '위치 권한이 꺼져 있어요.')
+    if (err.code !== 3) throw locationError('unavailable', '위치를 확인하지 못했어요.')
+  }
+  try {
+    const { coords } = await requestPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 0 })
+    return { latitude: coords.latitude, longitude: coords.longitude }
+  } catch (err) {
+    if (err.code === 1) throw locationError('denied', '위치 권한이 꺼져 있어요.')
+    throw locationError(err.code === 3 ? 'timeout' : 'unavailable', '위치를 확인하지 못했어요.')
+  }
 }
 
 // ───────────────────────── 목업 (백엔드 완성 전 임시) ─────────────────────────
 // 인하대 근처(용현동·학익동)를 흉내 낸 가짜 주소. 실제 주소·건물관리번호가 아니다.
 const MOCK_ADDRESSES = [
-  {
-    roadAddress: '인천광역시 미추홀구 인하로67번길 12 (용현동)',
-    buildingName: '제니스빌',
-    bdMgtSn: 'MOCK-0001',
-    isApartment: false,
-    dongOptions: [],
-  },
-  {
-    roadAddress: '인천광역시 미추홀구 인하로59번길 8 (용현동)',
-    buildingName: '인하하우스',
-    bdMgtSn: 'MOCK-0002',
-    isApartment: false,
-    dongOptions: [],
-  },
-  {
-    roadAddress: '인천광역시 미추홀구 매소홀로 220 (학익동)',
-    buildingName: '학익한마음아파트',
-    bdMgtSn: 'MOCK-0003',
-    isApartment: true,
-    dongOptions: ['101동', '102동', '103동', '104동'],
-  },
-  {
-    // 동 목록을 안 주는 아파트 → 화면이 "동 직접 입력"으로 바뀌는지 확인용
-    roadAddress: '인천광역시 미추홀구 독배로 300 (용현동)',
-    buildingName: '용현그린아파트',
-    bdMgtSn: 'MOCK-0004',
-    isApartment: true,
-    dongOptions: [],
-  },
+  mock('인천광역시 미추홀구 인하로67번길 3 (용현동)', '인천광역시 미추홀구 용현동 600-1', '', 'MOCK-0001'),
+  mock('인천광역시 미추홀구 인하로67번길 12 (용현동)', '인천광역시 미추홀구 용현동 601-12', '제니스빌', 'MOCK-0002'),
+  mock('인천광역시 미추홀구 인하로59번길 8 (용현동)', '인천광역시 미추홀구 용현동 605-3', '인하하우스', 'MOCK-0003'),
+  mock('인천광역시 미추홀구 매소홀로 220 (학익동)', '인천광역시 미추홀구 학익동 700', '학익한마음아파트', 'MOCK-0004', [
+    '101동',
+    '102동',
+    '103동',
+  ]),
+  // 동 목록을 안 주는 아파트 → 화면이 "동 직접 입력"으로 바뀌는지 확인용
+  mock('인천광역시 미추홀구 독배로 300 (용현동)', '인천광역시 미추홀구 용현동 650', '용현그린아파트', 'MOCK-0005', []),
 ]
 
-const delay = (ms) => new Promise((r) => setTimeout(r, ms))
-
-async function mockSearch(keyword) {
-  await delay(300) // 네트워크처럼 살짝 늦게
-  const q = keyword.replace(/\s/g, '')
-  const matched = MOCK_ADDRESSES.filter((a) => (a.roadAddress + a.buildingName).replace(/\s/g, '').includes(q))
-
-  // 아무 주소나 테스트할 수 있게, 입력한 글자 그대로도 후보 하나로 넣어준다 (예: "인하로 122")
-  // "아파트"가 들어 있으면 아파트로 보고 동 목록을 준다 → 동 선택 흐름도 확인 가능
-  const name = keyword.trim()
-  const isApartment = name.includes('아파트')
-  const typed = {
-    roadAddress: `${name} (목업 — 입력한 주소 그대로)`,
-    buildingName: name,
-    bdMgtSn: `MOCK-INPUT-${q}`,
-    isApartment,
-    dongOptions: isApartment ? ['101동', '102동', '103동'] : [],
+function mock(roadAddress, jibunAddress, buildingName, bdMgtSn, dongOptions = null) {
+  const roadNumber = roadAddress.replace(/\s*\(.*\)$/, '').split(' ').slice(-2).join(' ')
+  return {
+    roadAddress,
+    jibunAddress,
+    buildingName,
+    displayName: buildingName || roadNumber,
+    neighborhoodName: roadAddress.match(/\(([^,)]+)/)?.[1] ?? null,
+    bdMgtSn,
+    isApartment: dongOptions !== null,
+    dongOptions: dongOptions ?? [],
   }
-  const alreadyListed = matched.some((a) => a.buildingName.replace(/\s/g, '') === q)
-  return alreadyListed ? matched : [...matched, typed]
 }
 
-async function mockRegister({ buildingName, dong }) {
+const delay = (ms) => new Promise((r) => setTimeout(r, ms))
+const MOCK_PAGE_SIZE = 3
+
+async function mockSearch(keyword, page) {
+  await delay(300) // 네트워크처럼 살짝 늦게
+  const tokens = keyword.split(/\s+/).filter(Boolean)
+  const matched = MOCK_ADDRESSES.filter((a) => {
+    const text = (a.roadAddress + a.jibunAddress + a.buildingName).replace(/\s/g, '')
+    return tokens.every((t) => text.includes(t))
+  })
+  const items = matched.slice((page - 1) * MOCK_PAGE_SIZE, page * MOCK_PAGE_SIZE)
+  return { items, totalCount: matched.length, page, hasMore: page * MOCK_PAGE_SIZE < matched.length }
+}
+
+async function mockRegister({ buildingName, displayName, roadAddress, dong, detailAddress }) {
   await delay(300)
   // 지금 백엔드의 팟·정산 API가 건물 1번 기준으로 동작해서, 목업에서는 어떤 건물을 골라도 1번으로 묶는다
-  return { buildingId: 1, name: buildingName, dong: dong || null }
+  return {
+    buildingId: 1,
+    name: buildingName || displayName,
+    dong,
+    roadAddress,
+    neighborhoodName: roadAddress.match(/\(([^,)]+)/)?.[1] ?? null,
+    detailAddress,
+  }
 }
 
 // 주소 뒤에 ?mockGps=out 을 붙여 열면 그 탭에서는 "반경 밖" 실패를 흉내 낸다 (실패 바텀시트 확인용)

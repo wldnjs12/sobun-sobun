@@ -5,18 +5,20 @@ import { registerBuilding } from './onboardingApi.js'
 import styles from './Onboarding.module.css'
 
 const PROMISES = [
-  { title: '알뜰한 무낭비 소분 라이프', body: '같은 건물 이웃과 함께 대용량 생필품·가공식품을 남김없이 나눠요.' },
-  { title: '비대면 픽업 매너 준수', body: '1층 무인보관함이나 공동현관 비대면 픽업 수칙을 지켜 서로의 안전을 존중해요.' },
+  { title: '알뜰한 무낭비 소분 라이프', body: '같은 건물 이웃과 휴지·세제·생수 같은 대용량 생활용품을 미개봉 단위로 나눠요.' },
+  { title: '비대면 픽업 매너 준수', body: '공동현관·편의점 앞 같은 비대면 픽업 수칙을 지켜 서로의 안전을 존중해요.' },
 ]
 
 const DIRECT_INPUT = '__direct__'
+const DETAIL_MAX = 50 // 서버 BuildingRegisterRequest.detailAddress 제한과 같게
 
 /**
  * 건물 확인 · 동 선택 (S1'' · Stitch s1_1).
  * 상태: 빌라/원룸(동 선택 없음) / 아파트 동 목록 / 동 목록 없으면 직접 입력 (목록이 있어도 "직접입력" 선택 가능)
  *
+ * 상세주소(호수·층)는 선택 입력. 본인만 보는 값이라 서버는 다른 이웃에게 절대 보여주지 않는다 (DECISIONS §4·§6).
+ *
  * 디자인에서 뺀 것:
- *   - "호수 입력" → 기획상 호수는 받지 않는다 (기획수정_프롬포트.md 1-3, API_SPEC ①)
  *   - "위치 GPS 100% 일치·반경 50m" → 등록 단계에선 GPS를 안 보고, 반경은 100m (행동할 때 확인)
  *   - "42명 활동 중", 동별 "18명 소분중" → 서버가 주지 않는 숫자라서
  */
@@ -25,6 +27,7 @@ export default function BuildingConfirmPage() {
   const candidate = useLocation().state?.candidate
   const [dongChoice, setDongChoice] = useState(null) // 목록에서 고른 동 또는 DIRECT_INPUT
   const [dongInput, setDongInput] = useState('')
+  const [detailAddress, setDetailAddress] = useState('')
   const [agreed, setAgreed] = useState(PROMISES.map(() => false))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -38,14 +41,15 @@ export default function BuildingConfirmPage() {
   const dong = !needsDong ? null : directMode ? dongInput.trim() : dongChoice
   const allAgreed = agreed.every(Boolean)
   const canSubmit = (!needsDong || Boolean(dong)) && allAgreed
-  const displayName = candidate.buildingName || '이 건물'
+  // 주택·빌라는 건물명이 없어서 "인하로 45" 같은 도로명+건물번호(displayName)를 이름으로 쓴다
+  const displayName = candidate.displayName || candidate.buildingName || '이 건물'
   const fullName = dong ? `${displayName} ${dong}` : displayName
 
   const handleRegister = async () => {
     setSubmitting(true)
     setError(null)
     try {
-      await registerBuilding({ ...candidate, dong })
+      await registerBuilding({ ...candidate, displayName, dong, detailAddress })
       navigate('/home', { replace: true }) // replace: 뒤로가기로 등록 화면에 돌아오지 않게
     } catch (err) {
       setError(err.message)
@@ -72,7 +76,7 @@ export default function BuildingConfirmPage() {
           <div className={styles.heroImage}>
             <span className={styles.heroChip}>
               <Icon name="verified" size={16} />
-              {needsDong ? '아파트' : '빌라·원룸'}
+              {needsDong ? '아파트' : '주택·빌라'}
             </span>
             <Icon name={needsDong ? 'apartment' : 'home_work'} size={72} className={styles.heroBuildingIcon} />
             <span className={styles.heroRadius}>팟 열 때 반경 100m 확인</span>
@@ -86,6 +90,12 @@ export default function BuildingConfirmPage() {
             <Icon name="location_on" size={18} />
             {candidate.roadAddress}
           </p>
+          {candidate.jibunAddress && (
+            <p className={styles.resultJibun}>
+              <span className={styles.jibunLabel}>지번</span>
+              {candidate.jibunAddress}
+            </p>
+          )}
         </section>
 
         {needsDong && (
@@ -94,7 +104,7 @@ export default function BuildingConfirmPage() {
               <h3>
                 동 선택 <span className={styles.required}>(필수)</span>
               </h3>
-              <span className={styles.hint}>같은 동 이웃끼리 한 방에 모여요</span>
+              <span className={styles.hint}>같은 동 이웃은 "같은 건물"로 표시돼요</span>
             </div>
             {hasDongList && (
               <div className={styles.dongGrid}>
@@ -131,11 +141,29 @@ export default function BuildingConfirmPage() {
                 {!hasDongList && <p className={styles.hint}>동 목록을 불러오지 못해서 직접 입력해주세요.</p>}
               </>
             )}
-            <p className={styles.lockNote}>
-              <Icon name="lock" size={16} /> 호수는 받지 않아요. 이웃에게는 건물·동 이름만 보여요.
-            </p>
           </section>
         )}
+
+        <section className={styles.dongSection}>
+          <div className={styles.dongHead}>
+            <h3>
+              상세주소 <span className={styles.optional}>(선택)</span>
+            </h3>
+            <span className={styles.hint}>동·호수 등, 이웃에게 보이지 않아요</span>
+          </div>
+          <input
+            className={styles.input}
+            placeholder="예: 302호, 2층"
+            value={detailAddress}
+            maxLength={DETAIL_MAX}
+            onChange={(e) => setDetailAddress(e.target.value)}
+            aria-label="상세주소 (선택)"
+            autoComplete="address-line2"
+          />
+          <p className={styles.lockNote}>
+            <Icon name="lock" size={16} /> 이웃에게는 건물 이름(아파트는 동)까지만 보여요. 상세주소는 나만 봐요.
+          </p>
+        </section>
 
         <section className={styles.promiseSection}>
           <h3 className={styles.promiseTitle}>
