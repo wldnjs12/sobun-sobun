@@ -17,7 +17,7 @@ public class AddressSearchConfig {
             log.info("주소 검색: Juso(행정안전부 도로명주소 API) 사용");
             return new JusoAddressSearchClient(apiKey);
         }
-        log.info("주소 검색: 키가 없어 Stub 사용 (고정 데모 후보 2건)");
+        log.info("주소 검색: 키가 없어 Stub 사용 (용현동·학익동 가짜 주소 10건)");
         return new StubAddressSearchClient();
     }
 }
