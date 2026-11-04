@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
+import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getMyUserId } from '../../api/currentUser.js'
 import { fetchMyParticipation, fetchPod, markPaid } from '../pod/podApi.js'
 import { calcDiscountRate } from '../pod/podUtils.js'
-import { fetchSettlement, getSavedSettlement } from './settlementApi.js'
+import { fetchSettlement, getSavedSettlement, unitShareText } from './settlementApi.js'
 import { copyText, describePaymentLink } from './paymentLink.js'
 import styles from './Settlement.module.css'
 
 /**
  * 정산 결과 (S11 · Stitch 12번 + 송금 화면 _1·_2·_5).
  * 확정 직후엔 넘겨받은 값(state)을 바로 쓰고, 그 외(참여자, 새로고침, 다른 기기)엔
- * 서버에서 다시 받아온다(GET /settlements/{podId}). 서버 요청이 실패할 때만 이 브라우저에 저장된 값을 쓴다.
+ * 서버에서 다시 받아온다(GET /settlements/{podId}). 서버에 연결하지 못할 때만 이 브라우저에 저장된 값을 쓴다.
+ * 권한이 없으면(403: 동네 밖이거나 이 팟 참여자가 아님) 저장값도 쓰지 않고 안내만 보여준다.
  *
  * 보는 사람에 따라 아래가 달라진다:
  *   팟장   → 송금 받을 곳 확인 + [송금 현황 보기]
@@ -27,20 +29,32 @@ export default function SettlementResultPage() {
   const stateSettlement = useLocation().state?.settlement
   const [settlement, setSettlement] = useState(stateSettlement ?? null)
   const [loaded, setLoaded] = useState(Boolean(stateSettlement))
+  const [loadError, setLoadError] = useState(null)
   const [pod, setPod] = useState(null)
+  const [podLoaded, setPodLoaded] = useState(false)
   const [me, setMe] = useState(null) // { joined, paid, pickedUp }
   const [sending, setSending] = useState(false)
   const [payError, setPayError] = useState(null)
 
   const reload = () => {
-    fetchSettlement(podId).then((fetched) => {
-      setSettlement(fetched ?? getSavedSettlement(podId))
-      setLoaded(true)
-    })
+    setLoadError(null)
+    fetchSettlement(podId)
+      .then((fetched) => setSettlement(fetched))
+      .catch((e) => {
+        // 권한 문제는 저장값으로 덮지 않는다. 연결 실패일 때만 이 브라우저에 남은 값(팟장이 확정한 기기)을 쓴다
+        const saved = e.status === 403 ? null : getSavedSettlement(podId)
+        if (saved) setSettlement(saved)
+        else setLoadError(e)
+      })
+      .finally(() => setLoaded(true))
   }
 
   useEffect(() => {
-    fetchPod(podId).then(setPod).catch(() => {})
+    // 팟 정보가 없으면 "내가 팟장인지"를 몰라서 화면을 잘못 그린다 → 다 받아올 때까지 불러오는 중으로 둔다
+    fetchPod(podId)
+      .then(setPod)
+      .catch(() => setPod(null))
+      .finally(() => setPodLoaded(true))
     fetchMyParticipation(podId).then(setMe).catch(() => {})
   }, [podId])
 
@@ -50,7 +64,34 @@ export default function SettlementResultPage() {
     // reload는 podId만 쓰므로, podId가 바뀔 때만 다시 부르면 된다 (그래서 reload는 의존성 배열에 안 넣음)
   }, [podId, stateSettlement])
 
-  if (!loaded) {
+  if (loadError?.code === 'BUILDING_ACCESS_DENIED') {
+    return <AccessDeniedView pageTitle="정산 결과" what="팟" />
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="정산 결과" />
+        <div className={styles.message}>
+          <p>
+            {loadError.status === 403
+              ? '이 팟의 팟장과 참여자만 정산 결과를 볼 수 있어요.'
+              : `정산 결과를 불러오지 못했어요. (${loadError.message})`}
+          </p>
+          {loadError.status !== 403 && (
+            <button type="button" className={styles.secondaryButton} onClick={reload}>
+              <Icon name="refresh" size={18} /> 다시 시도
+            </button>
+          )}
+          <Link to={`/pods/${podId}`} className={styles.textLink}>
+            팟 상세로 가기
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (!loaded || !podLoaded) {
     return (
       <div className={styles.page}>
         <PageHeader title="정산 결과" />
@@ -67,6 +108,9 @@ export default function SettlementResultPage() {
         <PageHeader title="정산 결과" />
         <div className={styles.message}>
           <p>아직 정산 결과가 없어요. 팟장이 영수증을 올려 정산을 확정하면 여기서 볼 수 있어요.</p>
+          <button type="button" className={styles.secondaryButton} onClick={reload}>
+            <Icon name="refresh" size={18} /> 새로고침
+          </button>
           <Link to={`/pods/${podId}`} className={styles.textLink}>
             팟 상세로 가기
           </Link>
@@ -83,6 +127,7 @@ export default function SettlementResultPage() {
   const isHost = pod?.hostUserId === getMyUserId()
   const paid = Boolean(me?.paid)
   const payment = describePaymentLink(hostPaymentLink)
+  const unitShare = unitShareText(pod)
 
   const handlePaid = async () => {
     setSending(true)
@@ -131,6 +176,7 @@ export default function SettlementResultPage() {
             {participantCount}
           </span>
           {pod && <p className={styles.resultItem}>소분 품목 · {pod.title}</p>}
+          {unitShare && <p className={styles.resultItem}>{unitShare} 미개봉 상태로 가져가요</p>}
         </section>
 
         {savingRate !== null && (
@@ -156,7 +202,7 @@ export default function SettlementResultPage() {
         <section className={styles.breakdown}>
           <div className={styles.breakdownHead}>
             <h3>세부 정산 내역</h3>
-            <span className={styles.badge}>영수증 인증 ✓</span>
+            <span className={styles.badge}>팟장 확정</span>
           </div>
           <div className={styles.breakdownRow}>
             <span>
@@ -165,7 +211,7 @@ export default function SettlementResultPage() {
             <span>{baseShare.toLocaleString()}원</span>
           </div>
           <div className={styles.breakdownRow}>
-            <span>팟장 픽업·소분 수고비 ({Math.round(commissionRate * 100)}%)</span>
+            <span>팟장 구매·전달 수고비 ({Math.round(commissionRate * 100)}%)</span>
             <span>+{feeShare.toLocaleString()}원</span>
           </div>
           <div className={`${styles.breakdownRow} ${styles.breakdownTotal}`}>
@@ -204,9 +250,11 @@ export default function SettlementResultPage() {
               {sending ? '알리는 중…' : '보냈어요'}
             </button>
             <span className={styles.dockNote}>
-              {payment
-                ? '송금 여부는 자동으로 확인되지 않아요. 보낸 뒤 꼭 눌러주세요.'
-                : '팟장이 송금 정보를 등록하면 보낼 수 있어요.'}
+              {!me?.joined
+                ? '이 팟에 참여한 이웃만 송금 완료를 알릴 수 있어요.'
+                : payment
+                  ? '송금 여부는 자동으로 확인되지 않아요. 보낸 뒤 꼭 눌러주세요.'
+                  : '팟장이 송금 정보를 등록하면 보낼 수 있어요.'}
             </span>
           </>
         )}
@@ -294,7 +342,7 @@ function PaidProgress() {
         ))}
       </ol>
       <p className={styles.payNote}>
-        <Icon name="info" size={16} /> 팟장이 계좌에서 입금을 확인하면 소분해서 픽업 장소에 둬요.
+        <Icon name="info" size={16} /> 팟장이 계좌에서 입금을 확인하면 내 몫을 미개봉 그대로 픽업 장소에 둬요.
       </p>
     </section>
   )
