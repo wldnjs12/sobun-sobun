@@ -29,17 +29,36 @@ public class User {
     @Column(name = "building_id", nullable = false)
     private Long buildingId;
 
+    /**
+     * 상세주소(호수·층 등, 예: "302호"). 선택값이라 nullable.
+     * 왜 Building이 아니라 User에 두나: 같은 건물 이웃끼리도 서로의 호수를 알면 안 되기 때문 (개인정보).
+     * 본인 정보 응답(건물 등록 결과, /me) 외에는 절대 내려보내지 않는다.
+     */
+    @Column(name = "detail_address", length = 50)
+    private String detailAddress;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public User(Long id, Long buildingId) {
+        this(id, buildingId, null);
+    }
+
+    public User(Long id, Long buildingId, String detailAddress) {
         this.id = id;
         this.buildingId = buildingId;
+        this.detailAddress = detailAddress;
         this.createdAt = LocalDateTime.now();
     }
 
-    /** 건물을 재등록(이사 등)하면 소속만 갱신한다. */
-    public void changeBuilding(Long buildingId) {
+    /** 건물을 재등록(이사 등)하면 소속과 상세주소를 함께 갱신한다. 상세주소를 비우면 null로 지운다. */
+    public void changeBuilding(Long buildingId, String detailAddress) {
         this.buildingId = buildingId;
+        this.detailAddress = detailAddress;
+    }
+
+    /** 예전 호출부 호환용. 이사하면 예전 호수는 의미가 없으니 상세주소도 지운다. */
+    public void changeBuilding(Long buildingId) {
+        changeBuilding(buildingId, null);
     }
 }
