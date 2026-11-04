@@ -99,6 +99,8 @@ npm run dev
 - [ ] `psql -U sobunsobun -d sobunsobun -h localhost`로 접속되고, 백엔드 첫 실행 시 테이블이 자동 생성됐다(`\dt`로 확인)
 - [ ] `http://localhost:5173`에서 프론트 화면이 뜬다
 - [ ] 프론트에서 아무 버튼이나 눌렀을 때 콘솔에 `/api` 요청이 CORS 에러 없이 나간다
+- [ ] 회원가입 → 주소 검색 → 건물 등록까지 되고, 새로고침해도 로그인과 내 건물이 유지된다
+- [ ] 실시간 갱신을 확인하려면 일반 창과 시크릿 창(또는 다른 브라우저)에 **서로 다른 계정**으로 로그인한다 (예전 `?user=2` 방식은 없어짐)
 
 ## 자주 나는 에러
 
@@ -109,3 +111,5 @@ npm run dev
 | Gradle sync가 계속 실패함 | 인터넷 연결 문제 또는 프록시 | 네트워크 확인, IntelliJ 재시작 |
 | 프론트에서 API 호출 시 CORS 에러 | 백엔드를 안 거치고 직접 포트로 호출함 | 반드시 `/api/...` 상대경로로 호출 (vite 프록시 사용) |
 | `./gradlew: Permission denied` | 실행 권한 없음 | `chmod +x gradlew` |
+| 빌드 중 lombok 관련 에러 (`java.lang.NoSuchFieldError` 등) | 기본 JDK가 17이 아님(예: 25) | `export JAVA_HOME=$(/usr/libexec/java_home -v 17)` 후 다시 실행 |
+| 모든 API가 401 `UNAUTHORIZED` | 로그인 토큰이 없거나 만료됨 | 로그아웃 후 다시 로그인 (개발자도구 → Application → Local Storage에서 토큰 삭제해도 됨) |

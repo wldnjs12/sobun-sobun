@@ -58,7 +58,8 @@
 
 ## 5. 확인
 
-- 브라우저에서 Vercel URL 접속 → 온보딩(주소 검색 → 건물 등록) 화면이 정상 동작하는지 확인.
+- 브라우저에서 Vercel URL 접속 → 회원가입 → 주소 검색 → 건물 등록이 정상 동작하는지 확인. 건물명 없는 주소(빌라)도 등록되는지, 주소 검색 [더 보기]가 되는지 확인.
+- 새로고침·다른 기기에서 로그인해도 내 건물이 유지되는지 확인(`GET /api/account/me`).
 - 개발자도구 Network 탭에서 `/api` 요청에 CORS 에러가 없는지 확인 (있다면 4번의 `ALLOWED_ORIGINS` 값이 정확한지, 끝에 슬래시가 안 붙었는지 확인).
 - 팟 상세 화면에서 WebSocket(`wss://.../ws-sobun/websocket`) 연결이 되는지 확인 (연결 안 되면 `VITE_WS_BASE_URL`이 `wss://`로 시작하는지 확인 — `ws://`로 두면 HTTPS 페이지에서 Mixed Content로 브라우저가 막는다).
 
@@ -74,4 +75,6 @@ Railway·Vercel 둘 다 GitHub 연동 배포라서, 브랜치에 푸시하면 �
 | WebSocket이 연결되자마자 끊김 | `VITE_WS_BASE_URL`이 `ws://`(비보안)로 돼 있음 | `wss://`로 수정 |
 | Railway 배포 후 500/DB 에러 | Supabase URL에 `?sslmode=require`가 없음 | `SPRING_DATASOURCE_URL` 끝에 추가 |
 | 시각이 9시간 어긋남 ("N분 전"이 이상함) | 컨테이너 기본 시간대가 UTC | 백엔드가 시작 시 `Asia/Seoul`로 고정한다 (`SobunsobunApplication.SERVICE_TIME_ZONE`) — 따로 설정할 것 없음. 고정 이전에 저장된 데이터만 9시간 차이가 남는다 |
+| 배포 후 모든 요청이 401 | 로그인 토큰이 없음 — 계정 기능 배포 전에 쓰던 브라우저 저장값이 남아 있을 수 있음 | 로그아웃 후 다시 가입·로그인 |
+| 배포 후 기존 팟 화면이 깨짐 | 개편 전 팟 행에 새 컬럼(category·status 등)이 비어 있음 | 데모 DB면 기존 팟을 지우거나 기본값으로 채우기 (`ddl-auto: update`는 기존 행 값을 채워주지 않음) |
 | Railway 빌드가 느림(첫 배포) | Dockerfile이 Gradle 의존성을 매번 새로 받음 | 이후 배포부터는 Railway가 레이어 캐시를 재사용해서 빨라진다 |
