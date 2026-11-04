@@ -7,4 +7,7 @@ public interface SettlementPodReader {
 
     /** @return 팟이 없으면 empty */
     Optional<PodSummary> findPod(Long podId);
+
+    /** 이 사용자가 팟 참여자(PodParticipant)인가. 대표는 참여자 행이 없으므로 hostUserId로 따로 확인한다. */
+    boolean isParticipant(Long podId, Long userId);
 }

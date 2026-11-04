@@ -193,7 +193,7 @@ class SettlementConfirmTest {
 
         assertThatThrownBy(() -> settlementService.confirm(POD_ID, OTHER_BUILDING_USER_ID, request()))
                 .isInstanceOf(BuildingAccessDeniedException.class)
-                .hasMessage("다른 건물의 정산에는 접근할 수 없어요.");
+                .hasMessage(SettlementService.OTHER_BUILDING_MESSAGE);
         verify(settlementRepository, never()).save(any());
     }
 
@@ -236,5 +236,22 @@ class SettlementConfirmTest {
         given(settlementRepository.existsByPodIdAndConfirmedTrue(POD_ID)).willReturn(true);
 
         assertRejected(request(), "이미 정산이 확정된 팟이에요.");
+    }
+
+    @Test
+    void 송금_정보는_https_링크나_계좌_글자만_저장된다() {
+        assertThat(SettlementService.normalizePaymentLink("  https://toss.me/sobun  ")).isEqualTo("https://toss.me/sobun");
+        assertThat(SettlementService.normalizePaymentLink("toss.me/sobun")).isEqualTo("toss.me/sobun");
+        assertThat(SettlementService.normalizePaymentLink("카카오뱅크 3333-00-0000000 홍길동")).startsWith("카카오뱅크");
+        assertThat(SettlementService.normalizePaymentLink("   ")).isNull();
+        assertThat(SettlementService.normalizePaymentLink(null)).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"javascript:alert(1)", "JavaScript:alert(1)", "http://toss.me/sobun", "data:text/html;base64"})
+    void 위험하거나_암호화되지_않은_링크는_400(String link) {
+        assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05"), link),
+                "송금 링크는 https:// 로 시작하는 주소만 쓸 수 있어요.");
+        verify(settlementRepository, never()).save(any());
     }
 }

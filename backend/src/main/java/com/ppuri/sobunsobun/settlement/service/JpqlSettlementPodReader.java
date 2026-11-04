@@ -28,6 +28,18 @@ public class JpqlSettlementPodReader implements SettlementPodReader {
         return rows.stream().findFirst().map(row -> toSummary(podId, row));
     }
 
+    @Override
+    public boolean isParticipant(Long podId, Long userId) {
+        if (podId == null || userId == null) return false;
+        Long count = entityManager
+                .createQuery("select count(pp) from PodParticipant pp where pp.podId = :podId and pp.userId = :userId",
+                        Long.class)
+                .setParameter("podId", podId)
+                .setParameter("userId", userId)
+                .getSingleResult();
+        return count != null && count > 0;
+    }
+
     /** 컬럼이 비어 있는(null) 옛 데이터도 있을 수 있어서, 참여자 수는 0, 마감 여부는 false로 본다. */
     static PodSummary toSummary(Long podId, Object[] row) {
         Integer participantCount = (Integer) row[2];

@@ -7,9 +7,9 @@ package com.ppuri.sobunsobun.settlement.service;
 public class StubReceiptOcrClient implements ReceiptOcrClient {
 
     static final String SAMPLE_RECEIPT = """
-            소분마트 영수증
-            대용량 양파 5kg 1 8,900
-            대파 한단 1 3,400
+            소분생활마트 영수증
+            깨끗한나라 화장지 30롤 1 8,900
+            리큐 세제 3L 1 3,400
             합계 12,300
             카드결제 12,300
             """;
