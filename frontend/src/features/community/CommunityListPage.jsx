@@ -6,14 +6,15 @@ import Icon from '../../components/Icon.jsx'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import { BUILDING } from '../pod/podApi.js'
-import { CATEGORIES, categoryOf, fetchPosts, splitContent, timeAgo } from './communityApi.js'
+import { CATEGORIES, categoryOf, fetchPosts, locationLabel, splitContent, timeAgo } from './communityApi.js'
 import useCommunityEntry from './useCommunityEntry.js'
 import EntryGate from './EntryGate.jsx'
 import styles from './Community.module.css'
 
 /**
- * ⑤ 커뮤니티 글 목록 (S16 · Stitch s16).
+ * ⑤ 커뮤니티 글 목록 (S16 · Stitch s16). 내 건물 반경 1km 안 동네 이웃들의 글이 보인다.
  * 들어올 때 GPS 확인(COMMUNITY_ENTER)을 먼저 통과해야 글이 보인다.
+ * 글 카드에는 글쓴이 건물 대신 "용현동 · 약 300m" 같은 대략 위치만 보여준다 (익명성 보호).
  * 검색창은 서버 검색 API가 없어서, 불러온 글 안에서만 글자로 거른다.
  */
 export default function CommunityListPage() {
@@ -23,14 +24,17 @@ export default function CommunityListPage() {
   const [posts, setPosts] = useState(null)
   const [error, setError] = useState(null)
   const [keyword, setKeyword] = useState('')
+  const [reloadKey, setReloadKey] = useState(0) // [다시 불러오기]를 누르면 1씩 올려서 위 effect를 다시 실행
 
   useEffect(() => {
     if (entry.status !== 'passed') return
     setPosts(null)
+    setError(null)
     fetchPosts(category).then(setPosts).catch(setError)
-  }, [entry.status, category])
+  }, [entry.status, category, reloadKey])
 
   if (isBuildingAccessDenied(error)) return <AccessDeniedView pageTitle="커뮤니티" what="커뮤니티 글" />
+  // ↑ 동네 커뮤니티 목록에서 403이 나는 건 "건물을 아직 등록하지 않음"일 때뿐이다
 
   const q = keyword.trim()
   const visible = posts?.filter((p) => !q || p.content.includes(q)) ?? []
@@ -40,14 +44,14 @@ export default function CommunityListPage() {
       <AppHeader buildingName={BUILDING.name} />
 
       {entry.status !== 'passed' ? (
-        <EntryGate status={entry.status} onRetry={entry.retry} />
+        <EntryGate status={entry.status} failure={entry.failure} onRetry={entry.retry} />
       ) : (
         <main className={styles.listMain}>
           <div className={styles.searchBox}>
             <Icon name="search" size={20} className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder={`${BUILDING.name} 이웃 이야기 검색`}
+              placeholder="우리 동네 이웃 이야기 검색"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
@@ -76,8 +80,8 @@ export default function CommunityListPage() {
           {/* 공구 제안 → 반응 좋으면 팟으로: 커뮤니티를 만든 이유(05-community.md) */}
           <section className={styles.promo}>
             <span className={styles.promoBadge}>공구 제안 → 팟으로 바로 연결</span>
-            <h2 className={styles.promoTitle}>이웃과 같이 살 대용량 물품 있나요?</h2>
-            <p className={styles.promoBody}>먼저 익명으로 가볍게 제안해보고, 반응이 좋으면 바로 팟을 열 수 있어요.</p>
+            <h2 className={styles.promoTitle}>동네 이웃과 나눌 생활용품 있나요?</h2>
+            <p className={styles.promoBody}>휴지·세제처럼 묶음으로 사서 미개봉 단위로 나누기 좋은 물건을 익명으로 제안해보세요. 반응이 좋으면 바로 팟을 열 수 있어요.</p>
             <button
               type="button"
               className={styles.promoButton}
@@ -90,14 +94,22 @@ export default function CommunityListPage() {
             <Icon name="shopping_bag" size={88} className={styles.promoDeco} />
           </section>
 
-          {error && <p className={styles.stateText}>글을 불러오지 못했어요. ({error.message})</p>}
+          {error && (
+            <div className={styles.stateText}>
+              <p>글을 불러오지 못했어요. ({error.message})</p>
+              <button type="button" className={styles.primaryButton} onClick={() => setReloadKey((k) => k + 1)}>
+                <Icon name="refresh" size={18} />
+                다시 불러오기
+              </button>
+            </div>
+          )}
           {!error && posts === null && <p className={styles.stateText}>글을 불러오는 중이에요…</p>}
 
           {!error && posts !== null && visible.length === 0 && (
             <div className={styles.empty}>
               <Icon name="post_add" size={40} />
               <strong>{q ? '검색 결과가 없어요' : '등록된 글이 아직 없어요'}</strong>
-              <span>{q ? '다른 단어로 찾아보세요.' : '첫 번째 이야기를 이웃들에게 들려주세요!'}</span>
+              <span>{q ? '다른 단어로 찾아보세요.' : '예) "휴지 30롤 같이 사실 분" 처럼 첫 이야기를 들려주세요!'}</span>
             </div>
           )}
 
@@ -114,7 +126,6 @@ export default function CommunityListPage() {
         </Link>
       )}
 
-      {entry.locationSheet}
       <BottomNav />
     </div>
   )
@@ -130,9 +141,10 @@ function PostCard({ post }) {
           <Icon name="person" size={16} filled />
         </span>
         <span className={styles.metaText}>
-          {/* 첫 줄: "익명 이웃 · 건물명" 을 한 덩어리로 묶어야 세로 정렬(flex column)에서 한 줄로 보인다 */}
+          {/* 첫 줄: "익명 이웃 · 용현동 · 약 300m" 을 한 덩어리로 묶어야 세로 정렬(flex column)에서 한 줄로 보인다.
+              건물명은 절대 보여주지 않는다 — 서버도 법정동 이름과 대략 거리만 내려준다 */}
           <span>
-            <strong>{post.mine ? '나' : '익명 이웃'}</strong> · {BUILDING.name}
+            <strong>{post.mine ? '나' : '익명 이웃'}</strong> · {locationLabel(post)}
           </span>
           <small>{timeAgo(post.createdAt)}</small>
         </span>

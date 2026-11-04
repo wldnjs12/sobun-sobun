@@ -7,11 +7,12 @@ import useCommunityEntry from './useCommunityEntry.js'
 import EntryGate from './EntryGate.jsx'
 import styles from './Community.module.css'
 
+// 예시 품목은 생활용품만 (2026-11 개편 — 식품·식재료는 다루지 않는다). 상세 주소·동호수는 적지 않도록 안내한다
 const PLACEHOLDER = {
-  GROUP_BUY_SUGGESTION: '예) 생수 2L 24병 같이 나누실 분?\n6병 묶음 4팩이라 뜯지 않고 1팩씩 나누면 돼요.',
-  SHARE: '예) 라면 5개 나눔해요\n1층 보관함에 둘게요!',
-  QUESTION: '예) 근처에서 대용량 세제 싸게 사는 곳 있나요?',
-  FREE: '이웃에게 하고 싶은 이야기를 적어주세요.',
+  GROUP_BUY_SUGGESTION: '예) 휴지 30롤 같이 사실 분?\n10롤 묶음 3개라 뜯지 않고 1인 10롤씩 나누면 돼요.',
+  SHARE: '예) 세제 리필 나눔 후기\n3L 리필팩을 미개봉으로 나눴더니 깔끔했어요!',
+  QUESTION: '예) 근처에서 물티슈 박스로 싸게 사는 곳 있나요?',
+  FREE: '동네 이웃에게 하고 싶은 이야기를 적어주세요.',
 }
 
 /**
@@ -30,8 +31,7 @@ export default function CommunityWritePage() {
     return (
       <div className={styles.page}>
         <PageHeader title="글쓰기" />
-        <EntryGate status={entry.status} onRetry={entry.retry} />
-        {entry.locationSheet}
+        <EntryGate status={entry.status} failure={entry.failure} onRetry={entry.retry} />
       </div>
     )
   }
@@ -93,7 +93,7 @@ export default function CommunityWritePage() {
           autoFocus
         />
         <div className={styles.writeMeta}>
-          <span>첫 줄이 제목처럼 보여요 · 익명으로 올라가요</span>
+          <span>첫 줄이 제목처럼 보여요 · 익명으로 올라가요 · 주소·동호수는 적지 마세요</span>
           <span>{content.length}/2000</span>
         </div>
 
