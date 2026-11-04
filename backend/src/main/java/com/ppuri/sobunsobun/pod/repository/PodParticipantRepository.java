@@ -14,5 +14,8 @@ public interface PodParticipantRepository extends JpaRepository<PodParticipant, 
 
     List<PodParticipant> findByPodIdOrderByJoinedAt(Long podId);
 
+    /** 마이페이지 "내가 참여한 팟" — 최근에 참여한 것부터 */
+    List<PodParticipant> findByUserIdOrderByJoinedAtDesc(Long userId);
+
     void deleteByPodIdAndUserId(Long podId, Long userId);
 }

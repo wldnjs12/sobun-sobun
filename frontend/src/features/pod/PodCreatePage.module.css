@@ -461,3 +461,86 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ── 2026-11 개편: 카테고리·개수 입력·인라인 검증 ── */
+.categoryGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.categoryChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.categoryChipActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.unitRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-sm);
+}
+
+.unitPicks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.unitPick {
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container);
+  color: var(--color-on-surface-variant);
+  font: inherit;
+  font-size: 12px;
+}
+
+.unitPickActive {
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.inputInvalid,
+.inputInvalid:focus {
+  border-color: #ba1a1a;
+}
+
+.fieldError {
+  margin: 4px 0 0;
+  color: #ba1a1a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 12px;
+}

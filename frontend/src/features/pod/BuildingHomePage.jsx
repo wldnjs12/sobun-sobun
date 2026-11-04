@@ -1,48 +1,66 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import AppHeader from '../../components/AppHeader.jsx'
 import BottomNav from '../../components/BottomNav.jsx'
 import Icon from '../../components/Icon.jsx'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import PodCard from './PodCard.jsx'
 import EmptyPodState from './EmptyPodState.jsx'
-import { BUILDING, fetchBuildingPods } from './podApi.js'
+import { BUILDING, CATEGORIES, fetchNeighborhoodPods } from './podApi.js'
 import styles from './BuildingHomePage.module.css'
 
-const CATEGORIES = [
-  { key: 'all', label: '전체' },
-  { key: 'fresh', label: '냉장/냉동' },
-  { key: 'processed', label: '가공식품' },
-  { key: 'household', label: '생필품' },
+const STATUS_TABS = [
+  { key: 'OPEN', label: '모집중' },
+  { key: 'ALL', label: '전체' },
 ]
 
+// 글자를 칠 때마다 서버에 묻지 않고, 입력을 멈춘 뒤 0.3초가 지나면 한 번만 검색한다 (debounce)
+const SEARCH_DELAY_MS = 300
+
 /**
- * 건물 홈 / 팟 목록 (디자인 핸드오프 S4, Stitch 05번 · 빈 상태는 16번).
- * 개발 중 빈 화면을 확인하려면 주소 뒤에 ?empty 를 붙인다: /home?empty
+ * 건물 홈 / 공동구매 목록. 같은 건물 이웃들이 연 팟만 보여준다 (건물 단위 격리).
+ * 검색어·카테고리·상태는 서버(GET /api/pods)가 거른다.
+ * (파일 이름은 라우터·다른 화면이 import하고 있어서 BuildingHomePage 그대로 둔다)
  */
 export default function BuildingHomePage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const forceEmpty = searchParams.has('empty')
 
+  const [keywordInput, setKeywordInput] = useState('')
+  const [keyword, setKeyword] = useState('')
+  const [category, setCategory] = useState('ALL')
+  const [status, setStatus] = useState('OPEN')
   const [pods, setPods] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [category, setCategory] = useState('all')
+  // 응답이 늦게 온 "예전 검색" 결과가 최신 결과를 덮어쓰지 않도록 요청 번호를 센다
+  const requestSeq = useRef(0)
 
   useEffect(() => {
-    fetchBuildingPods(BUILDING.id)
-      .then((data) => setPods(forceEmpty ? [] : data))
-      .catch(setError) // 에러 객체째 보관 → 403(건물 소속 불일치) 구분용
-      .finally(() => setLoading(false))
-  }, [forceEmpty])
+    const timerId = setTimeout(() => setKeyword(keywordInput.trim()), SEARCH_DELAY_MS)
+    return () => clearTimeout(timerId) // 0.3초 안에 또 입력하면 이전 타이머를 취소
+  }, [keywordInput])
 
-  const openPods = pods.filter((pod) => !pod.closed)
-  const visiblePods =
-    category === 'all' ? openPods : openPods.filter((pod) => pod.category === category)
+  const load = useCallback(() => {
+    const seq = ++requestSeq.current
+    setLoading(true)
+    setError(null)
+    fetchNeighborhoodPods({ keyword, category, status })
+      .then((data) => seq === requestSeq.current && setPods(data))
+      .catch((e) => seq === requestSeq.current && setError(e)) // 에러 객체째 보관 → 403 구분용
+      .finally(() => seq === requestSeq.current && setLoading(false))
+  }, [keyword, category, status])
 
+  useEffect(load, [load])
+
+  const filtered = Boolean(keyword) || category !== 'ALL' || status !== 'OPEN'
   const goToPod = (pod) => navigate(`/pods/${pod.id}`)
   const goToCreatePod = () => navigate('/pods/new')
+  const resetFilters = () => {
+    setKeywordInput('')
+    setKeyword('')
+    setCategory('ALL')
+    setStatus('OPEN')
+  }
 
   return (
     <div className={styles.page}>
@@ -53,23 +71,50 @@ export default function BuildingHomePage() {
           <div className={styles.statusLeft}>
             <span className={styles.verifiedBadge}>
               <Icon name="verified" size={14} filled />
-              입주민 전용 인증
+              입주민 전용
             </span>
             <span className={styles.statusBuilding}>{BUILDING.name}</span>
           </div>
-          {openPods.length > 0 && (
+          {!loading && !error && !filtered && pods.length > 0 && (
             <span className={styles.liveBadge}>
               <span className={styles.liveDot} />
-              실시간 {openPods.length}개 팟 진행 중
+              모집중 {pods.length}개
             </span>
           )}
         </div>
 
         <HeroBanner />
 
+        <div className={styles.searchBox}>
+          <Icon name="search" size={20} className={styles.searchIcon} />
+          <input
+            type="search"
+            aria-label="공동구매 검색"
+            className={styles.searchInput}
+            placeholder="화장지, 생수, 세제…"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.tabs} role="tablist" aria-label="모집 상태">
+          {STATUS_TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={status === t.key}
+              className={`${styles.tab} ${status === t.key ? styles.tabActive : ''}`}
+              onClick={() => setStatus(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className={styles.chipRow}>
           <div className={styles.chips}>
-            {CATEGORIES.map((c) => (
+            {[{ key: 'ALL', label: '전체' }, ...CATEGORIES].map((c) => (
               <button
                 key={c.key}
                 type="button"
@@ -82,46 +127,58 @@ export default function BuildingHomePage() {
           </div>
           <button type="button" className={styles.createChip} onClick={goToCreatePod}>
             <Icon name="add" size={16} className={styles.createChipIcon} />
-            팟 만들기
+            열기
           </button>
         </div>
 
-        {loading && <p className={styles.message}>팟 목록을 불러오는 중이에요…</p>}
-        {/* 403 = 서버가 "이 건물 소속이 아니다"라고 판단 (예: 이 브라우저에 저장된 건물 정보가 서버와 다름) */}
-        {error && isBuildingAccessDenied(error) && (
+        {loading && <ListSkeleton />}
+
+        {/* 403 = 서버가 "이 건물 소속이 아니다"고 판단 (이 브라우저의 건물 정보가 서버와 다를 때) */}
+        {!loading && error && isBuildingAccessDenied(error) && (
           <p className={styles.message}>
             건물 정보가 서버와 맞지 않아요. <Link to="/onboarding/address">건물을 다시 등록해주세요</Link>
           </p>
         )}
-        {error && !isBuildingAccessDenied(error) && (
-          <p className={styles.message}>목록을 불러오지 못했어요. ({error.message})</p>
+        {!loading && error && !isBuildingAccessDenied(error) && (
+          <div className={styles.message} role="alert">
+            <p>목록을 불러오지 못했어요. ({error.message})</p>
+            <button type="button" className={styles.retryButton} onClick={load}>
+              다시 시도
+            </button>
+          </div>
         )}
 
-        {!loading && !error && openPods.length === 0 && (
-          <EmptyPodState onCreatePod={goToCreatePod} />
+        {!loading && !error && pods.length === 0 && !filtered && <EmptyPodState onCreatePod={goToCreatePod} />}
+        {!loading && !error && pods.length === 0 && filtered && (
+          <div className={styles.message}>
+            <p>조건에 맞는 공동구매가 없어요.</p>
+            <button type="button" className={styles.retryButton} onClick={resetFilters}>
+              필터 초기화
+            </button>{' '}
+            <button type="button" className={styles.retryButton} onClick={goToCreatePod}>
+              직접 열기
+            </button>
+          </div>
         )}
 
-        {!loading && !error && openPods.length > 0 && (
+        {!loading && !error && pods.length > 0 && (
           <>
             <div className={styles.feed}>
-              {visiblePods.map((pod) => (
+              {pods.map((pod) => (
                 <PodCard key={pod.id} pod={pod} onJoin={goToPod} />
               ))}
-              {visiblePods.length === 0 && (
-                <p className={styles.message}>이 카테고리에는 진행 중인 팟이 없어요.</p>
-              )}
             </div>
 
             <div className={styles.suggestion}>
               <div className={styles.suggestionText}>
                 <Icon name="help" size={22} className={styles.suggestionIcon} />
                 <div>
-                  <div className={styles.suggestionTitle}>원하는 상품이 없나요?</div>
-                  <div className={styles.suggestionBody}>이웃 입주민에게 소분 팟을 먼저 제안해보세요</div>
+                  <div className={styles.suggestionTitle}>찾는 물건이 없나요?</div>
+                  <div className={styles.suggestionBody}>직접 열면 같은 건물 이웃이 함께해요</div>
                 </div>
               </div>
               <button type="button" className={styles.suggestionButton} onClick={goToCreatePod}>
-                요청하기
+                열기
               </button>
             </div>
           </>
@@ -133,22 +190,33 @@ export default function BuildingHomePage() {
   )
 }
 
+/** 불러오는 동안 카드 자리를 회색 상자로 채워서 화면이 덜컹거리지 않게 한다 */
+function ListSkeleton() {
+  return (
+    <div className={styles.feed} aria-busy="true" aria-label="불러오는 중">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className={styles.skeleton} />
+      ))}
+    </div>
+  )
+}
+
 function HeroBanner() {
   return (
     <div className={styles.hero}>
       <div className={styles.heroContent}>
-        <span className={styles.heroTag}>1인 가구 알뜰 소분</span>
+        <span className={styles.heroTag}>우리 건물 생필품 공동구매</span>
         <h2 className={styles.heroTitle}>
-          대용량 가격으로 1인분씩!
+          대용량 묶음은 같이 사고
           <br />
-          이번 주 우리건물 핫한 소분
+          미개봉 그대로 나눠요
         </h2>
         <div className={styles.heroPerks}>
-          <Icon name="local_shipping" size={16} className={styles.heroPerkIcon} />
-          <span>배송비 0원</span>
+          <Icon name="apartment" size={16} className={styles.heroPerkIcon} />
+          <span>같은 건물 이웃</span>
           <span className={styles.heroDot}>·</span>
-          <Icon name="smart_toy" size={16} className={styles.heroPerkIcon} />
-          <span>1층 스마트 무인보관함 픽업</span>
+          <Icon name="inventory_2" size={16} className={styles.heroPerkIcon} />
+          <span>뜯지 않고 단위로 나눔</span>
         </div>
       </div>
       {/* 선물상자 그림: Stitch 디자인(05./code.html)의 SVG를 그대로 옮겼다 */}
