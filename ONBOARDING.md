@@ -1,5 +1,9 @@
 # 팀원 온보딩 — 처음 시작할 때 이 문서만 보면 됩니다
 
+## 0. 무엇을 만드나
+
+동네(반경 1km) 이웃끼리 휴지·세제·물티슈 같은 생활용품을 묶음으로 사서 미개봉 단위로 나누는 공동구매 앱입니다. 식품은 다루지 않아요. 먼저 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)의 1~5장을 훑어보세요.
+
 ## 1. 저장소 받기 (한 번만)
 
 ```bash
@@ -12,7 +16,7 @@ git checkout develop
 
 자세한 단계별 설치(PostgreSQL, 실행 방법, 자주 나는 에러)는 [docs/SETUP.md](./docs/SETUP.md)를 그대로 따라 하시면 됩니다. 백엔드 작업하실 분은 IntelliJ에서 **저장소 최상위가 아니라 `backend` 폴더**를 열어야 해요.
 
-외부 API 키(영수증 인식, 최저가 조회)가 필요하면 [docs/API_KEYS.md](./docs/API_KEYS.md) 참고 — 없어도 화면/로직 개발은 진행 가능합니다.
+외부 API 키(영수증 인식, 주소 검색, 좌표 변환)가 필요하면 [docs/API_KEYS.md](./docs/API_KEYS.md) 참고 — 없어도 화면/로직 개발은 진행 가능합니다.
 
 ## 3. Claude Code 쓰신다면
 
@@ -23,7 +27,7 @@ git checkout develop
 ```bash
 git checkout develop
 git pull origin develop
-git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
+git checkout -b feature/내가-할-작업     # 예: feature/pod-search
 ```
 
 작업 끝나면 커밋하고(`/commit` 또는 직접 `git commit`), `git push origin feature/내가-할-작업` 후 GitHub에서 **develop으로** PR을 올려주세요. (`/pr` 명령어 쓰면 push+PR 생성까지 한 번에 됩니다.) 자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -45,7 +49,7 @@ git checkout -b feature/내가-할-작업     # 예: feature/qr-auth
 - 10/2(금): 2차 목표 마무리 + 전체 통합 테스트 + [데모 시나리오](./docs/DEMO_SCRIPT.md) 리허설
 - 10/3(토): 빌드업데이 — 온보딩→팟→실시간 갱신→정산까지 이어지는 데모 완성이 목표
 
-> ⚠️ **위 표는 1차(빌드업데이까지) 기록입니다.** 10/3 멘토링 이후 기획이 바뀌어서(QR→주소+GPS, 최저가 삭제, 커뮤니티 신설) 담당 업무가 일부 재배치됐습니다 — 최신 담당자/의존순서는 [docs/REPLAN_WORK_ASSIGNMENT.md](./docs/REPLAN_WORK_ASSIGNMENT.md) 참고.
+> ⚠️ **위 표는 1차(빌드업데이까지) 기록입니다.** 이후 두 번의 기획 개편(10/3: QR→주소+GPS·최저가 삭제·커뮤니티 신설, 11월: 생활용품 한정·계정 로그인·동네 1km 범위)이 있었습니다. 지금 기준은 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)입니다.
 
 ## 6. main / develop 브랜치는 직접 건드리지 않기로 해요
 
