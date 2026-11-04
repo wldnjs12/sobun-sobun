@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 public class DemoPodSeeder implements ApplicationRunner {
 
     static final String DEMO_BUILDING_KEY = "9876543210987654321";
-    static final Long DEMO_HOST_USER_ID = 900_001L;
+    static final Long DEMO_HOST_USER_ID = -900_001L; // 음수: 실제 계정 id(100000~)와 절대 겹치지 않게
 
     private final BuildingRepository buildingRepository;
     private final PodRepository podRepository;

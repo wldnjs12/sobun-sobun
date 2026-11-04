@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,7 +26,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Account {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    /**
+     * 계정 id는 100000부터 시작한다. 왜: 로그인 도입 전 데모 시절 users 테이블에 id 1, 2... 행(건물 소속·팟 대표 기록)이
+     * 이미 있어서, 새 계정이 1번을 받으면 남의 건물·팟을 물려받게 된다. 시작 번호를 띄워서 옛 데모 데이터와 겹치지 않게 한다.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "account_id_seq")
+    @SequenceGenerator(name = "account_id_seq", sequenceName = "account_id_seq", initialValue = 100000, allocationSize = 1)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 20)

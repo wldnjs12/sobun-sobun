@@ -9,7 +9,7 @@ import java.util.Optional;
 
 /**
  * Pod 엔티티를 읽기 전용 JPQL로 조회한다.
- * pod 패키지는 최지원 소유라(docs/REPLAN_WORK_ASSIGNMENT.md 파일 소유권) 그쪽 코드를 import하거나 고치지 않고,
+ * 기능별 패키지 경계를 지키려고 pod 패키지 코드를 import하거나 고치지 않고,
  * 엔티티 이름과 필드 이름으로만 참조한다. Pod의 필드 이름이 바뀌면 컴파일이 아니라 실행 중에 깨지니 주의.
  */
 @Component

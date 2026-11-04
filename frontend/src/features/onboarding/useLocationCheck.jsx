@@ -14,7 +14,7 @@ import { checkLocation } from './onboardingApi.js'
  *
  * 흐름: 위치 확인 → 통과하면 action() 실행 / 실패하면 바텀시트 → [다시 확인]을 누르면 같은 행동을 다시 시도
  * runWithLocationCheck는 통과하면 true, 실패하면 false를 돌려준다 (커뮤니티 입장처럼 "막힌 상태"를 그려야 할 때 사용)
- * 원칙: 결과를 기억(캐시)하지 않고 매번 새로 확인한다 (docs/open-decisions.md 확정 사항).
+ * 원칙: 결과를 기억(캐시)하지 않고 매번 새로 확인한다 (docs/PRODUCT_SPEC.md 결정 기록).
  */
 export default function useLocationCheck() {
   const [checking, setChecking] = useState(false)

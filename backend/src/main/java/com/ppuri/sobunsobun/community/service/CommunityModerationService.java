@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommunityModerationService {
 
-    /** 자동 숨김 기준 — 임시값, 확정은 docs/open-decisions.md. */
+    /** 자동 숨김 기준 — 신고 3회 누적, docs/PRODUCT_SPEC.md 결정 기록. */
     public static final int REPORT_HIDE_THRESHOLD = 3;
 
     private final CommunityPostService postService;

@@ -16,10 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 /**
- * GPS 2차 확인. 행동(팟 개설·참여·커뮤니티 입장) 직전마다 호출되고, 결과를 캐시하지 않고 매번 재판정한다 (open-decisions.md 확정 사항).
+ * GPS 2차 확인. 행동(팟 개설·참여·커뮤니티 입장) 직전마다 호출되고, 결과를 캐시하지 않고 매번 재판정한다 (docs/PRODUCT_SPEC.md 결정 기록).
  *
  * ALLOWED_RADIUS_METERS: 임시값(100m). 실내 GPS 오차가 기기마다 달라 데모 리허설 때 실측 후 조정 필요
- * — 최종 확정 전까지 이 상수 하나만 바꾸면 되도록 유지한다 (docs/open-decisions.md).
+ * — 최종 확정 전까지 이 상수 하나만 바꾸면 되도록 유지한다 (docs/PRODUCT_SPEC.md).
  */
 @Service
 @RequiredArgsConstructor
