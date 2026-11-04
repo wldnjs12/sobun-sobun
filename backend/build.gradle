@@ -27,6 +27,9 @@ dependencies {
     // 검증
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // 비밀번호 BCrypt 해시용. Spring Security 전체(로그인 화면·필터 체인)는 넣지 않고 암호화 모듈만 쓴다.
+    implementation 'org.springframework.security:spring-security-crypto'
+
     // Lombok (보일러플레이트 최소화 — 초보 팀원도 다루기 쉽게)
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
