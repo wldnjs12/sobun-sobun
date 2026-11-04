@@ -2,7 +2,7 @@
 
 _최종 갱신: 2026-10-04 · 브랜치: feature/server-timezone (프론트 연결: feature/community-api-connect · 백엔드: feature/community, PR #22)_
 
-담당: 김민준(백엔드) · 프론트: 도우현(팀 합의, `frontend/src/features/community/` — [handoff/frontend.md](./frontend.md)) · 관련 문서: [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md), [open-decisions](../open-decisions.md), [REPLAN_WORK_ASSIGNMENT](../REPLAN_WORK_ASSIGNMENT.md)
+관련 문서: [PRODUCT_SPEC](../PRODUCT_SPEC.md), [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md), [handoff/frontend.md](./frontend.md)
 
 ## 이번 작업 요약
 
@@ -18,10 +18,10 @@ _최종 갱신: 2026-10-04 · 브랜치: feature/server-timezone (프론트 연�
 - `backend/.../community/` 신규 — API 계약(API_SPEC ⑤)의 엔드포인트 8개 전부 구현
   - 엔티티: `CommunityPost`, `CommunityComment`, `CommunityReport`(대상+신고자 유니크 제약), enum `CommunityCategory`, `ReportTargetType`
   - `CommunityPostService` — 글/댓글 목록·작성·상세·삭제, 건물 격리, 익명 닉네임 조립
-  - `CommunityModerationService` — 신고, 자동 숨김(`REPORT_HIDE_THRESHOLD = 3`, open-decisions에 적힌 위치 그대로)
+  - `CommunityModerationService` — 신고, 자동 숨김(`REPORT_HIDE_THRESHOLD = 3`, 임시값)
   - `AnonymousNicknames` — "글쓴이" / "이웃 N" 계산 (저장하지 않고 응답 만들 때마다 계산)
   - 건물 격리는 ①의 공용 가드 `BuildingAccessService.requireMembership()` 사용 → 다른 건물이면 `403` + `code: "BUILDING_ACCESS_DENIED"` (팟과 같은 형식이라 프론트의 `AccessDeniedView`가 그대로 동작). 글 작성 시 건물은 `User.buildingId`로 정함
-- 최저가(④) 백엔드 삭제: `backend/.../product/` 패키지 전체, `application.yml`·`application-local.yml.example`의 `naver.shopping` 설정 (REPLAN_WORK_ASSIGNMENT의 "커뮤니티 PR에서 같이 지운다")
+- 최저가(④) 백엔드 삭제: `backend/.../product/` 패키지 전체, `application.yml`·`application-local.yml.example`의 `naver.shopping` 설정
 - 테스트 29개 추가 (`backend/src/test/.../community/`), 백엔드 전체 테스트 통과
 
 ## 기획 대비 확인 (spec-check)

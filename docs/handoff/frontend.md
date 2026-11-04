@@ -1,6 +1,6 @@
 # 핸드오프: 프론트엔드 전체 (① 온보딩 · ② 팟 · ③ 정산 · ④ 최저가 · 마이페이지)
 
-> ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: ①온보딩(QR)과 ④최저가는 기획 개편으로 삭제/교체됩니다. 이 문서는 과거 작업 히스토리로만 보존하며, 최신 기획은 [REPLAN_WORK_ASSIGNMENT.md](../REPLAN_WORK_ASSIGNMENT.md)·[design-changes.md](../design-changes.md)를 참고하세요.
+> ⚠️ **기획 개편 전 기록(2026-10-03 이전)**: ①온보딩(QR)과 ④최저가는 기획 개편으로 삭제/교체됩니다. 이 문서는 과거 작업 히스토리로만 보존하며, 지금 기준은 [../PRODUCT_SPEC.md](../PRODUCT_SPEC.md).
 
 ---
 
@@ -19,7 +19,7 @@
 - 규칙(위에서부터 먼저 맞는 것): 정산 확정 → 팟장 "송금 현황 확인"(`/settlements/{id}/payments`), 참여자 "1인당 N원 송금해주세요"(`/settlements/{id}/result`) · 마감됨 → 팟장 "영수증 등록", 참여자 "정산 기다리는 중"(`/pods/{id}/complete`) · 인원 다 모임 → 팟장 "마감하세요", 참여자 "곧 마감"(`/pods/{id}`) · 모집 중이면 소식 없음
 - 한계: 푸시가 아니라 "현재 상태" 기준이라 시간·읽음 표시 없음. 내 팟과 마찬가지로 다른 기기에서 참여한 팟은 안 보임
 - `useMyPods` 결과에 `settlement` 필드 추가 (기존 `pod`, `status`는 그대로)
-- `AppHeader`는 공용 컴포넌트라 REPLAN_WORK_ASSIGNMENT 규칙대로 팀 채팅에 알릴 것
+- `AppHeader`는 공용 컴포넌트라 팀 채팅에 알릴 것
 
 **확인**: Vite 개발 서버 + 브라우저에서 API 응답을 가짜 데이터로 바꿔 확인 — 팟 5개(팟장 정산확정/참여자 정산확정/참여자 마감/팟장 인원 다 모임/모집 중)에서 소식 4개가 위 규칙대로 나오고 모집 중은 빠짐, 링크 경로 일치. 빈 상태 화면, 로고(마이→홈), 건물명(→주소 검색) 이동 확인. 실서버 확인 완료 (2026-10-15 실서버 확인: `docker compose` Postgres + 백엔드 + 프론트로 브라우저에서 직접 확인, feature/local-db-compose): 참여자 화면에서 인원 다 모임·송금 요청(1인 4,200원)·모집 마감 소식 3개가 실제 데이터로 나오고, 송금 요청 → 정산 결과 화면 이동 확인
 
@@ -27,7 +27,7 @@
 
 ## 🆕 ④ 최저가 프론트 삭제
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend · 담당: 도우현 (REPLAN 작업표의 "④최저가(프론트) 삭제")_
+_최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend_
 
 - `frontend/src/features/products/` 폴더(`ProductListPage.jsx`·`.module.css`)와 `App.jsx`의 `/products` 경로 삭제. 하단 탭에서는 이미 빠져 있었음
 - 예전 링크로 `/products`에 들어오면 없는 주소 규칙(`*` → `/`)에 따라 시작 화면으로 감
@@ -38,7 +38,7 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/remove-products-frontend · 담
 
 ## 🆕 기획 개편 후: ① 온보딩 프론트 (주소 + GPS)
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address · 담당: 도우현 · 백엔드 계약: [API_SPEC.md](../API_SPEC.md) ①_
+_최종 갱신: 2026-10-03 · 브랜치: feature/onboarding-address_SPEC.md](../API_SPEC.md) ①_
 
 ### 한 일
 - **QR 인증 삭제**: `QrScanPage.jsx`, `VerifyLocationPage.jsx`, PR #9 데모 인증코드·복사 UI까지 전부 제거
@@ -106,7 +106,7 @@ const { runWithLocationCheck, checking, locationSheet } = useLocationCheck()
 
 ## 🆕 ③ 송금 화면 (Stitch "stitch_new_starter_project 2" _1~_5) + 헤더 로고
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/payment-screens · 담당: 도우현 (정산 UI 담당 홍수진이 보낸 디자인, 백엔드는 이미 있던 API 사용 — 서버 변경 없음)_
+_최종 갱신: 2026-10-03 · 브랜치: feature/payment-screens_
 
 ### 한 일
 - **_4 정산 확정(팟장)** `SettlementPage` 금액 확인 단계: "내 송금 링크 또는 계좌 (선택)" 입력 → `confirm`의 `hostPaymentLink`로 전송. 입력 즉시 "이웃에게는 [토스로 송금] 버튼으로 보여요" 미리보기, "다음 정산에도 기본으로 사용" 체크 시 브라우저에 기억(`sobun.paymentLink.{userId}`)
@@ -132,7 +132,7 @@ _최종 갱신: 2026-10-03 · 브랜치: feature/payment-screens · 담당: 도�
 
 ## 🆕 ⑤ 커뮤니티 프론트 + 온보딩 새 디자인 (Stitch s1_1·s1_2·s16·s17)
 
-_최종 갱신: 2026-10-03 · 브랜치: feature/community-and-onboarding-design · 담당: 도우현 (팀 합의로 커뮤니티 프론트도 도우현, 백엔드는 김민준)_
+_최종 갱신: 2026-10-03 · 브랜치: feature/community-and-onboarding-design_
 
 ### 한 일
 - **S16 목록** `/community` · **S17 상세** `/community/posts/:id` · **S18 글쓰기** `/community/write` (`features/community/`)
