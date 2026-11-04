@@ -1,8 +1,8 @@
 # 소분소분 (뿌리팀 · MOONG TechThon 2026)
 
-인하대 근처(인천 미추홀구 용현동·학익동) 이웃과 생필품·가공식품을 주소+GPS로 인증한 뒤 함께 사서 원가로 나누는 하이퍼로컬 공동구매 앱.
+걸어서 갈 수 있는 동네(내 건물 반경 1km) 이웃끼리 휴지·세제·물티슈·샴푸 같은 생활용품을 묶음으로 함께 사서, 뜯지 않은 단위 그대로 나눠 갖는 공동구매 앱. 첫 지역은 인하대 근처(인천 미추홀구 용현동·학익동)입니다. 식품·식재료는 취급하지 않습니다.
 
-> ⚠️ **기획 개편(2026-10-03)**: QR 인증 → 주소+GPS, 최저가 조회 삭제, 건물별 익명 커뮤니티 신설. 자세한 배경은 `기획수정_프롬포트.md`, 작업 배분은 [docs/REPLAN_WORK_ASSIGNMENT.md](./docs/REPLAN_WORK_ASSIGNMENT.md) 참고.
+> **2026-11 개편**: 품목을 생활용품(미개봉 단위 나눔)으로 한정, 계정 로그인 추가, 팟·커뮤니티 범위를 같은 건물 → 동네(반경 1km)로 확장. 기준 문서는 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md).
 
 ## 팀 구성
 
@@ -27,16 +27,17 @@
 
 - 백엔드: Spring Boot 3 (Java 17), Spring Data JPA, WebSocket(STOMP), PostgreSQL
 - 프론트엔드: React + Vite, react-router-dom, @stomp/stompjs
-- 외부 연동: Naver Clova OCR(영수증 인식), 도로명주소 API(건물 검색), 카카오 로컬 API(건물 좌표 변환) — 발급 안내: [docs/API_KEYS.md](./docs/API_KEYS.md)
+- 외부 연동: Naver Clova OCR(영수증 인식), 도로명주소 API(Juso, 주소 검색), 카카오 로컬 API(주소 → 좌표 변환) — 발급 안내: [docs/API_KEYS.md](./docs/API_KEYS.md)
 
 > 사업계획서상 Node.js/Express 표기는 구현 예시이며, 팀 실제 역량에 맞춰 Spring Boot로 통일했습니다.
 
 ## 핵심 기능 (해커톤 MVP)
 
-1. 주소+GPS 건물 인증 온보딩
-2. 팟 개설·참여·실시간 정산 갱신 (건물 단위 격리)
-3. 대표 수고비(정률) 반영 자동 정산식
-4. 건물별 익명 커뮤니티 (글/댓글/신고, 공구 제안 → 팟 연동)
+1. 계정(아이디·비밀번호) 로그인 + 주소(1차)·GPS(2차) 건물 인증
+2. 동네(반경 1km) 팟 목록·검색·카테고리 필터, 팟 개설·참여·수정·취소, 1인당 금액 실시간 갱신
+3. 미개봉 단위 나눔 (예: 휴지 30롤 → 1인 10롤씩 3명)
+4. 영수증 OCR + 대표 수고비(기본 5%) 반영 자동 정산, 송금 링크·자가 신고, 비대면 픽업
+5. 동네 익명 커뮤니티 (글/댓글/신고, 공구 제안 → 팟 연동)
 
 ## 실행 방법
 
@@ -58,19 +59,20 @@ npm run dev
 ## 폴더 구조
 
 ```
-backend/   Spring Boot (기능별 패키지: auth, pod, settlement, community, global — product는 삭제 예정)
-frontend/  React + Vite (기능별 폴더: features/onboarding, pod, settlement, community — products는 삭제 예정)
-docs/      ERD, API 명세 초안
+backend/   Spring Boot (기능별 패키지: auth(계정 포함), pod, settlement, community, global)
+frontend/  React + Vite (기능별 폴더: features/onboarding, pod, settlement, community, mypage)
+docs/      제품 명세, API 명세, ERD, 설정·배포 가이드
 .claude/   Claude Code 팀 공유 설정 (커스텀 명령어, 브랜치 보호 훅)
 ```
 
 ## 문서
 
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — 브랜치 전략, 커밋 컨벤션, PR 규칙
-- [docs/ERD.md](./docs/ERD.md) — 데이터베이스 구조 초안
-- [docs/API_SPEC.md](./docs/API_SPEC.md) — API 명세 초안
+- [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md) — **제품 명세(기준 문서)**: 화면별 동작, 위치·주소 정책, 거래 흐름, 결정 기록
+- [docs/API_SPEC.md](./docs/API_SPEC.md) — API 명세
+- [docs/ERD.md](./docs/ERD.md) — 데이터베이스 구조
 - [docs/DESIGN_HANDOFF.md](./docs/DESIGN_HANDOFF.md) — 디자인 핸드오프용 화면별 상세 설명
-- docs/features/ — 기능별 상세 스펙 ([①온보딩](./docs/features/01-onboarding.md) · [②팟](./docs/features/02-pod.md) · [③정산](./docs/features/03-settlement.md) · [⑤커뮤니티](./docs/features/05-community.md) · ~~[④최저가조회](./docs/features/04-product-search.md)(삭제됨)~~)
+- docs/features/ — 기능별 상세 스펙(2026-10 기준, 2026-11 개편 내용은 PRODUCT_SPEC 우선) ([①온보딩](./docs/features/01-onboarding.md) · [②팟](./docs/features/02-pod.md) · [③정산](./docs/features/03-settlement.md) · [⑤커뮤니티](./docs/features/05-community.md))
 - [docs/SETUP.md](./docs/SETUP.md) — 로컬 개발 환경 설정 가이드
 - [docs/DEPLOY.md](./docs/DEPLOY.md) — 배포 가이드 (Supabase + Railway + Vercel)
 - [docs/API_KEYS.md](./docs/API_KEYS.md) — 외부 API 키 발급 안내

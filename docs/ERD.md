@@ -1,14 +1,14 @@
-# ERD 초안
+# ERD
 
-> ⚠️ **기획 개편(2026-10-03)**: QR 관련 컬럼·`PRODUCT` 테이블을 제거하고, 주소/GPS 기반 인증과 커뮤니티 테이블을 추가했습니다. 실제 반영은 [REPLAN_WORK_ASSIGNMENT.md](./REPLAN_WORK_ASSIGNMENT.md) 순서대로 진행됩니다.
-
-실제 컬럼은 개발하면서 조정하되, 아래 구조를 기준으로 시작합니다.
+> **2026-11 개편**: 계정 테이블(`ACCOUNTS`, `SESSION_TOKENS`) 추가, `POD`에 카테고리·미개봉 단위·상태 컬럼 추가, `USER`에 상세주소, `BUILDING`에 지번주소 추가. **(개편)** 표시 컬럼은 통합 시 이름이 확정될 수 있습니다. 의미와 규칙은 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) 7장.
 
 ```mermaid
 erDiagram
-    BUILDING ||--o{ POD : "건물 안에서 팟이 열린다"
-    BUILDING ||--o{ USER : "건물에 등록된 주민"
-    BUILDING ||--o{ COMMUNITY_POST : "건물 커뮤니티"
+    ACCOUNTS ||--o| USER : "id 공유 (건물 등록 시 생성)"
+    ACCOUNTS ||--o{ SESSION_TOKENS : "로그인 세션"
+    BUILDING ||--o{ POD : "개설 위치"
+    BUILDING ||--o{ USER : "소속 주민"
+    BUILDING ||--o{ COMMUNITY_POST : "작성 위치"
     POD ||--o{ POD_PARTICIPANT : "참여자"
     POD ||--o| SETTLEMENT : "마감 후 정산 1건"
     USER ||--o{ POD_PARTICIPANT : "참여"
@@ -18,19 +18,35 @@ erDiagram
     COMMUNITY_POST ||--o{ COMMUNITY_REPORT : "신고(글)"
     COMMUNITY_COMMENT ||--o{ COMMUNITY_REPORT : "신고(댓글)"
 
+    ACCOUNTS {
+        long id PK "자동 생성, USER.id와 같은 값"
+        string login_id UK "영문 소문자·숫자 4~20자"
+        string password_hash "BCrypt"
+        string nickname "2~10자, 본인에게만 노출"
+        datetime created_at
+    }
+    SESSION_TOKENS {
+        long id PK
+        string token_hash "랜덤 opaque 토큰의 해시 (원문은 저장 안 함)"
+        long account_id FK
+        datetime created_at
+        datetime expires_at "발급 + 30일"
+    }
     BUILDING {
         long id PK
-        string name "건물명(검색 결과의 buildingName)"
+        string name "nullable(개편), 없으면 도로명+건물번호로 표시"
         string road_address
+        string jibun_address "개편, nullable"
         string building_management_number "bdMgtSn, 도로명주소 API"
         string dong "nullable, 아파트만"
-        string building_key UK "bdMgtSn + ':' + (dong 또는 빈문자열)"
+        string building_key UK "빌라 bdMgtSn / 아파트 bdMgtSn:동"
         double latitude
         double longitude
     }
     USER {
-        long id PK
-        long building_id FK
+        long id PK "= accounts.id"
+        long building_id FK "not null"
+        string detail_address "개편, nullable, 본인에게만 노출"
         datetime created_at
     }
     LOCATION_CHECK {
@@ -43,17 +59,24 @@ erDiagram
     }
     POD {
         long id PK
-        long building_id FK
+        long building_id FK "대표의 건물 (동네 판정 기준)"
         long host_user_id FK
+        string category "개편, TISSUE|LAUNDRY|BATH|KITCHEN|CLEANING|DAILY|ETC"
         string title
+        string description "개편, nullable, 500자"
         decimal total_amount
-        int target_participant_count
-        int participant_count
-        decimal commission_rate
-        datetime deadline
-        boolean closed
+        int total_units "개편, 묶음 전체 개수"
+        string unit_label "개편, 10자 (롤/팩/개/병)"
+        int units_per_person "개편, 1인 몫(미개봉)"
+        int target_participant_count "대표 포함"
+        int participant_count "대표 포함"
+        decimal commission_rate "기본 0.05"
+        datetime deadline "표시용"
+        string status "개편, OPEN|CLOSED|CANCELLED"
+        boolean closed "호환용, status != OPEN"
         decimal original_price "nullable, 절약액 카드용"
         string pickup_pin "4자리, 생성 시 자동 발급"
+        string pickup_note "개편, nullable, 100자"
     }
     POD_PARTICIPANT {
         long id PK
@@ -77,19 +100,19 @@ erDiagram
     }
     COMMUNITY_POST {
         long id PK
-        long building_id FK
-        long author_user_id FK "응답엔 절대 노출 안 함, 신고처리용 내부 보관"
+        long building_id FK "작성자 건물 (동네 판정 기준)"
+        long author_user_id FK "응답엔 절대 노출 안 함"
         string category "FREE | QUESTION | SHARE | GROUP_BUY_SUGGESTION"
-        string content
+        string content "2000자"
         datetime created_at
         int report_count
-        boolean hidden "report_count >= 3(임시)이면 true"
+        boolean hidden "report_count >= 3이면 true"
     }
     COMMUNITY_COMMENT {
         long id PK
         long post_id FK
         long author_user_id FK "응답엔 절대 노출 안 함"
-        string content
+        string content "500자"
         datetime created_at
         int report_count
         boolean hidden
@@ -105,9 +128,10 @@ erDiagram
 
 ## 메모
 
-- `USER`가 처음으로 생기는 엔티티입니다. 로그인이 없어 지금처럼 임의의 숫자 `userId`를 쓰지만, 이 테이블이 "이 userId가 어느 건물 소속인지"의 근거가 되어 건물 소속 검증(`BuildingAccessService`)에 쓰입니다.
-- `BUILDING.building_key`는 서버가 계산해서 저장하는 유니크 키입니다. 빌라/원룸은 `bdMgtSn`만, 아파트는 `bdMgtSn + 동`까지 같아야 같은 건물로 취급합니다.
-- `LOCATION_CHECK`는 원본 좌표를 저장하지 않고 판정 결과·시각·목적만 남깁니다(개인정보 보호 — [기획수정_프롬포트.md](../기획수정_프롬포트.md) 1-3절).
-- `COMMUNITY_POST`/`COMMUNITY_COMMENT`의 `author_user_id`는 DB에는 있지만 **API 응답에는 절대 포함하지 않습니다** — 익명 닉네임("이웃 N"/"글쓴이")은 응답 조립 시점에 매번 계산하고 저장하지 않습니다.
-- `POD.target_participant_count` 도달 시에만 마감(기존과 동일, 변경 없음).
-- `BUILDING_AUTH`(과거 QR 인증 기록 테이블)와 `PRODUCT`(최저가 캐시 테이블)는 **삭제됩니다.**
+- **`ACCOUNTS`와 `USER`를 나눈 이유**: `USER`는 "어느 건물 소속인가"이고 `building_id`가 not null이다. 계정은 건물 등록 전에도 있어야 하므로 따로 둔다. `accounts.id == users.id`라서 기존 코드의 `userId`(Pod.hostUserId 등)를 그대로 쓸 수 있다. 기존 `users` 테이블 이름(PostgreSQL 예약어 `user` 회피)은 유지.
+- **동네 판정**: 테이블에 "동네"를 저장하지 않는다. 요청할 때마다 내 `BUILDING` 좌표와 대상 `BUILDING` 좌표의 거리(≤ 1km)로 계산한다(`NeighborhoodService`). 그래서 `POD.building_id`, `COMMUNITY_POST.building_id`는 그대로 두면 된다.
+- **노출 금지 컬럼**: `BUILDING.road_address/jibun_address/name/dong/latitude/longitude`, `USER.detail_address`, `ACCOUNTS.nickname`, `*.author_user_id`는 다른 사용자 응답에 넣지 않는다. 다른 사용자에게는 법정동 이름(도로명주소 괄호에서 추출)과 대략 거리만.
+- `BUILDING.building_key`는 서버가 계산하는 유니크 키. 상세주소는 키에 쓰지 않는다.
+- `LOCATION_CHECK`는 원본 좌표를 저장하지 않고 판정 결과·시각·목적만 남긴다(개인정보 보호).
+- 익명 닉네임("이웃 N"/"글쓴이")은 저장하지 않고 응답 조립 시점에 계산한다.
+- 스키마는 `ddl-auto: update`로 자동 반영된다. 새 not null 컬럼을 기존 행이 있는 테이블에 추가할 때는 기본값이 필요하다(예: `POD.category`, `POD.status` — 통합 시 확인).
