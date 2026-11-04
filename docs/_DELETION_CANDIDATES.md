@@ -22,7 +22,7 @@ _작성: 2026-11-04 · 아직 아무것도 지우지 않았음. 참조 여부는
 | 경로 | 이유 | 참조하는 곳 / 주의 |
 | --- | --- | --- |
 | `docs/DESIGN_HANDOFF.md` | "홍수진 담당" 역할 문서 + 식품(생수·라면·즉석밥) 예시, 화면 동작은 PRODUCT_SPEC 6장이 대체. 단 톤앤매너·설문 근거는 여기에만 있음 | `README.md`, `ONBOARDING.md`, `docs/features/01~05`, `docs/handoff/pod.md:35`, 코드 주석 `OnboardingPage.jsx:14`. 지울 거면 설문 근거 2~3줄을 PRODUCT_SPEC 3장으로 옮기기 |
-| `docs/features/01-onboarding.md`, `02-pod.md`, `03-settlement.md`, `05-community.md` | 각 파일 머리에 "담당: 누구" 역할 표기 + 2026-10 기준(같은 건물, 식품 예시 일부). PRODUCT_SPEC이 상위 기준 | **`.claude/commands/plan.md`, `spec-check.md`가 이 경로를 읽음** — 지우면 두 커맨드를 `docs/PRODUCT_SPEC.md` 기준으로 바꿔야 함. 코드 주석 다수(`PodCreatePage.jsx:13`, `podUtils.js:37`, `JoinConfirmSheet.jsx:115`, `SettlementPage.jsx:83`, `CommunityListPage.jsx:76`). 지우지 않으면 "담당:" 줄만 삭제 권장 |
+| `docs/features/01-onboarding.md`, `02-pod.md`, `03-settlement.md`, `05-community.md` | 각 파일 머리에 "담당: 누구" 역할 표기 + 2026-10 기준(같은 건물 범위, 계정·단위 필드 없음). PRODUCT_SPEC이 상위 기준 | **`.claude/commands/plan.md`, `spec-check.md`가 이 경로를 읽음** — 지우면 두 커맨드를 `docs/PRODUCT_SPEC.md` 기준으로 바꿔야 함. 코드 주석 다수(`PodCreatePage.jsx:13`, `podUtils.js:37`, `JoinConfirmSheet.jsx:115`, `SettlementPage.jsx:83`, `CommunityListPage.jsx:76`). 지우지 않으면 "담당:" 줄만 삭제 권장 |
 | `docs/handoff/frontend.md`, `docs/handoff/pod.md` | 2026-10 이전 작업 히스토리(QR·최저가·?user=2·localStorage 임시 계약 등) | `docs/handoff/community.md:5`, 코드 주석 `frontend/src/api/currentUser.js:5`, `frontend/.../podApi.js:5`. `currentUser.js`는 계정 작업으로 바뀌므로 그 뒤에 지우기 |
 | `docs/handoff/` 폴더 전체 | — | **지우면 안 됨.** `.claude/hooks/require-handoff-before-push.sh:29`가 `docs/handoff/` 변경 커밋이 없으면 push를 막고, `.claude/commands/handoff.md:12`가 `docs/handoff/README.md` 템플릿을 씀. `README.md`·`settlement.md`·`community.md`는 남길 것 |
 
@@ -33,7 +33,7 @@ _작성: 2026-11-04 · 아직 아무것도 지우지 않았음. 참조 여부는
 | `README.md` "팀 구성" 표의 "담당 기능" 열 | 팀 역할 분담(오너 요청). 최저가 언급도 남아 있음. 이름·역할(직군)만 남기는 걸 권장 |
 | `ONBOARDING.md` 5절 "담당 업무 및 목표 일정" 표 + 9/28~10/3 일정 | 팀 역할 분담 + 지난 일정, QR·최저가·04-product-search 링크 포함 |
 | `ONBOARDING.md` 7절 칸반 보드 | `PROJECT_BOARD.md` 삭제 시 같이 |
-| `CONTRIBUTING.md:7` 브랜치 예시 `feature/qr-auth`, `feature/product-search`, `:17` 커밋 예시 "QR 스캔 후 위치 검증" | 삭제된 기능 이름. 예시만 교체 |
+| `CONTRIBUTING.md:7` 브랜치 예시 `feature/qr-auth`, `feature/product-search`, `:19` 커밋 예시 "QR 스캔 후 위치 검증" | 삭제된 기능 이름. 예시만 교체 |
 | `.claude/commands/{handoff,ship,spec-check}.md:3` argument-hint의 `product`, `spec-check.md:12`의 `backend/.../product → ④` 매핑 | 없는 패키지. (`.claude/`는 문서 담당 범위 밖이라 이번에 안 고침) |
 
 ## D. 코드·설정 (문서 담당 범위 밖 — 해당 담당이 처리)
