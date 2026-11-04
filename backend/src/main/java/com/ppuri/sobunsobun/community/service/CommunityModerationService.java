@@ -29,7 +29,7 @@ public class CommunityModerationService {
 
     @Transactional
     public void reportPost(Long postId, Long reporterUserId) {
-        CommunityPost post = postService.getVisiblePostInMyNeighborhood(postId, reporterUserId);
+        CommunityPost post = postService.getVisiblePostOfMyBuilding(postId, reporterUserId);
         if (post.isWrittenBy(reporterUserId)) {
             throw new IllegalStateException("본인 글은 신고할 수 없어요.");
         }
@@ -42,7 +42,7 @@ public class CommunityModerationService {
         CommunityComment comment = commentRepository.findById(commentId)
                 .filter(c -> !c.isHidden())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다: " + commentId));
-        postService.getVisiblePostInMyNeighborhood(comment.getPostId(), reporterUserId);
+        postService.getVisiblePostOfMyBuilding(comment.getPostId(), reporterUserId);
         if (comment.isWrittenBy(reporterUserId)) {
             throw new IllegalStateException("본인 댓글은 신고할 수 없어요.");
         }

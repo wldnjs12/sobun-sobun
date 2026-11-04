@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 핵심 기능 ⑤: 동네 익명 커뮤니티 (김민준 담당). API 계약: docs/API_SPEC.md ⑤.
+ * 핵심 기능 ⑤: 건물별 익명 커뮤니티 (김민준 담당). API 계약: docs/API_SPEC.md ⑤.
  * 입장 전 GPS 확인(purpose=COMMUNITY_ENTER)은 프론트가 ①의 /api/auth/location-check로 먼저 한다.
  *
  * 요청한 사람(userId): X-User-Id 헤더가 있으면 헤더를 쓰고, 없을 때만 예전 방식(?userId=)을 쓴다.
@@ -38,14 +38,14 @@ public class CommunityController {
     private final CommunityPostService postService;
     private final CommunityModerationService moderationService;
 
-    /** buildingId는 예전 화면 호환용으로 받기만 하고 쓰지 않는다 — 범위는 서버가 "내 동네(반경 1km)"로 정한다. */
+    /** buildingId를 생략하면 요청한 사람의 소속 건물 글을 보여준다. 다른 건물 id를 보내면 403. */
     @GetMapping("/posts")
     public ApiResponse<List<CommunityPostSummary>> list(@RequestHeader(value = USER_HEADER, required = false) Long headerUserId,
                                                         @RequestParam(required = false) Long userId,
                                                         @RequestParam(required = false) Long buildingId,
                                                         @RequestParam(required = false) CommunityCategory category)
             throws MissingServletRequestParameterException {
-        return ApiResponse.ok(postService.list(requester(headerUserId, userId), category));
+        return ApiResponse.ok(postService.list(buildingId, requester(headerUserId, userId), category));
     }
 
     @PostMapping("/posts")
@@ -117,7 +117,7 @@ public class CommunityController {
     }
 
     // 아래 핸들러는 이 컨트롤러에서 난 예외만 처리한다.
-    // 404(없는 글)·409(중복 신고 등)·403 BUILDING_ACCESS_DENIED(동네 밖)는 GlobalExceptionHandler가 처리.
+    // 404(없는 글)·409(중복 신고 등)·403 BUILDING_ACCESS_DENIED(다른 건물)는 GlobalExceptionHandler가 처리.
 
     @ExceptionHandler(CommunityForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)

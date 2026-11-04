@@ -33,7 +33,7 @@ public class SettlementController {
 
     /**
      * 대표가 확인한 금액으로 정산 확정.
-     * 동네(반경 1km) 밖 사용자면 403(BUILDING_ACCESS_DENIED, 전역 핸들러가 처리), 대표가 아니면 403, 없는 팟이면 404.
+     * 다른 건물 사용자면 403(BUILDING_ACCESS_DENIED, 전역 핸들러가 처리), 대표가 아니면 403, 없는 팟이면 404.
      */
     @PostMapping("/{podId}/confirm")
     public ApiResponse<SettlementResponse> confirm(@PathVariable Long podId,
@@ -44,7 +44,7 @@ public class SettlementController {
     }
 
     /**
-     * 확정된 정산 결과 조회 (참여자 화면·다른 기기용). 동네 밖이거나 대표·참여자가 아니면 403.
+     * 확정된 정산 결과 조회 (참여자 화면·다른 기기용). 다른 건물이거나 대표·참여자가 아니면 403.
      * 확정 전이거나 없는 팟이면 에러가 아니라 200 + data=null — 공용 client.js가 success=false면 예외를 던지기 때문에,
      * "아직 정산 전"을 정상 응답으로 내려줘야 화면이 대기 상태를 바로 그릴 수 있다.
      */

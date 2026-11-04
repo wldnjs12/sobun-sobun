@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -29,8 +29,8 @@ public class SettlementService {
 
     static final long MAX_RECEIPT_BYTES = 10L * 1024 * 1024; // 10MB
 
-    /** NeighborhoodService 기본 문구는 "팟" 기준이라 정산용 문구를 따로 넘긴다 */
-    static final String OTHER_BUILDING_MESSAGE = "우리 동네(반경 1km) 밖 팟의 정산에는 접근할 수 없어요.";
+    /** BuildingAccessService 기본 문구는 "팟" 기준이라 정산용 문구를 따로 넘긴다 */
+    static final String OTHER_BUILDING_MESSAGE = "다른 건물의 정산에는 접근할 수 없어요.";
     static final String NOT_MEMBER_MESSAGE = "이 팟의 대표와 참여자만 정산을 볼 수 있어요.";
 
     /** 송금 정보 최대 길이 — 토스/카카오페이 링크나 "은행 계좌번호 예금주" 정도면 충분하다 */
@@ -41,7 +41,7 @@ public class SettlementService {
     private final ReceiptOcrClient receiptOcrClient;
     private final SettlementPodReader podReader;
     private final SettlementRepository settlementRepository;
-    private final NeighborhoodService neighborhoodService;
+    private final BuildingAccessService buildingAccessService;
 
     /**
      * 영수증 이미지 → OCR → 총액 추출.
@@ -78,8 +78,8 @@ public class SettlementService {
      * 대표가 확인(또는 수정)한 원가로 정산 확정.
      * 최종 금액 = 원가 × (1 + 수고비율), 1인당 = 최종 금액 ÷ 확정 참여자 수 (원 단위 올림, PodService 실시간 계산과 같은 방식)
      *
-     * 검사 순서: 입력 → 팟 조회(404) → 동네 가드(403) → 대표(403) → 마감(400) → 참여자 수 → 중복 확정(400).
-     * 동네 가드를 중복 확정 검사보다 앞에 둬서, 동네 밖 사람에게 정산이 이미 있는지조차 알려주지 않는다.
+     * 검사 순서: 입력 → 팟 조회(404) → 건물 소속(403) → 대표(403) → 마감(400) → 참여자 수 → 중복 확정(400).
+     * 건물 가드를 중복 확정 검사보다 앞에 둬서, 다른 건물 사람에게 정산이 이미 있는지조차 알려주지 않는다.
      */
     @Transactional
     public SettlementResponse confirm(Long podId, Long userId, SettlementConfirmRequest request) {
@@ -90,8 +90,8 @@ public class SettlementService {
         String hostPaymentLink = normalizePaymentLink(request.hostPaymentLink());
 
         PodSummary pod = findPodOrThrow(podId);
-        neighborhoodService.requireNeighbor(userId, pod.buildingId(), OTHER_BUILDING_MESSAGE);
-        // 팟 마감(Pod.close)의 "대표만 팟을 마감할 수 있습니다."와 같은 문구 톤. 상태는 동네 가드와 같은 403 (close는 409)
+        buildingAccessService.requireMembership(userId, pod.buildingId(), OTHER_BUILDING_MESSAGE);
+        // 팟 마감(Pod.close)의 "대표만 팟을 마감할 수 있습니다."와 같은 문구 톤. 상태는 건물 가드와 같은 403 (close는 409)
         if (!Objects.equals(pod.hostUserId(), userId)) {
             throw new SettlementException(HttpStatus.FORBIDDEN, "대표만 정산을 확정할 수 있습니다.");
         }
@@ -121,8 +121,8 @@ public class SettlementService {
      * 확정된 정산 결과 조회. 팟장이 아닌 참여자(다른 기기)도 결과 화면을 볼 수 있게 한다.
      * 아직 확정 전이거나 없는 팟이면 null — 프론트는 이걸 "정산 대기" 상태로 보여준다.
      * 팟이 있으면 정산을 찾기 전에 접근 권한부터 확인한다:
-     *   1) 동네 가드(반경 1km 밖이면 403 BUILDING_ACCESS_DENIED) — 거친 1차 확인
-     *   2) 대표 또는 참여자인가 (아니면 403) — 송금 링크·계좌번호가 들어 있어서 같은 동네라도 구경꾼에게는 보여주지 않는다
+     *   1) 같은 건물 소속인가 (아니면 403 BUILDING_ACCESS_DENIED) — 1차 확인
+     *   2) 대표 또는 참여자인가 (아니면 403) — 송금 링크·계좌번호가 들어 있어서 같은 건물이라도 구경꾼에게는 보여주지 않는다
      */
     @Transactional(readOnly = true)
     public SettlementResponse findConfirmed(Long podId, Long userId) {
@@ -130,7 +130,7 @@ public class SettlementService {
         if (pod.isEmpty()) {
             return null;
         }
-        neighborhoodService.requireNeighbor(userId, pod.get().buildingId(), OTHER_BUILDING_MESSAGE);
+        buildingAccessService.requireMembership(userId, pod.get().buildingId(), OTHER_BUILDING_MESSAGE);
         boolean isHost = Objects.equals(pod.get().hostUserId(), userId);
         if (!isHost && !podReader.isParticipant(podId, userId)) {
             throw new SettlementException(HttpStatus.FORBIDDEN, NOT_MEMBER_MESSAGE);

@@ -46,7 +46,7 @@ class CommunityModerationServiceTest {
     void setUp() {
         service = new CommunityModerationService(postService, commentRepository, reportRepository);
         post = post(1L, 1L, AUTHOR, CommunityCategory.FREE);
-        when(postService.getVisiblePostInMyNeighborhood(any(), any())).thenReturn(post);
+        when(postService.getVisiblePostOfMyBuilding(any(), any())).thenReturn(post);
     }
 
     private void givenReportCount(ReportTargetType type, Long targetId, long count) {
@@ -105,12 +105,12 @@ class CommunityModerationServiceTest {
         service.reportComment(10L, 200L);
 
         assertThat(comment.isHidden()).isTrue();
-        verify(postService).getVisiblePostInMyNeighborhood(1L, 200L); // 동네 밖 글의 댓글 신고도 막힌다
+        verify(postService).getVisiblePostOfMyBuilding(1L, 200L); // 다른 건물 댓글 신고도 막힌다
     }
 
     @Test
-    void 동네_밖_주민은_신고할_수_없다() {
-        when(postService.getVisiblePostInMyNeighborhood(1L, 900L)).thenThrow(new BuildingAccessDeniedException("우리 동네(반경 1km) 이웃의 글만 볼 수 있어요."));
+    void 다른_건물_주민은_신고할_수_없다() {
+        when(postService.getVisiblePostOfMyBuilding(1L, 900L)).thenThrow(new BuildingAccessDeniedException("우리 건물 커뮤니티만 볼 수 있어요."));
 
         assertThatThrownBy(() -> service.reportPost(1L, 900L)).isInstanceOf(BuildingAccessDeniedException.class);
         verify(reportRepository, never()).saveAndFlush(any());

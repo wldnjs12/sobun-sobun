@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
+import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -29,7 +29,7 @@ class SettlementFindTest {
 
     private static final long POD_ID = 1L;
     private static final long BUILDING_ID = 10L;
-    private static final long USER_ID = 2L;               // 같은 동네 참여자
+    private static final long USER_ID = 2L;               // 같은 건물 참여자
     private static final long OTHER_BUILDING_USER_ID = 99L;
 
     @Mock
@@ -39,18 +39,18 @@ class SettlementFindTest {
     private SettlementRepository settlementRepository;
 
     @Mock
-    private NeighborhoodService neighborhoodService;
+    private BuildingAccessService buildingAccessService;
 
     private SettlementService settlementService;
 
     @BeforeEach
     void setUp() {
         settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository,
-                neighborhoodService);
+                buildingAccessService);
     }
 
     private static final long HOST_USER_ID = 1L;
-    private static final long BYSTANDER_USER_ID = 3L;     // 같은 동네지만 이 팟에 참여하지 않음
+    private static final long BYSTANDER_USER_ID = 3L;     // 같은 건물지만 이 팟에 참여하지 않음
 
     private void givenPodExists() {
         given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, 3, true)));
@@ -71,7 +71,7 @@ class SettlementFindTest {
         assertThat(result.participantCount()).isEqualTo(3);
         assertThat(result.perPersonAmount()).isEqualByComparingTo("4305");
         assertThat(result.confirmed()).isTrue();
-        verify(neighborhoodService).requireNeighbor(USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+        verify(buildingAccessService).requireMembership(USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
     }
 
     @Test
@@ -87,15 +87,15 @@ class SettlementFindTest {
         given(podReader.findPod(POD_ID)).willReturn(Optional.empty());
 
         assertThat(settlementService.findConfirmed(POD_ID, USER_ID)).isNull();
-        verifyNoInteractions(neighborhoodService, settlementRepository);
+        verifyNoInteractions(buildingAccessService, settlementRepository);
     }
 
     @Test
-    void 동네_밖_사용자면_예외이고_정산을_조회하지_않는다() {
+    void 다른_건물_사용자면_예외이고_정산을_조회하지_않는다() {
         givenPodExists();
         willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
-                .given(neighborhoodService)
-                .requireNeighbor(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+                .given(buildingAccessService)
+                .requireMembership(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
 
         assertThatThrownBy(() -> settlementService.findConfirmed(POD_ID, OTHER_BUILDING_USER_ID))
                 .isInstanceOf(BuildingAccessDeniedException.class);
@@ -112,7 +112,7 @@ class SettlementFindTest {
     }
 
     @Test
-    void 같은_동네라도_참여하지_않은_사람은_403이고_정산을_조회하지_않는다() {
+    void 같은_건물라도_참여하지_않은_사람은_403이고_정산을_조회하지_않는다() {
         givenPodExists();
         given(podReader.isParticipant(POD_ID, BYSTANDER_USER_ID)).willReturn(false);
 
