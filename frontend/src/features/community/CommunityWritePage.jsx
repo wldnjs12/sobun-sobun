@@ -7,12 +7,12 @@ import useCommunityEntry from './useCommunityEntry.js'
 import EntryGate from './EntryGate.jsx'
 import styles from './Community.module.css'
 
-// 예시 품목은 생활용품만 (2026-11 개편 — 식품·식재료는 다루지 않는다). 상세 주소·동호수는 적지 않도록 안내한다
+// 예시 품목: 생필품 + 밀봉 가공식품(생수 등). 신선 식재료는 위생·보관 리스크로 제외. 상세 주소·호수는 적지 않도록 안내한다
 const PLACEHOLDER = {
   GROUP_BUY_SUGGESTION: '예) 휴지 30롤 같이 사실 분?\n10롤 묶음 3개라 뜯지 않고 1인 10롤씩 나누면 돼요.',
   SHARE: '예) 세제 리필 나눔 후기\n3L 리필팩을 미개봉으로 나눴더니 깔끔했어요!',
-  QUESTION: '예) 근처에서 물티슈 박스로 싸게 사는 곳 있나요?',
-  FREE: '동네 이웃에게 하고 싶은 이야기를 적어주세요.',
+  QUESTION: '예) 근처에서 생수 2L×24병 싸게 사는 곳 있나요?',
+  FREE: '이웃에게 하고 싶은 이야기를 적어주세요.',
 }
 
 /**

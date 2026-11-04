@@ -11,7 +11,7 @@ import styles from './Settlement.module.css'
  * 확인 번호(Pod.pickupPin)는 참여자에게만 내려오고(GET /pods/{id}/me), 수령 완료는 자가신고(POST /pods/{id}/picked-up)다.
  *
  * 2026-11 개편:
- *   - 동네(반경 1km) 단위라 팟이 내 건물이 아닐 수 있다 → 내 건물 이름을 장소로 쓰지 않고, 팟장이 적은 pickupNote를 보여준다.
+ *   - 건물 안 어디서 받는지는 팟마다 달라서, 팟장이 적은 pickupNote(예 "1층 공동현관 앞")를 그대로 보여준다.
  *     (예전의 "1층 무인락커" 고정 문구는 실제 정보가 아니라서 지웠다)
  *   - 묶음을 "미개봉 단위"로 나눈다 → 팟에 unitsPerPerson·unitLabel이 있으면 "1인 10롤씩 미개봉" 으로 안내.
  *     이 필드들은 팟 담당 쪽에서 추가 중이라, 없으면 문구를 생략한다(optional chaining).

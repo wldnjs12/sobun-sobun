@@ -4,7 +4,7 @@ import { calcPerPersonPrice, totalWithCommission100 } from '../pod/podUtils.js'
 
 /**
  * 정산(③) API. 백엔드: origin/feature/settlement
- * 접근: 팟의 대표와 참여자만 (동네 밖이면 403 BUILDING_ACCESS_DENIED, 같은 동네라도 참여 안 했으면 403)
+ * 접근: 팟의 대표와 참여자만 (다른 건물이면 403 BUILDING_ACCESS_DENIED, 같은 건물이라도 참여 안 했으면 403)
  *
  * 1인당 금액 계산은 백엔드 SettlementService와 같은 식이어야 화면 숫자와 서버 숫자가 같다:
  *   최종 금액 = 영수증 원가 × (1 + 수고비율)

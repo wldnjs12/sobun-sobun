@@ -4,13 +4,13 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { isBuildingAccessDenied } from '../../api/client.js'
+import { BUILDING } from '../pod/podApi.js'
 import {
   addComment,
   categoryOf,
   deleteComment,
   deletePost,
   fetchPost,
-  locationLabel,
   reportComment,
   reportPost,
   splitContent,
@@ -166,7 +166,7 @@ export default function CommunityDetailPage() {
               {post.mine ? '나' : '익명 이웃'} <span className={styles.writerBadge}>글쓴이</span>
             </strong>
             <span>
-              <Icon name="verified" size={14} /> 동네 이웃 · {locationLabel(post)}
+              <Icon name="verified" size={14} /> {BUILDING.name} 이웃
             </span>
           </div>
           <MoreMenu

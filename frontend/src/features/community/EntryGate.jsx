@@ -10,7 +10,7 @@ const REASONS = {
   denied: {
     icon: 'location_disabled',
     title: '위치 권한이 꺼져 있어요',
-    body: '동네 이웃인지 확인할 때만 위치를 쓰고, 위치 자체는 저장하지 않아요.',
+    body: '같은 건물 이웃인지 확인할 때만 위치를 쓰고, 위치 자체는 저장하지 않아요.',
     steps: [
       '주소창 왼쪽의 자물쇠(또는 설정) 아이콘을 눌러요',
       '위치를 "허용"으로 바꿔요',
@@ -25,7 +25,7 @@ const REASONS = {
   outOfRange: {
     icon: 'wrong_location',
     title: '등록한 건물 근처가 아니에요',
-    body: '동네 커뮤니티는 등록한 건물 근처에서 위치를 확인한 뒤 들어올 수 있어요. 집 근처에서 다시 시도해 주세요.',
+    body: '커뮤니티는 등록한 건물 근처에서 위치를 확인한 뒤 들어올 수 있어요. 집 근처에서 다시 시도해 주세요.',
   },
   network: {
     icon: 'cloud_off',
@@ -42,7 +42,7 @@ export default function EntryGate({ status, failure, onRetry }) {
           <Icon name="my_location" size={32} className={styles.spin} />
         </span>
         <strong>위치를 확인하고 있어요</strong>
-        <p>커뮤니티는 동네(반경 1km) 이웃만 들어올 수 있어요. 등록한 건물 근처에 있는지 확인하는 용도예요.</p>
+        <p>커뮤니티는 같은 건물 이웃만 들어올 수 있어요. 건물 안에 있는지 확인하는 용도예요.</p>
       </div>
     )
   }
