@@ -5,7 +5,7 @@ import { registerBuilding } from './onboardingApi.js'
 import styles from './Onboarding.module.css'
 
 const PROMISES = [
-  { title: '알뜰한 무낭비 소분 라이프', body: '동네 이웃과 대용량 휴지·세제 같은 생활용품을 미개봉 단위로 나눠요.' },
+  { title: '알뜰한 무낭비 소분 라이프', body: '같은 건물 이웃과 휴지·세제·생수 같은 대용량 생활용품을 미개봉 단위로 나눠요.' },
   { title: '비대면 픽업 매너 준수', body: '공동현관·편의점 앞 같은 비대면 픽업 수칙을 지켜 서로의 안전을 존중해요.' },
 ]
 
@@ -161,8 +161,7 @@ export default function BuildingConfirmPage() {
             autoComplete="address-line2"
           />
           <p className={styles.lockNote}>
-            <Icon name="lock" size={16} /> 상세주소는 나만 볼 수 있어요. 다른 이웃에게는 동네 이름(예: 용현동)과 대략적인
-            거리만 보여요.
+            <Icon name="lock" size={16} /> 이웃에게는 건물 이름(아파트는 동)까지만 보여요. 상세주소는 나만 봐요.
           </p>
         </section>
 

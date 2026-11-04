@@ -122,11 +122,11 @@ export default function AddressSearchPage() {
         <div>
           <span className={styles.matchBadge}>
             <Icon name="bolt" size={14} />
-            주소 기반 동네 이웃 매칭
+            주소 기반 건물 이웃 매칭
           </span>
           <h1 className={styles.searchTitle}>우리 집 주소 찾기</h1>
           <p className={styles.sectionBody}>
-            골목 주택부터 대단지 아파트까지, 우리 집 주소를 찾아 동네 이웃과 생활용품을 나눠요.
+            골목 주택부터 대단지 아파트까지, 우리 집 주소를 찾아 같은 건물 이웃과 생활용품을 나눠요.
           </p>
         </div>
 
@@ -262,9 +262,9 @@ export default function AddressSearchPage() {
           </span>
           <div>
             <strong>비대면 안전 소분 안내</strong>
-            <p>원룸, 빌라, 오피스텔, 아파트 등 동네 이웃과 공동현관이나 편의점 앞에서 얼굴 마주치지 않고 함께 사요.</p>
+            <p>원룸, 빌라, 오피스텔, 아파트 등 같은 건물 이웃과 공동현관이나 편의점 앞에서 얼굴 마주치지 않고 함께 사요.</p>
             <span className={styles.safeLink}>
-              <Icon name="lock" size={14} /> 주소는 동네 확인에만 쓰고, 이웃에게는 동네 이름과 대략적인 거리만 보여요
+              <Icon name="lock" size={14} /> 이웃에게는 건물 이름(아파트는 동)까지만 보여요. 상세주소는 나만 봐요.
             </span>
           </div>
         </section>
