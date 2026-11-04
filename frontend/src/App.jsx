@@ -7,6 +7,7 @@ import BuildingHomePage from './features/pod/BuildingHomePage.jsx'
 import PodCreatePage from './features/pod/PodCreatePage.jsx'
 import PodDetailPage from './features/pod/PodDetailPage.jsx'
 import PodCompletePage from './features/pod/PodCompletePage.jsx'
+import PodEditPage from './features/pod/PodEditPage.jsx'
 import SettlementPage from './features/settlement/SettlementPage.jsx'
 import SettlementResultPage from './features/settlement/SettlementResultPage.jsx'
 import PaymentStatusPage from './features/settlement/PaymentStatusPage.jsx'
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="/home" element={<RequireBuilding><BuildingHomePage /></RequireBuilding>} />
           <Route path="/pods/new" element={<RequireBuilding><PodCreatePage /></RequireBuilding>} />
           <Route path="/pods/:podId" element={<RequireBuilding><PodDetailPage /></RequireBuilding>} />
+          <Route path="/pods/:podId/edit" element={<RequireBuilding><PodEditPage /></RequireBuilding>} />
           <Route path="/pods/:podId/complete" element={<RequireBuilding><PodCompletePage /></RequireBuilding>} />
 
           {/* ③ 정산 (10 영수증 + 11 금액 확인 · 12 정산 결과 · 13 비대면 픽업) */}

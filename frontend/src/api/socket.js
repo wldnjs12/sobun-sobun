@@ -5,7 +5,7 @@ import { getMyUserId, getToken } from './currentUser.js'
  * 팟 실시간 정산 갱신용 STOMP 클라이언트.
  * 사용 예: const client = connectPodSocket(podId, (event) => setAmount(event.perPersonAmount), { onDenied })
  *
- * 기획 개편(건물 소속 검증): 연결할 때 X-User-Id를 보내야 하고, 다른 건물 팟이면 서버가 구독을 거부한다.
+ * 기획 개편(건물 소속 검증): 연결할 때 로그인 토큰을 보내야 하고, 다른 건물 팟이면 서버가 구독을 거부한다.
  * 거부되면 onDenied()를 부르고 재연결을 멈춘다. (안 멈추면 3초마다 거부 → 재연결을 끝없이 반복함)
  */
 // 로컬 개발: 백엔드가 같은 머신의 8080 포트라고 가정. 배포(Vercel): VITE_WS_BASE_URL(백엔드 Railway 주소, wss://)을 쓴다.
@@ -16,7 +16,7 @@ export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
     // 백엔드가 /ws-sobun 을 SockJS로 열어둬서(WebSocketConfig의 .withSockJS()),
     // 순수 WebSocket으로 붙으려면 끝에 /websocket 을 붙여야 한다. 없으면 연결 자체가 실패한다.
     brokerURL: `${WS_BASE_URL}/ws-sobun/websocket`,
-    // Authorization은 서버가 아직 확인하지 않지만(핸드셰이크는 기존 동작 유지), 나중에 서버가 토큰으로 검증하도록 미리 보낸다
+    // 서버는 Authorization 토큰으로 사용자를 확인한다 (X-User-Id는 이전 버전 호환용, 서버가 무시함)
     connectHeaders: { 'X-User-Id': String(getMyUserId()), Authorization: `Bearer ${getToken() ?? ''}` },
     reconnectDelay: 3000,
     onConnect: () => {
