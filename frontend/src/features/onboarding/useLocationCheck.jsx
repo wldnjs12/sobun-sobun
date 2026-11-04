@@ -30,8 +30,8 @@ export default function useLocationCheck() {
       await checkLocation(purpose)
     } catch (e) {
       setChecking(false)
-      // reason이 없는 에러 = 서버 연결 실패 등 → 위치를 못 받은 것과 같은 안내 + 원래 메시지
-      setFailure({ reason: e.reason ?? 'unavailable', message: e.message })
+      // reason이 없는 에러 = 예상 못 한 오류 → 서버 오류와 같은 안내 + 원래 메시지를 보여준다
+      setFailure({ reason: e.reason ?? 'server', message: e.message })
       return false
     }
     setChecking(false)
@@ -45,7 +45,13 @@ export default function useLocationCheck() {
   }
 
   const locationSheet = failure && (
-    <LocationCheckSheet reason={failure.reason} retrying={checking} onRetry={retry} onClose={() => setFailure(null)} />
+    <LocationCheckSheet
+      reason={failure.reason}
+      message={failure.message}
+      retrying={checking}
+      onRetry={retry}
+      onClose={() => setFailure(null)}
+    />
   )
 
   return { runWithLocationCheck, checking, locationSheet }
