@@ -63,6 +63,21 @@ export default function CommunityDetailPage() {
     )
   }
 
+  // 404 = 신고가 3번 쌓여 자동으로 숨겨졌거나 글쓴이가 지운 글 → 다시 불러와도 소용없으니 안내만 한다
+  if (error?.status === 404) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="커뮤니티" />
+        <div className={styles.stateText}>
+          <p>삭제되었거나 신고가 쌓여 숨겨진 글이에요.</p>
+          <p>
+            <Link to="/community">커뮤니티 목록으로</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className={styles.page}>
