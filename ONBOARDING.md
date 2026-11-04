@@ -2,7 +2,7 @@
 
 ## 0. 무엇을 만드나
 
-동네(반경 1km) 이웃끼리 휴지·세제·물티슈 같은 생활용품을 묶음으로 사서 미개봉 단위로 나누는 공동구매 앱입니다. 식품은 다루지 않아요. 먼저 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)의 1~5장을 훑어보세요.
+같은 건물 이웃끼리 화장지·세제 같은 생필품과 생수·라면 같은 밀봉 가공식품을 묶음으로 사서 미개봉 단위로 나누는 공동구매 앱입니다. 식재료는 다루지 않아요. 먼저 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)의 1~5장을 훑어보세요.
 
 ## 1. 저장소 받기 (한 번만)
 
@@ -32,35 +32,12 @@ git checkout -b feature/내가-할-작업     # 예: feature/pod-search
 
 작업 끝나면 커밋하고(`/commit` 또는 직접 `git commit`), `git push origin feature/내가-할-작업` 후 GitHub에서 **develop으로** PR을 올려주세요. (`/pr` 명령어 쓰면 push+PR 생성까지 한 번에 됩니다.) 자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-## 5. 담당 업무 및 목표 일정
-
-연휴 기간이라 다들 본가에 있어서 노트북이 없는 관계로, 실제 작업은 **9/28(월) 복귀 이후부터** 시작합니다. 그 전까지 시간 되는 사람은 기획 구상이나 스티치 디자인 정도만 틈틈이 해두면 좋아요.
-
-| 담당자 | 맡은 기능 | 참고 문서 | 1차 목표 (9/30까지) | 2차 목표 (10/2까지) |
-| --- | --- | --- | --- | --- |
-| 문소원 | ①온보딩(백) · ③정산(백) | [01-onboarding](./docs/features/01-onboarding.md), [03-settlement](./docs/features/03-settlement.md) | QR+GPS 인증 API 완성 | 영수증 OCR + 정산 계산 API |
-| 김민준 | ①온보딩(프론트) · ④최저가(백) | [01-onboarding](./docs/features/01-onboarding.md), [04-product-search](./docs/features/04-product-search.md) | QR 스캔+위치 확인 화면 | 최저가 조회 API 연동 |
-| 도우현 | ②팟(프론트) · ④최저가(프론트) | [02-pod](./docs/features/02-pod.md), [04-product-search](./docs/features/04-product-search.md) | 팟 목록/상세 정적 화면 | 실시간 갱신 연동 + 최저가 화면 |
-| 홍수진 | 디자인 시스템 전체 · ③정산(프론트) | [DESIGN_HANDOFF](./docs/DESIGN_HANDOFF.md) | 전체 화면 시안 완료(9/29까지 — 다른 사람들이 이걸 보고 화면을 만들어야 해서 최대한 먼저) | 정산/영수증 업로드 화면 개발 |
-| 최지원 (PM) | ②팟(백, 리드) · 코드 리뷰 총괄 | [02-pod](./docs/features/02-pod.md) | 실시간 WebSocket 정산 API | 전체 통합 지원, PR 리뷰 |
-
-- 9/28(월): 다들 복귀 — 환경 세팅 완료하고 바로 작업 시작
-- 10/1(목) 저녁: 오프라인 집합 — 1차 목표 진행상황 공유 + 프론트-백엔드 연동 시작 (이 자리에서 막힌 것 같이 풀기)
-- 10/2(금): 2차 목표 마무리 + 전체 통합 테스트 + [데모 시나리오](./docs/DEMO_SCRIPT.md) 리허설
-- 10/3(토): 빌드업데이 — 온보딩→팟→실시간 갱신→정산까지 이어지는 데모 완성이 목표
-
-> ⚠️ **위 표는 1차(빌드업데이까지) 기록입니다.** 이후 두 번의 기획 개편(10/3: QR→주소+GPS·최저가 삭제·커뮤니티 신설, 11월: 생활용품 한정·계정 로그인·동네 1km 범위)이 있었습니다. 지금 기준은 [docs/PRODUCT_SPEC.md](./docs/PRODUCT_SPEC.md)입니다.
-
-## 6. main / develop 브랜치는 직접 건드리지 않기로 해요
+## 5. main / develop 브랜치는 직접 건드리지 않기로 해요
 
 `main`, `develop`에는 직접 커밋/푸시하지 않고 항상 `feature/기능명` 브랜치에서 작업합니다. 다만 매번 PR 올리고 승인 기다리는 절차는 생략하기로 했어요 — feature 브랜치에서 작업을 어느 정도 쌓은 다음, PR을 올리거나(권장) 바로 develop에 머지해서 push하는 방식으로 편하게 진행하면 됩니다. 자세한 규칙은 [CONTRIBUTING.md](./CONTRIBUTING.md) 참고.
 
-⚠️ 다만 이건 **팀 약속이지 시스템으로 강제되는 규칙은 아니에요.** Claude Code를 쓰면 훅이 `main`/`develop` 직접 커밋을 한 번 막아주지만, 이건 Claude Code 안에서만 동작하고 IntelliJ GUI나 터미널 git 명령어는 막지 못합니다. GitHub 저장소 자체의 브랜치 보호 규칙도 (걸면 번거로워질 것 같아서) 설정하지 않기로 했으니, 결국은 "우리끼리 main/develop 직접 안 건드리기로 한 약속"에 의존하는 구조예요. 데모 직전(10/2~10/3)엔 특히 조심해주세요.
+⚠️ 다만 이건 **팀 약속이지 시스템으로 강제되는 규칙은 아니에요.** Claude Code를 쓰면 훅이 `main`/`develop` 직접 커밋을 한 번 막아주지만, 이건 Claude Code 안에서만 동작하고 IntelliJ GUI나 터미널 git 명령어는 막지 못합니다. GitHub 저장소 자체의 브랜치 보호 규칙도 (걸면 번거로워질 것 같아서) 설정하지 않기로 했으니, 결국은 "우리끼리 main/develop 직접 안 건드리기로 한 약속"에 의존하는 구조예요. 데모 직전엔 특히 조심해주세요.
 
-## 7. 할 일 관리 — GitHub Projects 칸반 보드
-
-팀 할 일은 GitHub Projects 칸반 보드로 관리합니다: https://github.com/users/wldnjs12/projects/1 (Backlog → 진행중 → 리뷰 → 완료). 이슈를 만들고 담당자를 지정하면 보드에서 진행 상황을 한눈에 볼 수 있어요. 사용법은 [docs/PROJECT_BOARD.md](./docs/PROJECT_BOARD.md) 참고.
-
-## 8. 막히면
+## 6. 막히면
 
 팀 채팅방에 바로 질문하거나, Claude Code한테 물어보세요 — `CLAUDE.md`에 이 프로젝트 맥락이 이미 들어있어서 꽤 잘 답해줄 거예요.

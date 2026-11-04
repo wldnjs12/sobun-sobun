@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Bash(git status:*), Bash(git branch:*), EnterPl
 
 1. `git branch --show-current`로 브랜치 확인. `main`/`develop`이면 계획은 세워도 되지만, 구현 시작 전에 `feature/기능명` 브랜치를 새로 만들어야 한다고 미리 알려줘.
 2. 계획 세우기 전에 관련 자료를 먼저 읽어:
-   - 작업 키워드로 관련된 `docs/features/01-onboarding.md` / `02-pod.md` / `03-settlement.md` / `04-product-search.md`
+   - `docs/PRODUCT_SPEC.md` (기준 문서)와 작업 키워드로 관련된 `docs/features/01-onboarding.md` / `02-pod.md` / `03-settlement.md` / `05-community.md`
    - `docs/API_SPEC.md`의 관련 섹션, `docs/ERD.md`의 관련 엔티티
    - 루트 `CLAUDE.md`의 공통 컨벤션(기능별 패키지 구조 `controller/service/domain/dto`, 응답은 `ApiResponse<T>`)
    - 관련 기존 코드(같은 기능 패키지의 기존 컨트롤러/서비스/엔티티)를 둘러봐서 패턴을 파악해
