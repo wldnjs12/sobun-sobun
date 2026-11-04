@@ -254,3 +254,24 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+/* 2026-11: 모집 취소 상태 태그, 버튼으로 쓰는 설정 행 */
+.cancelled {
+  background: #ffdad6;
+  color: #93000a;
+}
+
+button.settingRow {
+  width: 100%;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.link {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
