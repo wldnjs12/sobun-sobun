@@ -1,14 +1,14 @@
 # ERD
 
-> **2026-11 개편**: 계정 테이블(`ACCOUNTS`, `SESSION_TOKENS`) 추가, `POD`에 카테고리·미개봉 단위·상태 컬럼 추가, `USER`에 상세주소, `BUILDING`에 지번주소 추가. **(개편)** 표시 컬럼은 통합 시 이름이 확정될 수 있습니다. 의미와 규칙은 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) 7장.
+> **2026-11 개편**: 계정 테이블(`ACCOUNTS`, `SESSION_TOKENS`) 추가, `POD`에 카테고리·미개봉 단위·상태 컬럼 추가, `USER`에 상세주소, `BUILDING`에 지번주소 추가. 범위는 건물 단위 격리 그대로. **(개편)** 표시 컬럼은 통합 시 이름이 확정될 수 있습니다. 의미와 규칙은 [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) 7장.
 
 ```mermaid
 erDiagram
     ACCOUNTS ||--o| USER : "id 공유 (건물 등록 시 생성)"
     ACCOUNTS ||--o{ SESSION_TOKENS : "로그인 세션"
-    BUILDING ||--o{ POD : "개설 위치"
+    BUILDING ||--o{ POD : "건물 안에서 팟이 열린다"
     BUILDING ||--o{ USER : "소속 주민"
-    BUILDING ||--o{ COMMUNITY_POST : "작성 위치"
+    BUILDING ||--o{ COMMUNITY_POST : "건물 커뮤니티"
     POD ||--o{ POD_PARTICIPANT : "참여자"
     POD ||--o| SETTLEMENT : "마감 후 정산 1건"
     USER ||--o{ POD_PARTICIPANT : "참여"
@@ -59,9 +59,9 @@ erDiagram
     }
     POD {
         long id PK
-        long building_id FK "대표의 건물 (동네 판정 기준)"
+        long building_id FK "이 건물 주민만 접근"
         long host_user_id FK
-        string category "개편, TISSUE|LAUNDRY|BATH|KITCHEN|CLEANING|DAILY|ETC"
+        string category "개편, TISSUE|LAUNDRY|BATH|KITCHEN|CLEANING|DAILY|PROCESSED_FOOD|ETC"
         string title
         string description "개편, nullable, 500자"
         decimal total_amount
@@ -100,7 +100,7 @@ erDiagram
     }
     COMMUNITY_POST {
         long id PK
-        long building_id FK "작성자 건물 (동네 판정 기준)"
+        long building_id FK "이 건물 주민만 접근"
         long author_user_id FK "응답엔 절대 노출 안 함"
         string category "FREE | QUESTION | SHARE | GROUP_BUY_SUGGESTION"
         string content "2000자"
@@ -129,8 +129,8 @@ erDiagram
 ## 메모
 
 - **`ACCOUNTS`와 `USER`를 나눈 이유**: `USER`는 "어느 건물 소속인가"이고 `building_id`가 not null이다. 계정은 건물 등록 전에도 있어야 하므로 따로 둔다. `accounts.id == users.id`라서 기존 코드의 `userId`(Pod.hostUserId 등)를 그대로 쓸 수 있다. 기존 `users` 테이블 이름(PostgreSQL 예약어 `user` 회피)은 유지.
-- **동네 판정**: 테이블에 "동네"를 저장하지 않는다. 요청할 때마다 내 `BUILDING` 좌표와 대상 `BUILDING` 좌표의 거리(≤ 1km)로 계산한다(`NeighborhoodService`). 그래서 `POD.building_id`, `COMMUNITY_POST.building_id`는 그대로 두면 된다.
-- **노출 금지 컬럼**: `BUILDING.road_address/jibun_address/name/dong/latitude/longitude`, `USER.detail_address`, `ACCOUNTS.nickname`, `*.author_user_id`는 다른 사용자 응답에 넣지 않는다. 다른 사용자에게는 법정동 이름(도로명주소 괄호에서 추출)과 대략 거리만.
+- **건물 단위 격리**: `POD.building_id`, `COMMUNITY_POST.building_id`가 요청자의 `USER.building_id`와 같을 때만 접근(`BuildingAccessService`). 정산은 `SETTLEMENT.pod_id` → `POD.building_id`로 같은 확인.
+- **노출 금지 컬럼**: `BUILDING.road_address/jibun_address/latitude/longitude`, `USER.detail_address`, `ACCOUNTS.nickname`, `*.author_user_id`는 다른 사용자 응답에 넣지 않는다. 다른 사용자에게는 건물 이름(+동)까지만.
 - `BUILDING.building_key`는 서버가 계산하는 유니크 키. 상세주소는 키에 쓰지 않는다.
 - `LOCATION_CHECK`는 원본 좌표를 저장하지 않고 판정 결과·시각·목적만 남긴다(개인정보 보호).
 - 익명 닉네임("이웃 N"/"글쓴이")은 저장하지 않고 응답 조립 시점에 계산한다.
