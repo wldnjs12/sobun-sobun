@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
 import com.ppuri.sobunsobun.settlement.dto.ReceiptOcrResult;
@@ -22,7 +22,7 @@ class ReceiptRecognizeTest {
 
     private static SettlementService serviceWith(ReceiptOcrClient ocrClient) {
         return new SettlementService(ocrClient, mock(SettlementPodReader.class), mock(SettlementRepository.class),
-                mock(BuildingAccessService.class));
+                mock(NeighborhoodService.class));
     }
 
     private static MockMultipartFile receipt(byte[] content) {

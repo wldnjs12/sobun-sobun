@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
@@ -31,14 +31,14 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/** 정산 확정(계산 + 입력 검증 + 건물 소속·대표·마감 검사) 단위 테스트 */
+/** 정산 확정(계산 + 입력 검증 + 동네 범위·대표·마감 검사) 단위 테스트 */
 @ExtendWith(MockitoExtension.class)
 class SettlementConfirmTest {
 
     private static final long POD_ID = 1L;
     private static final long BUILDING_ID = 10L;
     private static final long HOST_USER_ID = 1L;
-    private static final long NEIGHBOR_USER_ID = 2L;     // 같은 건물, 대표 아님
+    private static final long NEIGHBOR_USER_ID = 2L;     // 같은 동네, 대표 아님
     private static final long OTHER_BUILDING_USER_ID = 99L;
 
     @Mock
@@ -48,14 +48,14 @@ class SettlementConfirmTest {
     private SettlementRepository settlementRepository;
 
     @Mock
-    private BuildingAccessService buildingAccessService;
+    private NeighborhoodService neighborhoodService;
 
     private SettlementService settlementService;
 
     @BeforeEach
     void setUp() {
         settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository,
-                buildingAccessService);
+                neighborhoodService);
         lenient().when(settlementRepository.save(any(Settlement.class))).then(returnsFirstArg());
     }
 
@@ -96,10 +96,10 @@ class SettlementConfirmTest {
     }
 
     @Test
-    void 같은_건물_대표가_마감된_팟을_확정하면_건물_소속을_정산용_문구로_확인한다() {
+    void 같은_동네_대표가_마감된_팟을_확정하면_동네_범위을_정산용_문구로_확인한다() {
         confirm("12300", "0.05", 3);
 
-        verify(buildingAccessService).requireMembership(HOST_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+        verify(neighborhoodService).requireNeighbor(HOST_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
     }
 
     @Test
@@ -185,32 +185,32 @@ class SettlementConfirmTest {
     }
 
     @Test
-    void 다른_건물_사용자면_403이고_저장되지_않는다() {
+    void 동네_밖_사용자면_403이고_저장되지_않는다() {
         given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
         willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
-                .given(buildingAccessService)
-                .requireMembership(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+                .given(neighborhoodService)
+                .requireNeighbor(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
 
         assertThatThrownBy(() -> settlementService.confirm(POD_ID, OTHER_BUILDING_USER_ID, request()))
                 .isInstanceOf(BuildingAccessDeniedException.class)
-                .hasMessage("다른 건물의 정산에는 접근할 수 없어요.");
+                .hasMessage(SettlementService.OTHER_BUILDING_MESSAGE);
         verify(settlementRepository, never()).save(any());
     }
 
     @Test
-    void 건물_가드가_중복_확정_검사보다_먼저_실행된다() {
+    void 동네_가드가_중복_확정_검사보다_먼저_실행된다() {
         given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
         willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
-                .given(buildingAccessService).requireMembership(anyLong(), anyLong(), any());
+                .given(neighborhoodService).requireNeighbor(anyLong(), anyLong(), any());
 
         assertThatThrownBy(() -> settlementService.confirm(POD_ID, OTHER_BUILDING_USER_ID, request()))
                 .isInstanceOf(BuildingAccessDeniedException.class);
-        // 다른 건물 사람에게 "이미 확정됨" 여부를 알려주지 않도록 정산 존재 여부를 아예 조회하지 않는다
+        // 동네 밖 사람에게 "이미 확정됨" 여부를 알려주지 않도록 정산 존재 여부를 아예 조회하지 않는다
         verify(settlementRepository, never()).existsByPodIdAndConfirmedTrue(any());
     }
 
     @Test
-    void 같은_건물이어도_대표가_아니면_403이고_저장되지_않는다() {
+    void 같은_동네이어도_대표가_아니면_403이고_저장되지_않는다() {
         given(podReader.findPod(POD_ID)).willReturn(Optional.of(closedPod(3)));
 
         assertRejected(NEIGHBOR_USER_ID, request(), HttpStatus.FORBIDDEN, "대표만 정산을 확정할 수 있습니다.");
@@ -236,5 +236,22 @@ class SettlementConfirmTest {
         given(settlementRepository.existsByPodIdAndConfirmedTrue(POD_ID)).willReturn(true);
 
         assertRejected(request(), "이미 정산이 확정된 팟이에요.");
+    }
+
+    @Test
+    void 송금_정보는_https_링크나_계좌_글자만_저장된다() {
+        assertThat(SettlementService.normalizePaymentLink("  https://toss.me/sobun  ")).isEqualTo("https://toss.me/sobun");
+        assertThat(SettlementService.normalizePaymentLink("toss.me/sobun")).isEqualTo("toss.me/sobun");
+        assertThat(SettlementService.normalizePaymentLink("카카오뱅크 3333-00-0000000 홍길동")).startsWith("카카오뱅크");
+        assertThat(SettlementService.normalizePaymentLink("   ")).isNull();
+        assertThat(SettlementService.normalizePaymentLink(null)).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"javascript:alert(1)", "JavaScript:alert(1)", "http://toss.me/sobun", "data:text/html;base64"})
+    void 위험하거나_암호화되지_않은_링크는_400(String link) {
+        assertRejected(new SettlementConfirmRequest(new BigDecimal("12300"), new BigDecimal("0.05"), link),
+                "송금 링크는 https:// 로 시작하는 주소만 쓸 수 있어요.");
+        verify(settlementRepository, never()).save(any());
     }
 }

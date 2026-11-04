@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementException;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -28,13 +29,19 @@ public class SettlementService {
 
     static final long MAX_RECEIPT_BYTES = 10L * 1024 * 1024; // 10MB
 
-    /** BuildingAccessService 기본 문구는 "팟" 기준이라 정산용 문구를 따로 넘긴다 */
-    static final String OTHER_BUILDING_MESSAGE = "다른 건물의 정산에는 접근할 수 없어요.";
+    /** NeighborhoodService 기본 문구는 "팟" 기준이라 정산용 문구를 따로 넘긴다 */
+    static final String OTHER_BUILDING_MESSAGE = "우리 동네(반경 1km) 밖 팟의 정산에는 접근할 수 없어요.";
+    static final String NOT_MEMBER_MESSAGE = "이 팟의 대표와 참여자만 정산을 볼 수 있어요.";
+
+    /** 송금 정보 최대 길이 — 토스/카카오페이 링크나 "은행 계좌번호 예금주" 정도면 충분하다 */
+    static final int MAX_PAYMENT_LINK_LENGTH = 200;
+    /** "javascript:", "http:" 처럼 주소 형식(scheme:)으로 시작하는 글자 */
+    private static final Pattern URL_SCHEME = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:");
 
     private final ReceiptOcrClient receiptOcrClient;
     private final SettlementPodReader podReader;
     private final SettlementRepository settlementRepository;
-    private final BuildingAccessService buildingAccessService;
+    private final NeighborhoodService neighborhoodService;
 
     /**
      * 영수증 이미지 → OCR → 총액 추출.
@@ -71,8 +78,8 @@ public class SettlementService {
      * 대표가 확인(또는 수정)한 원가로 정산 확정.
      * 최종 금액 = 원가 × (1 + 수고비율), 1인당 = 최종 금액 ÷ 확정 참여자 수 (원 단위 올림, PodService 실시간 계산과 같은 방식)
      *
-     * 검사 순서: 입력 → 팟 조회(404) → 건물 소속(403) → 대표(403) → 마감(400) → 참여자 수 → 중복 확정(400).
-     * 건물 가드를 중복 확정 검사보다 앞에 둬서, 다른 건물 사람에게 정산이 이미 있는지조차 알려주지 않는다.
+     * 검사 순서: 입력 → 팟 조회(404) → 동네 가드(403) → 대표(403) → 마감(400) → 참여자 수 → 중복 확정(400).
+     * 동네 가드를 중복 확정 검사보다 앞에 둬서, 동네 밖 사람에게 정산이 이미 있는지조차 알려주지 않는다.
      */
     @Transactional
     public SettlementResponse confirm(Long podId, Long userId, SettlementConfirmRequest request) {
@@ -80,10 +87,11 @@ public class SettlementService {
         BigDecimal rate = request == null ? null : request.commissionRate();
         validateCost(cost);
         validateRate(rate);
+        String hostPaymentLink = normalizePaymentLink(request.hostPaymentLink());
 
         PodSummary pod = findPodOrThrow(podId);
-        buildingAccessService.requireMembership(userId, pod.buildingId(), OTHER_BUILDING_MESSAGE);
-        // 팟 마감(Pod.close)의 "대표만 팟을 마감할 수 있습니다."와 같은 문구 톤. 상태는 건물 가드와 같은 403 (close는 409)
+        neighborhoodService.requireNeighbor(userId, pod.buildingId(), OTHER_BUILDING_MESSAGE);
+        // 팟 마감(Pod.close)의 "대표만 팟을 마감할 수 있습니다."와 같은 문구 톤. 상태는 동네 가드와 같은 403 (close는 409)
         if (!Objects.equals(pod.hostUserId(), userId)) {
             throw new SettlementException(HttpStatus.FORBIDDEN, "대표만 정산을 확정할 수 있습니다.");
         }
@@ -104,7 +112,6 @@ public class SettlementService {
         BigDecimal perPersonAmount = calculatePerPersonAmount(exactFinalAmount, participantCount);
         BigDecimal finalAmount = exactFinalAmount.setScale(0, RoundingMode.HALF_UP);
 
-        String hostPaymentLink = request.hostPaymentLink();
         Settlement settlement = settlementRepository.save(
                 new Settlement(podId, cost, rate, finalAmount, participantCount, perPersonAmount, hostPaymentLink));
         return SettlementResponse.from(settlement);
@@ -113,7 +120,9 @@ public class SettlementService {
     /**
      * 확정된 정산 결과 조회. 팟장이 아닌 참여자(다른 기기)도 결과 화면을 볼 수 있게 한다.
      * 아직 확정 전이거나 없는 팟이면 null — 프론트는 이걸 "정산 대기" 상태로 보여준다.
-     * 팟이 있으면 정산을 찾기 전에 건물 소속부터 확인한다 (다른 건물이면 403).
+     * 팟이 있으면 정산을 찾기 전에 접근 권한부터 확인한다:
+     *   1) 동네 가드(반경 1km 밖이면 403 BUILDING_ACCESS_DENIED) — 거친 1차 확인
+     *   2) 대표 또는 참여자인가 (아니면 403) — 송금 링크·계좌번호가 들어 있어서 같은 동네라도 구경꾼에게는 보여주지 않는다
      */
     @Transactional(readOnly = true)
     public SettlementResponse findConfirmed(Long podId, Long userId) {
@@ -121,7 +130,11 @@ public class SettlementService {
         if (pod.isEmpty()) {
             return null;
         }
-        buildingAccessService.requireMembership(userId, pod.get().buildingId(), OTHER_BUILDING_MESSAGE);
+        neighborhoodService.requireNeighbor(userId, pod.get().buildingId(), OTHER_BUILDING_MESSAGE);
+        boolean isHost = Objects.equals(pod.get().hostUserId(), userId);
+        if (!isHost && !podReader.isParticipant(podId, userId)) {
+            throw new SettlementException(HttpStatus.FORBIDDEN, NOT_MEMBER_MESSAGE);
+        }
         return settlementRepository.findFirstByPodIdAndConfirmedTrueOrderByIdDesc(podId)
                 .map(SettlementResponse::from)
                 .orElse(null);
@@ -140,6 +153,23 @@ public class SettlementService {
     /** 1인당 금액: 원 단위로 올림해서 대표가 덜 받는 일이 없게 한다 (차액은 최대 참여자 수 - 1원). */
     public BigDecimal calculatePerPersonAmount(BigDecimal finalAmount, int participantCount) {
         return finalAmount.divide(BigDecimal.valueOf(participantCount), 0, RoundingMode.CEILING);
+    }
+
+    /**
+     * 송금 정보는 이웃 화면에서 링크로 열리기 때문에, "javascript:" 같은 위험한 주소가 저장되지 않게 서버에서도 막는다.
+     * 허용: https:// 링크, 주소 형식이 아닌 글자(계좌번호 "카카오뱅크 3333-00-0000000", "toss.me/아이디").
+     * 빈 값은 null(송금 정보 없음)로 저장한다.
+     */
+    static String normalizePaymentLink(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String link = raw.trim();
+        if (link.length() > MAX_PAYMENT_LINK_LENGTH) {
+            throw new SettlementException("송금 정보는 " + MAX_PAYMENT_LINK_LENGTH + "자까지 적을 수 있어요.");
+        }
+        if (URL_SCHEME.matcher(link).find() && !link.regionMatches(true, 0, "https://", 0, 8)) {
+            throw new SettlementException("송금 링크는 https:// 로 시작하는 주소만 쓸 수 있어요.");
+        }
+        return link;
     }
 
     private static void validateCost(BigDecimal cost) {

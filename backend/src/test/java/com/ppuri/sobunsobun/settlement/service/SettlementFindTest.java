@@ -1,6 +1,6 @@
 package com.ppuri.sobunsobun.settlement.service;
 
-import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.NeighborhoodService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.settlement.domain.Settlement;
 import com.ppuri.sobunsobun.settlement.domain.SettlementRepository;
@@ -29,7 +29,7 @@ class SettlementFindTest {
 
     private static final long POD_ID = 1L;
     private static final long BUILDING_ID = 10L;
-    private static final long USER_ID = 2L;               // 같은 건물 참여자
+    private static final long USER_ID = 2L;               // 같은 동네 참여자
     private static final long OTHER_BUILDING_USER_ID = 99L;
 
     @Mock
@@ -39,18 +39,22 @@ class SettlementFindTest {
     private SettlementRepository settlementRepository;
 
     @Mock
-    private BuildingAccessService buildingAccessService;
+    private NeighborhoodService neighborhoodService;
 
     private SettlementService settlementService;
 
     @BeforeEach
     void setUp() {
         settlementService = new SettlementService(new StubReceiptOcrClient(), podReader, settlementRepository,
-                buildingAccessService);
+                neighborhoodService);
     }
 
+    private static final long HOST_USER_ID = 1L;
+    private static final long BYSTANDER_USER_ID = 3L;     // 같은 동네지만 이 팟에 참여하지 않음
+
     private void givenPodExists() {
-        given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, 1L, 3, true)));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, 3, true)));
+        org.mockito.Mockito.lenient().when(podReader.isParticipant(POD_ID, USER_ID)).thenReturn(true);
     }
 
     @Test
@@ -67,7 +71,7 @@ class SettlementFindTest {
         assertThat(result.participantCount()).isEqualTo(3);
         assertThat(result.perPersonAmount()).isEqualByComparingTo("4305");
         assertThat(result.confirmed()).isTrue();
-        verify(buildingAccessService).requireMembership(USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+        verify(neighborhoodService).requireNeighbor(USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
     }
 
     @Test
@@ -83,18 +87,40 @@ class SettlementFindTest {
         given(podReader.findPod(POD_ID)).willReturn(Optional.empty());
 
         assertThat(settlementService.findConfirmed(POD_ID, USER_ID)).isNull();
-        verifyNoInteractions(buildingAccessService, settlementRepository);
+        verifyNoInteractions(neighborhoodService, settlementRepository);
     }
 
     @Test
-    void 다른_건물_사용자면_예외이고_정산을_조회하지_않는다() {
+    void 동네_밖_사용자면_예외이고_정산을_조회하지_않는다() {
         givenPodExists();
         willThrow(new BuildingAccessDeniedException(SettlementService.OTHER_BUILDING_MESSAGE))
-                .given(buildingAccessService)
-                .requireMembership(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
+                .given(neighborhoodService)
+                .requireNeighbor(OTHER_BUILDING_USER_ID, BUILDING_ID, SettlementService.OTHER_BUILDING_MESSAGE);
 
         assertThatThrownBy(() -> settlementService.findConfirmed(POD_ID, OTHER_BUILDING_USER_ID))
                 .isInstanceOf(BuildingAccessDeniedException.class);
+        verify(settlementRepository, never()).findFirstByPodIdAndConfirmedTrueOrderByIdDesc(any());
+    }
+
+    @Test
+    void 대표는_참여자_행이_없어도_결과를_볼_수_있다() {
+        givenPodExists();
+        given(settlementRepository.findFirstByPodIdAndConfirmedTrueOrderByIdDesc(POD_ID)).willReturn(Optional.empty());
+
+        assertThat(settlementService.findConfirmed(POD_ID, HOST_USER_ID)).isNull();
+        verify(podReader, never()).isParticipant(POD_ID, HOST_USER_ID);
+    }
+
+    @Test
+    void 같은_동네라도_참여하지_않은_사람은_403이고_정산을_조회하지_않는다() {
+        givenPodExists();
+        given(podReader.isParticipant(POD_ID, BYSTANDER_USER_ID)).willReturn(false);
+
+        assertThatThrownBy(() -> settlementService.findConfirmed(POD_ID, BYSTANDER_USER_ID))
+                .isInstanceOf(com.ppuri.sobunsobun.settlement.domain.SettlementException.class)
+                .hasMessage(SettlementService.NOT_MEMBER_MESSAGE)
+                .satisfies(e -> assertThat(((com.ppuri.sobunsobun.settlement.domain.SettlementException) e).getStatus())
+                        .isEqualTo(org.springframework.http.HttpStatus.FORBIDDEN));
         verify(settlementRepository, never()).findFirstByPodIdAndConfirmedTrueOrderByIdDesc(any());
     }
 }
