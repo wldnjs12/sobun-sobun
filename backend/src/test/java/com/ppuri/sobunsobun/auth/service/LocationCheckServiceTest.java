@@ -20,6 +20,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -113,5 +115,24 @@ class LocationCheckServiceTest {
                 new LocationCheckRequest(LAT + 10.0, LON + 10.0, LocationCheckPurpose.COMMUNITY_ENTER));
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void 최근_통과_기록이_있으면_행동을_허용한다() {
+        given(locationCheckRepository.existsByUserIdAndBuildingIdAndPurposeAndSuccessTrueAndCheckedAtAfter(
+                eq(USER_ID), eq(BUILDING_ID), eq(LocationCheckPurpose.POD_JOIN), any())).willReturn(true);
+
+        locationCheckService.requireRecentPass(USER_ID, BUILDING_ID, LocationCheckPurpose.POD_JOIN);
+    }
+
+    @Test
+    void 최근_통과_기록이_없으면_LOCATION_CHECK_REQUIRED로_막는다() {
+        given(locationCheckRepository.existsByUserIdAndBuildingIdAndPurposeAndSuccessTrueAndCheckedAtAfter(
+                eq(USER_ID), eq(BUILDING_ID), eq(LocationCheckPurpose.POD_CREATE), any())).willReturn(false);
+
+        assertThatThrownBy(() ->
+                locationCheckService.requireRecentPass(USER_ID, BUILDING_ID, LocationCheckPurpose.POD_CREATE))
+                .isInstanceOf(LocationCheckException.class)
+                .extracting("code").isEqualTo("LOCATION_CHECK_REQUIRED");
     }
 }

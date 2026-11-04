@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Icon from '../../components/Icon.jsx'
 import styles from './EmptyPodState.module.css'
 
@@ -30,11 +31,12 @@ export default function EmptyPodState({ onCreatePod }) {
           <Icon name="add_circle" size={20} />
           첫 팟 만들기
         </button>
-        {/* TODO: 투표함 기능은 아직 기획 문서에 없음 — 팀 논의 후 연결 */}
-        <button type="button" className={styles.voteLink}>
-          사고 싶은 것 투표함에 올리기
+        {/* 디자인의 "투표함"은 기획에 없는 기능이라, 같은 역할을 하는 커뮤니티 "공구 제안"으로 연결한다.
+            글쓰기 화면이 아니라 목록으로 보내는 이유: 커뮤니티 입장 GPS 확인(COMMUNITY_ENTER)은 목록에서 한다 */}
+        <Link to="/community" className={styles.voteLink}>
+          사고 싶은 것 커뮤니티에 제안하기
           <Icon name="arrow_forward" size={16} />
-        </button>
+        </Link>
       </section>
 
       <section className={styles.tip}>

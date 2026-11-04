@@ -3,6 +3,7 @@ package com.ppuri.sobunsobun.auth.service;
 import com.ppuri.sobunsobun.auth.domain.Building;
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
 import com.ppuri.sobunsobun.auth.domain.LocationCheck;
+import com.ppuri.sobunsobun.auth.domain.LocationCheckPurpose;
 import com.ppuri.sobunsobun.auth.domain.LocationCheckRepository;
 import com.ppuri.sobunsobun.auth.domain.User;
 import com.ppuri.sobunsobun.auth.domain.UserRepository;
@@ -25,6 +26,11 @@ import java.time.LocalDateTime;
 public class LocationCheckService {
 
     static final double ALLOWED_RADIUS_METERS = 100.0;
+    /**
+     * 위치 확인 통과 후 실제 행동(팟 개설·참여)까지 허용하는 시간. 프론트는 통과하자마자 바로 API를 부르므로
+     * 보통 몇 초면 충분하지만, 느린 네트워크·바텀시트 재시도를 고려해 넉넉히 3분으로 둔다.
+     */
+    static final long RECENT_PASS_VALID_SECONDS = 180;
     private static final double EARTH_RADIUS_METERS = 6_371_000.0;
 
     private final UserRepository userRepository;
@@ -57,6 +63,22 @@ public class LocationCheckService {
                     "지금 위치가 등록한 건물(" + building.getName() + ")과 달라요. 집에 돌아가서 다시 시도해 주세요.");
         }
         return true;
+    }
+
+    /**
+     * 팟 개설·참여 같은 행동 직전에 호출: 이 사용자가 이 건물에서 이 목적(purpose)으로
+     * 최근 {@link #RECENT_PASS_VALID_SECONDS}초 안에 위치 확인을 통과했는지 서버가 직접 확인한다.
+     * 통과 기록이 없으면 LOCATION_CHECK_REQUIRED로 막는다.
+     */
+    @Transactional(readOnly = true)
+    public void requireRecentPass(Long userId, Long buildingId, LocationCheckPurpose purpose) {
+        LocalDateTime after = LocalDateTime.now().minusSeconds(RECENT_PASS_VALID_SECONDS);
+        boolean passed = locationCheckRepository
+                .existsByUserIdAndBuildingIdAndPurposeAndSuccessTrueAndCheckedAtAfter(userId, buildingId, purpose, after);
+        if (!passed) {
+            throw new LocationCheckException("LOCATION_CHECK_REQUIRED",
+                    "위치 확인이 필요해요. 다시 시도해 주세요.");
+        }
     }
 
     /**

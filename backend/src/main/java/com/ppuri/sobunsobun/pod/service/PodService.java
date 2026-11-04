@@ -1,7 +1,9 @@
 package com.ppuri.sobunsobun.pod.service;
 
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
+import com.ppuri.sobunsobun.auth.domain.LocationCheckPurpose;
 import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.LocationCheckService;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
 import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,7 @@ public class PodService {
     private final PodParticipantRepository podParticipantRepository;
     private final BuildingRepository buildingRepository;
     private final BuildingAccessService buildingAccessService;
+    private final LocationCheckService locationCheckService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
@@ -34,6 +38,7 @@ public class PodService {
             throw new IllegalArgumentException("존재하지 않는 건물입니다: " + request.buildingId());
         }
         buildingAccessService.requireMembership(request.hostUserId(), request.buildingId());
+        locationCheckService.requireRecentPass(request.hostUserId(), request.buildingId(), LocationCheckPurpose.POD_CREATE);
         Pod pod = Pod.builder()
                 .buildingId(request.buildingId())
                 .hostUserId(request.hostUserId())
@@ -51,6 +56,10 @@ public class PodService {
     public PodResponse join(Long podId, Long userId) {
         Pod pod = getPodForUpdate(podId);
         buildingAccessService.requireMembership(userId, pod.getBuildingId());
+        // 대표는 개설 직후 자동으로 참여한다(프론트 createPod). 개설할 때 이미 위치를 확인했으므로 참여 확인은 면제
+        if (!Objects.equals(pod.getHostUserId(), userId)) {
+            locationCheckService.requireRecentPass(userId, pod.getBuildingId(), LocationCheckPurpose.POD_JOIN);
+        }
         if (podParticipantRepository.existsByPodIdAndUserId(podId, userId)) {
             throw new IllegalStateException("이미 참여한 팟입니다.");
         }

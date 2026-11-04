@@ -28,7 +28,7 @@ export default function MyPage() {
           <div>
             <span className={styles.eyebrow}>우리 건물 알뜰 이웃</span>
             <h1 className={styles.name}>마이소분</h1>
-            <span className={styles.userTag}>사용자 #{getMyUserId()} (로그인 전 임시)</span>
+            <span className={styles.userTag}>사용자 #{getMyUserId()}</span>
           </div>
         </section>
 

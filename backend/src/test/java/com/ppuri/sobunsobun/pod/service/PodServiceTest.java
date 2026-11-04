@@ -1,7 +1,10 @@
 package com.ppuri.sobunsobun.pod.service;
 
 import com.ppuri.sobunsobun.auth.domain.BuildingRepository;
+import com.ppuri.sobunsobun.auth.domain.LocationCheckPurpose;
 import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
+import com.ppuri.sobunsobun.auth.service.LocationCheckException;
+import com.ppuri.sobunsobun.auth.service.LocationCheckService;
 import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.domain.PodParticipant;
@@ -37,10 +40,12 @@ class PodServiceTest {
     @Mock
     private BuildingAccessService buildingAccessService;
     @Mock
+    private LocationCheckService locationCheckService;
+    @Mock
     private SimpMessagingTemplate messagingTemplate;
 
     private PodService newService() {
-        return new PodService(podRepository, podParticipantRepository, buildingRepository, buildingAccessService, messagingTemplate);
+        return new PodService(podRepository, podParticipantRepository, buildingRepository, buildingAccessService, locationCheckService, messagingTemplate);
     }
 
     private PodCreateRequest newCreateRequest() {
@@ -176,5 +181,41 @@ class PodServiceTest {
         assertThatThrownBy(() -> podService.join(1L, 999L)).isInstanceOf(BuildingAccessDeniedException.class);
 
         verify(podParticipantRepository, never()).save(any());
+    }
+
+    @Test
+    void 최근_위치_확인_기록이_없으면_팟_생성이_거부된다() {
+        PodService podService = newService();
+        when(buildingRepository.existsById(1L)).thenReturn(true);
+        doThrow(new LocationCheckException("LOCATION_CHECK_REQUIRED", "위치 확인이 필요해요."))
+                .when(locationCheckService).requireRecentPass(100L, 1L, LocationCheckPurpose.POD_CREATE);
+
+        assertThatThrownBy(() -> podService.create(newCreateRequest()))
+                .isInstanceOf(LocationCheckException.class);
+
+        verify(podRepository, never()).save(any());
+    }
+
+    @Test
+    void 최근_위치_확인_기록이_없으면_팟_참여가_거부된다() {
+        PodService podService = newService();
+        when(podRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(samplePod()));
+        doThrow(new LocationCheckException("LOCATION_CHECK_REQUIRED", "위치 확인이 필요해요."))
+                .when(locationCheckService).requireRecentPass(7L, 1L, LocationCheckPurpose.POD_JOIN);
+
+        assertThatThrownBy(() -> podService.join(1L, 7L)).isInstanceOf(LocationCheckException.class);
+
+        verify(podParticipantRepository, never()).save(any());
+    }
+
+    @Test
+    void 대표는_개설_직후_자동_참여할_때_위치_재확인을_면제받는다() {
+        PodService podService = newService();
+        when(podRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(samplePod())); // 대표 = 100
+
+        podService.join(1L, 100L);
+
+        verify(locationCheckService, never()).requireRecentPass(any(), any(), any());
+        verify(podParticipantRepository).save(any(PodParticipant.class));
     }
 }

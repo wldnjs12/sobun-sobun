@@ -132,6 +132,7 @@
   gap: var(--space-xs);
   border: none;
   background: none;
+  text-decoration: none;
   color: var(--color-primary);
   font-size: 14px;
   font-weight: 600;

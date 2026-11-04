@@ -3,6 +3,7 @@ package com.ppuri.sobunsobun.global.exception;
 import com.ppuri.sobunsobun.global.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.ppuri.sobunsobun.auth.service.LocationCheckException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -24,5 +25,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BuildingAccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleBuildingAccessDenied(BuildingAccessDeniedException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.fail("BUILDING_ACCESS_DENIED", e.getMessage()));
+    }
+
+    /**
+     * GPS 2차 확인 실패(반경 밖·건물 미등록·위치 확인 없이 개설/참여 시도) → 400 + code.
+     * 인증 API뿐 아니라 팟 API에서도 던지므로 전역에서 처리한다.
+     */
+    @ExceptionHandler(LocationCheckException.class)
+    public ResponseEntity<ApiResponse<Void>> handleLocationCheck(LocationCheckException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getCode(), e.getMessage()));
     }
 }

@@ -21,6 +21,7 @@
 - **데모 고정 좌표 모드**: 서버 환경변수(`LOCATION_CHECK_DEMO_MODE=true` 등)로만 켜짐, 기본 꺼짐. 운영/기본 환경에서는 항상 꺼져 있어야 합니다.
 - **위치 개인정보**: 제출된 원본 좌표(`latitude`/`longitude`)는 저장하지 않습니다. 판정 결과(성공/실패, 시각, 목적)만 `LOCATION_CHECK` 테이블에 남습니다.
 - **실패 응답**: `400` · `{ "success": false, "data": null, "message": "...", "code": "OUT_OF_RANGE" }`. 위치 권한 거부·타임아웃은 서버까지 오지 않고 **프론트에서 브라우저 Geolocation 에러로 처리**합니다(아래 표의 (b)(c)).
+- **서버 강제(2026-11-04)**: 팟 개설(`POST /pods`)·참여(`POST /pods/{id}/join`)는 서버가 직접 "이 사용자가 이 건물에서 해당 목적(`POD_CREATE`/`POD_JOIN`)으로 **최근 3분 안에** 위치 확인을 통과했는지" `LOCATION_CHECK` 기록을 조회해 확인합니다. 없으면 `400` · `code: "LOCATION_CHECK_REQUIRED"`. (프론트만 확인하면 API를 직접 호출해 GPS를 건너뛸 수 있어서.) 대표가 개설 직후 자동 참여할 때는 개설 시 확인했으므로 면제. 커뮤니티 입장(`COMMUNITY_ENTER`)은 조회라 서버 강제 대상이 아닙니다.
 
 | 상황 | 주체 | 문구 |
 | --- | --- | --- |
@@ -38,9 +39,9 @@
 
 | Method | Endpoint | 설명 | 요청 | 응답 |
 | --- | --- | --- | --- | --- |
-| POST | /pods | 팟 개설 (buildingId가 실존하지 않으면 404, hostUserId가 그 건물 소속 아니면 403) | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline?, originalPrice? }` | `Pod` |
+| POST | /pods | 팟 개설 (buildingId가 실존하지 않으면 404, hostUserId가 그 건물 소속 아니면 403, 최근 `POD_CREATE` 위치 확인 없으면 400 `LOCATION_CHECK_REQUIRED`) | `{ buildingId, hostUserId, title, totalAmount, targetParticipantCount, commissionRate?, deadline?, originalPrice? }` | `Pod` |
 | GET | /pods?buildingId=&userId= | 건물의 진행중 팟 목록 | 쿼리: buildingId, userId(소속 확인용) | `Pod[]` |
-| POST | /pods/{id}/join?userId= | 팟 참여 (건물 소속 아니면 403) | - | `Pod` |
+| POST | /pods/{id}/join?userId= | 팟 참여 (건물 소속 아니면 403, 대표가 아닌데 최근 `POD_JOIN` 위치 확인 없으면 400 `LOCATION_CHECK_REQUIRED`) | - | `Pod` |
 | DELETE | /pods/{id}/join?userId= | 팟 참여 취소 | - | `Pod` |
 | POST | /pods/{id}/close?hostUserId= | 팟 마감 (대표만) | - | `Pod` |
 | GET | /pods/{id}?userId= | 팟 상세 조회 (건물 소속 아니면 403) | - | `Pod` |

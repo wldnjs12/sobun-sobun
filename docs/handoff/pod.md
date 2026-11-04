@@ -2,7 +2,23 @@
 
 > ⚠️ **참고**: 2026-10-03 기획 개편으로 ②팟에 "건물 소속 검증"(다른 건물 접근 403)이 추가될 예정입니다. 이 문서의 나머지 내용(생성/참여/실시간 갱신)은 여전히 유효합니다 — 변경분은 [features/02-pod.md](../features/02-pod.md) 참고.
 
-_최종 갱신: 2026-09-29 · 브랜치: feature/pod-realtime_
+_최종 갱신: 2026-11-04 · 브랜치: feature/gps-server-check (이전: feature/pod-realtime)_
+
+## 🆕 2026-11-04 · GPS 2차 확인 서버 강제 + 시연 화면 정리 (최지원 · feature/gps-server-check)
+
+**왜**: 지금까지는 프론트만 `/auth/location-check`를 부르고, 팟 개설·참여 API는 위치 확인 여부를 몰랐음 → API를 직접 호출하면 GPS 없이 개설·참여 가능. API_SPEC의 "반드시 서버에서 판정"과 어긋남.
+
+**한 일**
+- `LocationCheckService.requireRecentPass(userId, buildingId, purpose)` 추가 — `LOCATION_CHECK` 로그에서 "최근 3분(`RECENT_PASS_VALID_SECONDS=180`) 안, 같은 건물, 같은 목적, 성공" 기록이 있는지 조회. 없으면 `LocationCheckException("LOCATION_CHECK_REQUIRED")`
+- `PodService.create` → `POD_CREATE`, `PodService.join` → `POD_JOIN` 확인. **대표는 개설 직후 자동 참여(프론트 `createPod`)할 때 면제** (개설 때 이미 확인)
+- `LocationCheckException` 처리를 `AuthController` 안 핸들러 → `GlobalExceptionHandler`로 이동 (팟 API에서 던지면 500이 나던 문제 방지). 응답 형식은 그대로 `400 + code`
+- 프론트: 건물 홈 빈 상태의 동작 없는 "투표함" 버튼 → "사고 싶은 것 커뮤니티에 제안하기"(`/community`, 목록에서 입장 GPS 확인). 마이페이지 "(로그인 전 임시)" 문구 제거
+
+**확인**: 백엔드 테스트 108개 통과(신규 5개), 프론트 빌드 통과. 실제 서버(임시 Postgres, 데모 모드)에서 curl로: 위치 확인 없이 개설 → 400 `LOCATION_CHECK_REQUIRED` / `POD_CREATE` 통과 후 개설 성공 / 대표 자동 참여 성공 / 이웃이 확인 없이 참여 → 400 / 목적이 다른(`POD_CREATE`) 기록만 있으면 참여 → 400 / `POD_JOIN` 통과 후 참여 성공. 미등록 사용자 location-check는 기존대로 400 `BUILDING_NOT_REGISTERED`
+
+**주의**: 데모 모드(`LOCATION_CHECK_DEMO_MODE=true`)에서도 location-check 호출 자체는 필요함(항상 통과 기록을 남기므로 정상 흐름엔 영향 없음). 데모용 데이터를 curl로 넣는 스크립트가 있다면 `/pods` 전에 location-check를 먼저 호출해야 함
+
+---
 
 ## 이번 작업 요약
 

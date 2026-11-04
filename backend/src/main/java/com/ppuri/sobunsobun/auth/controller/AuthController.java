@@ -6,7 +6,6 @@ import com.ppuri.sobunsobun.auth.dto.BuildingRegisterResponse;
 import com.ppuri.sobunsobun.auth.dto.LocationCheckRequest;
 import com.ppuri.sobunsobun.auth.service.AddressSearchClient;
 import com.ppuri.sobunsobun.auth.service.BuildingRegisterService;
-import com.ppuri.sobunsobun.auth.service.LocationCheckException;
 import com.ppuri.sobunsobun.auth.service.LocationCheckService;
 import com.ppuri.sobunsobun.global.common.ApiResponse;
 import jakarta.validation.Valid;
@@ -48,12 +47,6 @@ public class AuthController {
     }
 
     /** 반경 밖·등록된 건물 없음 등 → 400 + { success: false, message, code } */
-    @ExceptionHandler(LocationCheckException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleLocationCheckFailure(LocationCheckException e) {
-        return ApiResponse.fail(e.getCode(), e.getMessage());
-    }
-
     /** @Valid 검증 실패 → 첫 번째 에러 문구만 내려준다 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
