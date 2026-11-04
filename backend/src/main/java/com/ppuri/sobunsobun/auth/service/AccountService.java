@@ -74,19 +74,19 @@ public class AccountService {
     public MeResponse me(Long accountId) {
         Account account = accountRepository.findById(accountId).orElseThrow(AccountException::unauthorized);
         MeResponse.MyBuilding building = userRepository.findById(accountId)
-                .flatMap(user -> buildingRepository.findById(user.getBuildingId()))
-                .map(AccountService::toMyBuilding)
+                .flatMap(user -> buildingRepository.findById(user.getBuildingId())
+                        .map(b -> toMyBuilding(b, user.getDetailAddress())))
                 .orElse(null);
         return new MeResponse(account.getId(), account.getLoginId(), account.getNickname(), building);
     }
 
-    private static MeResponse.MyBuilding toMyBuilding(Building b) {
+    private static MeResponse.MyBuilding toMyBuilding(Building b, String detailAddress) {
         return new MeResponse.MyBuilding(
                 b.getId(),
                 displayName(b.getName(), b.getRoadAddress()),
                 b.getRoadAddress(),
                 b.getDong(),
-                null, // TODO(integration): user.getDetailAddress() — 주소 담당이 User에 상세주소를 추가하면 연결
+                detailAddress, // 상세주소는 본인 /me 응답에만 내려간다
                 NeighborhoodService.neighborhoodName(b.getRoadAddress()));
     }
 
