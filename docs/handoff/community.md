@@ -2,7 +2,7 @@
 
 _최종 갱신: 2026-10-04 · 브랜치: feature/server-timezone (프론트 연결: feature/community-api-connect · 백엔드: feature/community, PR #22)_
 
-관련 문서: [PRODUCT_SPEC](../PRODUCT_SPEC.md), [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md), [handoff/frontend.md](./frontend.md)
+관련 문서: [PRODUCT_SPEC](../PRODUCT_SPEC.md), [05-community](../features/05-community.md), [API_SPEC ⑤](../API_SPEC.md), [ERD](../ERD.md)
 
 ## 이번 작업 요약
 

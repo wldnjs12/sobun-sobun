@@ -2,7 +2,7 @@
 
 기능별로 "지금까지 뭘 했고, 기획 대비 뭐가 다르고, 다음 사람이 뭘 알아야 하는지"를 남기는 곳입니다.
 
-> 이 폴더는 브랜치별 작업 기록(핸드오프)입니다. 2026-10 이전 기록에는 QR·최저가처럼 지금은 없는 기능이 나옵니다. 지금 기준은 [../PRODUCT_SPEC.md](../PRODUCT_SPEC.md)입니다. (`/handoff` 명령과 push 전 훅이 이 폴더를 씁니다 — 폴더를 지우지 마세요.)
+> **현재 상태는 [household-replan.md](./household-replan.md)부터 보세요.** `settlement.md`·`community.md`는 2026-10 구현 세부 기록입니다. 지금 기준은 [../PRODUCT_SPEC.md](../PRODUCT_SPEC.md)입니다. (`/handoff` 명령과 push 전 훅이 이 폴더를 씁니다 — 폴더를 지우지 마세요.)
 `docs/features/*.md`(기획·설계)와는 목적이 다릅니다 — 저긴 "하기로 한 것", 여긴 "실제로 한 것과 그 차이"를 적습니다.
 
 ## 파일 규칙

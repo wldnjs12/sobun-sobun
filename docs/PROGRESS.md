@@ -1,4 +1,4 @@
-# 진행 현황 (2026-11-04)
+# 진행 현황 (2026-11-05)
 
 통합 브랜치 `feature/household-replan` 기준. 아래 기능 브랜치는 전부 여기에 머지했고, 백엔드 테스트(JDK 17)와 프론트 빌드는 통과했어요. 아직 push하지 않았어요.
 
@@ -17,6 +17,6 @@
 
 ## 다음 할 일
 1. (선택) 낮음 항목 정리 — 우선 F-4 "대표/팟장" 용어 통일
-2. `/handoff` 실행: push 훅이 `docs/handoff/` 변경을 요구해요.
+2. (완료) 인계 문서: `docs/handoff/household-replan.md`
 3. `feature/household-replan` push → develop PR → main 반영: 이 단계는 사용자 결정이 필요해요(직접 머지할지, PR만 올릴지, Railway·Vercel 배포 브랜치 확인).
 4. 실서버 검증. 선택 환경변수: `LOCATION_CHECK_DEMO_MODE`, `ADDRESS_DEMO_FALLBACK`, `DEMO_SEED`
