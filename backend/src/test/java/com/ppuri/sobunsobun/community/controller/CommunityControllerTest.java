@@ -120,4 +120,22 @@ class CommunityControllerTest {
                 .andExpect(jsonPath("$.data.id").value(5))
                 .andExpect(jsonPath("$.data.mine").value(true));
     }
+
+    @Test
+    void X_User_Id_헤더가_있으면_쿼리의_userId보다_우선한다() throws Exception {
+        // 로그인 필터가 헤더를 토큰 주인으로 덮어쓰므로, 쿼리에 남의 id를 적어도 헤더 주인으로 처리돼야 사칭이 막힌다
+        given(postService.list(null, 100L, null)).willReturn(List.of());
+
+        mockMvc.perform(get("/api/community/posts").header("X-User-Id", "100").param("userId", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        org.mockito.Mockito.verify(postService).list(null, 100L, null);
+    }
+
+    @Test
+    void 요청자를_알_수_없으면_400() throws Exception {
+        mockMvc.perform(get("/api/community/posts"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
 }

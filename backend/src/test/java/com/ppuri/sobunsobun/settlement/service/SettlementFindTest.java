@@ -49,8 +49,12 @@ class SettlementFindTest {
                 buildingAccessService);
     }
 
+    private static final long HOST_USER_ID = 1L;
+    private static final long BYSTANDER_USER_ID = 3L;     // 같은 건물지만 이 팟에 참여하지 않음
+
     private void givenPodExists() {
-        given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, 1L, 3, true)));
+        given(podReader.findPod(POD_ID)).willReturn(Optional.of(new PodSummary(POD_ID, BUILDING_ID, HOST_USER_ID, 3, true)));
+        org.mockito.Mockito.lenient().when(podReader.isParticipant(POD_ID, USER_ID)).thenReturn(true);
     }
 
     @Test
@@ -95,6 +99,28 @@ class SettlementFindTest {
 
         assertThatThrownBy(() -> settlementService.findConfirmed(POD_ID, OTHER_BUILDING_USER_ID))
                 .isInstanceOf(BuildingAccessDeniedException.class);
+        verify(settlementRepository, never()).findFirstByPodIdAndConfirmedTrueOrderByIdDesc(any());
+    }
+
+    @Test
+    void 대표는_참여자_행이_없어도_결과를_볼_수_있다() {
+        givenPodExists();
+        given(settlementRepository.findFirstByPodIdAndConfirmedTrueOrderByIdDesc(POD_ID)).willReturn(Optional.empty());
+
+        assertThat(settlementService.findConfirmed(POD_ID, HOST_USER_ID)).isNull();
+        verify(podReader, never()).isParticipant(POD_ID, HOST_USER_ID);
+    }
+
+    @Test
+    void 같은_건물라도_참여하지_않은_사람은_403이고_정산을_조회하지_않는다() {
+        givenPodExists();
+        given(podReader.isParticipant(POD_ID, BYSTANDER_USER_ID)).willReturn(false);
+
+        assertThatThrownBy(() -> settlementService.findConfirmed(POD_ID, BYSTANDER_USER_ID))
+                .isInstanceOf(com.ppuri.sobunsobun.settlement.domain.SettlementException.class)
+                .hasMessage(SettlementService.NOT_MEMBER_MESSAGE)
+                .satisfies(e -> assertThat(((com.ppuri.sobunsobun.settlement.domain.SettlementException) e).getStatus())
+                        .isEqualTo(org.springframework.http.HttpStatus.FORBIDDEN));
         verify(settlementRepository, never()).findFirstByPodIdAndConfirmedTrueOrderByIdDesc(any());
     }
 }

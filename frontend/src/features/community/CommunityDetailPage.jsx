@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
@@ -58,17 +58,56 @@ export default function CommunityDetailPage() {
     return (
       <div className={styles.page}>
         <PageHeader title="커뮤니티" />
-        <EntryGate status={entry.status} onRetry={entry.retry} />
-        {entry.locationSheet}
+        <EntryGate status={entry.status} failure={entry.failure} onRetry={entry.retry} />
       </div>
     )
   }
 
-  if (error || !post) {
+  // 404 = 신고가 3번 쌓여 자동으로 숨겨졌거나 글쓴이가 지운 글 → 다시 불러와도 소용없으니 안내만 한다
+  if (error?.status === 404) {
     return (
       <div className={styles.page}>
         <PageHeader title="커뮤니티" />
-        <p className={styles.stateText}>{error?.message ?? '글을 불러오는 중이에요…'}</p>
+        <div className={styles.stateText}>
+          <p>삭제되었거나 신고가 쌓여 숨겨진 글이에요.</p>
+          <p>
+            <Link to="/community">커뮤니티 목록으로</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="커뮤니티" />
+        <div className={styles.stateText}>
+          <p>글을 불러오지 못했어요. ({error.message})</p>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={() => {
+              setError(null)
+              fetchPost(postId).then(setPost).catch(setError)
+            }}
+          >
+            <Icon name="refresh" size={18} />
+            다시 불러오기
+          </button>
+          <p>
+            <Link to="/community">커뮤니티 목록으로</Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!post) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="커뮤니티" />
+        <p className={styles.stateText}>글을 불러오는 중이에요…</p>
       </div>
     )
   }
@@ -117,8 +156,9 @@ export default function CommunityDetailPage() {
     }
   }
 
-  // 공구 제안 → 팟 생성: 첫 줄(제목)을 품목 이름으로 넘긴다. 팟 생성 화면이 "커뮤니티 제안에서 가져왔어요"로 표시
-  const openPod = () => navigate('/pods/new', { state: { title } })
+  // 공구 제안 → 팟 생성: 첫 줄(제목)을 품목 이름으로 넘긴다. 팟 생성 화면(PodCreatePage)이 location.state.title을 읽어
+  // 제목 칸을 채우고 "커뮤니티 제안에서 가져왔어요"로 표시한다. 팟 이름은 40자 안팎이라 너무 길면 잘라서 넘긴다
+  const openPod = () => navigate('/pods/new', { state: { title: title.slice(0, 40) } })
 
   return (
     <div className={styles.page}>
@@ -164,7 +204,7 @@ export default function CommunityDetailPage() {
               <Icon name="bolt" size={16} /> 공구 제안 → 팟 바로 연결
             </span>
             <h2 className={styles.podCtaTitle}>이 품목으로 바로 팟 열기</h2>
-            <p className={styles.podCtaBody}>품목 이름이 채워진 팟 생성 화면으로 이동해요. 금액과 인원만 정하면 끝!</p>
+            <p className={styles.podCtaBody}>품목 이름이 채워진 팟 생성 화면으로 이동해요. 금액·인원과 1인당 미개봉 수량만 정하면 끝!</p>
             <button type="button" className={styles.podCtaButton} onClick={openPod}>
               팟 개설하기
               <Icon name="arrow_forward" size={18} />

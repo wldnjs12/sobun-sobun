@@ -6,7 +6,7 @@ import { connectPodSocket } from '../../api/socket.js'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { closePod, fetchPod } from './podApi.js'
-import { getMyUserId } from '../../api/currentUser.js'
+import { fetchSettlement } from '../settlement/settlementApi.js'
 import { calcPerPersonPrice } from './podUtils.js'
 import styles from './PodCompletePage.module.css'
 
@@ -19,19 +19,33 @@ const STEPS = [
 
 /**
  * 팟 모집 완료 (Stitch 09번). 목표 인원이 다 모였을 때 보여준다.
- * 팟장은 여기서 ① 모집 마감 → ② 영수증 업로드(③ 정산, /settlements/:podId) 순서로 진행한다.
- * 참여자 화면은 팟장이 마감하면 실시간으로 바뀐다.
+ * 대표는 여기서 ① 모집 마감 → ② 영수증 업로드(③ 정산, /settlements/:podId) 순서로 진행한다.
+ * 참여자 화면은 대표가 마감하면 실시간으로 바뀐다.
  */
 export default function PodCompletePage() {
   const { podId } = useParams()
   const [pod, setPod] = useState(null)
   const [error, setError] = useState(null)
   const [closing, setClosing] = useState(false)
+  const [askClose, setAskClose] = useState(false)
+  const [closeError, setCloseError] = useState(null)
+  const [settlement, setSettlement] = useState(null)
   const navigate = useNavigate()
+
+  // 정산 확정은 실시간 이벤트가 없어서, 마감된 팟이면 정산 여부를 10초마다 다시 확인한다.
+  // 확정되면 "영수증 올리면…" 안내 대신 정산 결과/송금 현황으로 가는 버튼을 보여준다.
+  const closed = pod?.closed
+  useEffect(() => {
+    if (!closed || settlement) return undefined
+    const check = () => fetchSettlement(podId).then((s) => s && setSettlement(s)).catch(() => {})
+    check()
+    const timerId = setInterval(check, 10000)
+    return () => clearInterval(timerId)
+  }, [podId, closed, settlement])
 
   useEffect(() => {
     fetchPod(podId).then(setPod).catch(setError) // 에러 객체째 보관 → 403(다른 건물) 구분용
-    // 팟장이 마감하면 서버가 closed=true 이벤트를 보내준다 → 다시 불러와서 화면 갱신
+    // 대표가 마감하면 서버가 closed=true 이벤트를 보내준다 → 다시 불러와서 화면 갱신
     const client = connectPodSocket(podId, () => fetchPod(podId).then(setPod), {
       onDenied: () => setError(Object.assign(new Error('다른 건물의 팟에는 접근할 수 없어요.'), { code: 'BUILDING_ACCESS_DENIED' })),
     })
@@ -39,12 +53,14 @@ export default function PodCompletePage() {
   }, [podId])
 
   const handleClose = async () => {
-    if (!window.confirm('모집을 마감할까요? 마감하면 더 이상 참여·취소를 할 수 없어요.')) return
+    // window.confirm/alert 대신 화면 안 확인 버튼(askClose)과 에러 문구(closeError)로 처리한다
     setClosing(true)
+    setCloseError(null)
     try {
       setPod(await closePod(pod.id))
+      setAskClose(false)
     } catch (e) {
-      window.alert(e.message)
+      setCloseError(e.message)
     } finally {
       setClosing(false)
     }
@@ -61,6 +77,17 @@ export default function PodCompletePage() {
     )
   }
 
+  if (pod.status === 'CANCELLED') {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="팟 모집 완료" />
+        <p className={styles.message}>
+          대표가 모집을 취소한 공동구매예요. <Link to="/home">건물 홈으로</Link>
+        </p>
+      </div>
+    )
+  }
+
   if (!pod.closed && pod.participantCount < pod.targetParticipantCount) {
     return (
       <div className={styles.page}>
@@ -72,9 +99,11 @@ export default function PodCompletePage() {
     )
   }
 
-  const isHost = pod.hostUserId === getMyUserId()
-  const finalPrice = calcPerPersonPrice(pod.totalAmount, pod.commissionRate, pod.targetParticipantCount)
-  const waitingNeighbors = pod.targetParticipantCount - 1
+  const isHost = pod.isHost
+  // 마감은 목표 인원이 다 안 차도 할 수 있어서, 마감 후엔 실제 참여 인원 기준으로 보여준다
+  const headCount = pod.closed ? pod.participantCount : pod.targetParticipantCount
+  const finalPrice = calcPerPersonPrice(pod.totalAmount, pod.commissionRate, headCount)
+  const waitingNeighbors = pod.participantCount - 1
 
   return (
     <div className={styles.page}>
@@ -87,20 +116,22 @@ export default function PodCompletePage() {
 
           <span className={styles.celebrateBadge}>
             <span className={styles.pingDot} />
-            🎉 목표 인원 달성
+            {pod.closed ? '모집 마감' : '목표 인원 달성'}
           </span>
-          <h2 className={styles.heroTitle}>{pod.targetParticipantCount}명이 모두 모였어요!</h2>
+          <h2 className={styles.heroTitle}>{headCount}명이 함께 나눠요!</h2>
           <p className={styles.heroBody}>
-            {pod.closed
-              ? '팟장이 상품을 구매하고 영수증을 올리면 정산이 시작돼요.'
-              : '팟장이 모집을 마감하면 구매가 시작돼요.'}
+            {settlement
+              ? '정산이 확정됐어요. 정산 결과를 확인해주세요.'
+              : pod.closed
+              ? '대표가 상품을 구매하고 영수증을 올리면 정산이 시작돼요.'
+              : '대표가 모집을 마감하면 구매가 시작돼요.'}
           </p>
 
           <div className={styles.avatars}>
             {Array.from({ length: pod.participantCount }, (_, i) => (
               <span key={i} className={styles.avatar}>
                 <Icon name="person" size={20} filled />
-                {i === 0 && <span className={styles.hostTag}>팟장</span>}
+                {i === 0 && <span className={styles.hostTag}>대표</span>}
               </span>
             ))}
             <span className={`${styles.avatar} ${styles.avatarCount}`}>
@@ -113,7 +144,7 @@ export default function PodCompletePage() {
         <section className={styles.card}>
           <ol className={styles.stepper}>
             {STEPS.map((step, i) => {
-              // 모집완료는 항상 끝난 단계, 구매진행은 팟장이 마감한 뒤부터 진행 중
+              // 모집완료는 항상 끝난 단계, 구매진행은 대표가 마감한 뒤부터 진행 중
               const state = i === 0 ? 'done' : i === 1 && pod.closed ? 'current' : 'todo'
               return (
                 <li key={step.label} className={`${styles.step} ${styles[state]}`}>
@@ -134,7 +165,7 @@ export default function PodCompletePage() {
               <Icon name="groups" size={20} className={styles.primaryIcon} />
               예상 정산 견적
             </span>
-            <span className={styles.confirmBadge}>{pod.targetParticipantCount}명 소분 확정</span>
+            <span className={styles.confirmBadge}>{headCount}명 나눔</span>
           </div>
 
           <div className={styles.quote}>
@@ -175,13 +206,13 @@ export default function PodCompletePage() {
             )}
           </div>
           <div className={styles.productInfo}>
-            <span className={styles.productLabel}>{pod.unitLabel}</span>
+            <span className={styles.productLabel}>{pod.categoryLabel ?? '기타'}</span>
             <h3 className={styles.productTitle}>{pod.title}</h3>
-            <p className={styles.productDesc}>1/{pod.targetParticipantCount} 소분 배분</p>
+            <p className={styles.productDesc}>미개봉 {pod.shareLabel}씩</p>
           </div>
         </section>
 
-        {/* ── 팟장 할 일 / 참여자 안내 ── */}
+        {/* ── 대표 할 일 / 참여자 안내 ── */}
         {isHost && !pod.closed && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
@@ -194,18 +225,55 @@ export default function PodCompletePage() {
                 </p>
               </div>
             </div>
-            <button type="button" className={styles.hostButton} disabled={closing} onClick={handleClose}>
-              <Icon name="flag" size={20} />
-              {closing ? '마감하는 중…' : '모집 마감하기'}
+            {closeError && <p className={styles.bodyText}>{closeError}</p>}
+            {askClose ? (
+              <>
+                <p className={styles.bodyText}>정말 마감할까요? 마감하면 되돌릴 수 없어요.</p>
+                <button type="button" className={styles.hostButton} disabled={closing} onClick={handleClose}>
+                  <Icon name="flag" size={20} />
+                  {closing ? '마감하는 중…' : '네, 마감할게요'}
+                </button>
+                <button type="button" className={styles.homeLink} disabled={closing} onClick={() => setAskClose(false)}>
+                  아니요
+                </button>
+              </>
+            ) : (
+              <button type="button" className={styles.hostButton} onClick={() => setAskClose(true)}>
+                <Icon name="flag" size={20} />
+                모집 마감하기
+              </button>
+            )}
+          </section>
+        )}
+        {settlement && (
+          <section className={styles.hostCard}>
+            <div className={styles.hostHeader}>
+              <span className={styles.hostEmoji}>🧾</span>
+              <div>
+                <h4 className={styles.hostTitle}>정산이 확정됐어요</h4>
+                <p className={styles.hostBody}>
+                  {isHost
+                    ? '이웃들이 [보냈어요]를 눌렀는지 송금 현황에서 확인하세요.'
+                    : `내 몫 ${settlement.perPersonAmount?.toLocaleString()}원을 송금하고 [보냈어요]를 눌러주세요.`}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={styles.hostButton}
+              onClick={() => navigate(isHost ? `/settlements/${pod.id}/payments` : `/settlements/${pod.id}/result`)}
+            >
+              <Icon name={isHost ? 'fact_check' : 'payments'} size={20} />
+              {isHost ? '송금 현황 보기' : '정산 결과 보고 송금하기'}
             </button>
           </section>
         )}
-        {isHost && pod.closed && (
+        {isHost && pod.closed && !settlement && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
               <span className={styles.hostEmoji}>🛍️</span>
               <div>
-                <h4 className={styles.hostTitle}>팟장 확인 필요</h4>
+                <h4 className={styles.hostTitle}>대표 확인 필요</h4>
                 <p className={styles.hostBody}>
                   상품을 구매하셨나요? 실제 <strong>영수증</strong>을 올려주시면 기다리는 이웃 {waitingNeighbors}명에게
                   정산 금액이 안내돼요.
@@ -218,16 +286,16 @@ export default function PodCompletePage() {
             </button>
           </section>
         )}
-        {!isHost && (
+        {!isHost && !settlement && (
           <section className={styles.card}>
             <div className={styles.cardTitle}>
               <Icon name="hourglass_top" size={20} className={styles.primaryIcon} />
-              {pod.closed ? '팟장이 구매 중이에요' : '팟장의 마감을 기다리는 중'}
+              {pod.closed ? '대표가 구매 중이에요' : '대표의 마감을 기다리는 중'}
             </div>
             <p className={styles.bodyText}>
               {pod.closed
-                ? '팟장이 영수증을 올리면 최종 정산 금액을 알려드릴게요. 따로 하실 일은 없어요.'
-                : '팟장이 모집을 마감하면 이 화면이 자동으로 바뀌어요.'}
+                ? '대표가 영수증을 올리면 최종 정산 금액을 알려드릴게요. 따로 하실 일은 없어요.'
+                : '대표가 모집을 마감하면 이 화면이 자동으로 바뀌어요.'}
             </p>
           </section>
         )}
@@ -239,7 +307,7 @@ export default function PodCompletePage() {
             비대면 픽업 안내
           </div>
           <p className={styles.bodyText}>
-            정산이 끝나면 <strong>{pod.pickupSpot}</strong> 보관함 번호와 비밀번호를 픽업 화면에서 알려드려요.
+            픽업 장소: <strong>{pod.pickupSpot}</strong>. 정산이 끝나면 픽업 화면에서 수령 비밀번호를 알려드려요.
           </p>
         </section>
 

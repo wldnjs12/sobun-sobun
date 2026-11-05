@@ -38,9 +38,13 @@ public class CommunityPostService {
     private final BuildingAccessService buildingAccessService;
     private final UserRepository userRepository;
 
-    /** 글 목록(S16) — 최신순, 숨김 글 제외. category가 null이면 전체. */
+    /**
+     * 글 목록(S16) — 최신순, 숨김 글 제외. category가 null이면 전체.
+     * buildingId를 안 보내면 요청한 사람의 소속 건물로 정한다 (프론트가 건물 id를 몰라도 되게). 보내면 소속인지 확인한다.
+     */
     @Transactional(readOnly = true)
-    public List<CommunityPostSummary> list(Long buildingId, Long userId, CommunityCategory category) {
+    public List<CommunityPostSummary> list(Long requestedBuildingId, Long userId, CommunityCategory category) {
+        Long buildingId = requestedBuildingId != null ? requestedBuildingId : myBuildingId(userId);
         checkMember(buildingId, userId);
         List<CommunityPost> posts = category == null
                 ? postRepository.findByBuildingIdAndHiddenFalseOrderByIdDesc(buildingId)
@@ -53,9 +57,7 @@ public class CommunityPostService {
     /** 건물은 요청으로 받지 않고 작성자의 소속 건물로 정한다 — 다른 건물에 글을 쓸 방법 자체가 없다. */
     @Transactional
     public CommunityPostDetail create(Long userId, PostCreateRequest request) {
-        Long buildingId = userRepository.findById(userId)
-                .orElseThrow(() -> new BuildingAccessDeniedException("건물을 먼저 등록해야 커뮤니티를 이용할 수 있어요."))
-                .getBuildingId();
+        Long buildingId = myBuildingId(userId);
         CommunityPost post = postRepository.save(CommunityPost.builder()
                 .buildingId(buildingId)
                 .authorUserId(userId)
@@ -119,6 +121,12 @@ public class CommunityPostService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다: " + postId));
         checkMember(post.getBuildingId(), userId);
         return post;
+    }
+
+    private Long myBuildingId(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BuildingAccessDeniedException("건물을 먼저 등록해야 커뮤니티를 이용할 수 있어요."))
+                .getBuildingId();
     }
 
     private void checkMember(Long buildingId, Long userId) {

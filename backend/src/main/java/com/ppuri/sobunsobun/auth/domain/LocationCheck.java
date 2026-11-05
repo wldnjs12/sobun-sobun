@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 /**
  * GPS 2차 확인 기록 (ERD의 LOCATION_CHECK). 판정 결과만 남기는 append-only 로그다.
- * 캐시가 아니라 매 호출마다 새 행을 남긴다(open-decisions.md: 캐시 없음, 매번 재확인) — 그래서 upsert 메서드가 없다.
+ * 캐시가 아니라 매 호출마다 새 행을 남긴다(docs/PRODUCT_SPEC.md 결정 기록: 캐시 없음, 매번 재확인) — 그래서 upsert 메서드가 없다.
  * 원본 위경도는 개인정보라 저장하지 않고, 성공/실패·시각·목적만 남긴다.
  */
 @Entity

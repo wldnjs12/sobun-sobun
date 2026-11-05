@@ -4,13 +4,14 @@ import { BUILDING } from '../pod/podApi.js'
 
 /**
  * ⑤ 건물별 익명 커뮤니티 API. 계약: docs/API_SPEC.md ⑤ (백엔드 담당: 김민준)
+ * 범위: 내가 등록한 건물의 글만. 건물은 서버가 요청한 사람의 소속으로 정한다 (다른 건물 글은 id로 열어도 403).
  *
  * ⑤ 백엔드(PR #22)가 develop에 머지돼서 실제 서버를 쓴다 (USE_MOCK = false).
  * 백엔드 없이 화면만 볼 때는 true로 바꾸면 아래 목업으로 동작한다.
  *
  * 응답 모양 (API_SPEC에 필드가 다 적혀 있지 않아서 프론트가 이렇게 가정함 — 백엔드와 맞출 것):
- *   CommunityPostSummary = { id, category, content, commentCount, createdAt, mine }
- *   CommunityPostDetail  = { id, category, content, createdAt, mine, suggestable,
+ *   CommunityPostSummary = { id, category, content, preview, commentCount, suggestable, createdAt, mine }
+ *   CommunityPostDetail  = { id, category, authorLabel, content, createdAt, mine, suggestable,
  *                            comments: [{ id, content, createdAt, authorLabel, mine }] }
  *   - authorLabel: 글쓴이는 "글쓴이", 나머지는 그 글 안에서 처음 등장한 순서대로 "이웃 1", "이웃 2"…
  *   - mine: 내가 쓴 글/댓글인지 (삭제 버튼 표시용). 실제 작성자 id는 응답에 절대 없다
@@ -27,31 +28,36 @@ export const categoryOf = (key) => CATEGORIES.find((c) => c.key === key) ?? CATE
 
 const me = () => getMyUserId()
 
+// 요청한 사람은 X-User-Id 헤더로 보낸다. 로그인 후에는 서버 필터가 이 헤더를 토큰 주인으로 덮어써서 사칭이 막힌다.
+// (?userId= 쿼리는 예전 서버와의 호환용으로 같이 보낸다 — 서버는 헤더가 있으면 헤더를 쓴다)
+const withMe = () => ({ headers: { 'X-User-Id': String(me()) } })
+
+
 /** 글 목록. category가 없으면 전체 */
 export async function fetchPosts(category) {
   if (USE_MOCK) return mockList(category)
-  const query = `buildingId=${BUILDING.id}&userId=${me()}` + (category ? `&category=${category}` : '')
-  return api.get(`/community/posts?${query}`)
+  const query = `userId=${me()}` + (category ? `&category=${category}` : '')
+  return api.get(`/community/posts?${query}`, withMe())
 }
 
 export async function fetchPost(postId) {
   if (USE_MOCK) return mockDetail(Number(postId))
-  return api.get(`/community/posts/${postId}?userId=${me()}`)
+  return api.get(`/community/posts/${postId}?userId=${me()}`, withMe())
 }
 
 export async function createPost({ category, content }) {
   if (USE_MOCK) return mockCreate({ category, content })
-  return api.post(`/community/posts?userId=${me()}`, { category, content })
+  return api.post(`/community/posts?userId=${me()}`, { category, content }, withMe())
 }
 
 export async function deletePost(postId) {
   if (USE_MOCK) return mockDeletePost(Number(postId))
-  return api.delete(`/community/posts/${postId}?userId=${me()}`)
+  return api.delete(`/community/posts/${postId}?userId=${me()}`, withMe())
 }
 
 export async function addComment(postId, content) {
   if (USE_MOCK) return mockAddComment(Number(postId), content)
-  return api.post(`/community/posts/${postId}/comments?userId=${me()}`, { content })
+  return api.post(`/community/posts/${postId}/comments?userId=${me()}`, { content }, withMe())
 }
 
 /**
@@ -60,18 +66,18 @@ export async function addComment(postId, content) {
  */
 export async function deleteComment(postId, commentId) {
   if (USE_MOCK) return mockDeleteComment(Number(postId), Number(commentId))
-  await api.delete(`/community/comments/${commentId}?userId=${me()}`)
+  await api.delete(`/community/comments/${commentId}?userId=${me()}`, withMe())
   return fetchPost(postId)
 }
 
 export async function reportPost(postId) {
   if (USE_MOCK) return mockReport('post', Number(postId))
-  return api.post(`/community/posts/${postId}/report?userId=${me()}`)
+  return api.post(`/community/posts/${postId}/report?userId=${me()}`, undefined, withMe())
 }
 
 export async function reportComment(commentId) {
   if (USE_MOCK) return mockReport('comment', Number(commentId))
-  return api.post(`/community/comments/${commentId}/report?userId=${me()}`)
+  return api.post(`/community/comments/${commentId}/report?userId=${me()}`, undefined, withMe())
 }
 
 /** 본문의 첫 줄을 제목처럼, 나머지를 본문처럼 보여주기 위한 도우미 (API에는 content 하나뿐) */
@@ -92,27 +98,27 @@ export function timeAgo(iso) {
 // ───────────────────────── 목업 (⑤ 백엔드 완성 전 임시) ─────────────────────────
 // 서버 규칙을 흉내 낸다: 건물별로 분리(샘플 글은 처음 연 건물 것), 익명 번호는 응답 만들 때 계산, 실제 작성자 id는 밖으로 안 내보냄,
 // 같은 사람 중복 신고 무시, 신고 3회면 숨김.
-// localStorage에 저장해서 새로고침해도 남고, 같은 브라우저의 다른 탭(?user=2)에서도 같은 글이 보인다.
+// localStorage에 저장해서 새로고침해도 남고, 같은 브라우저의 다른 탭에서도 같은 글이 보인다.
 const STORE_KEY = 'sobun.mockCommunity'
 const REPORT_HIDE_THRESHOLD = 3
 const delay = (ms) => new Promise((r) => setTimeout(r, ms))
 const ago = (minutes) => new Date(Date.now() - minutes * 60000).toISOString()
 
 function seed() {
-  // 시연 예시 품목: 생필품·가공식품만 (기획 개편 1-2)
+  // 시연 예시 품목: 생필품 + 밀봉 가공식품(생수 등). 신선 식재료는 위생·보관 리스크로 다루지 않는다. 미개봉 단위 나눔 위주
   return {
     nextId: 100,
     posts: [
       {
         id: 1, buildingId: null, author: 9003, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(2), reports: [], hidden: false,
-        content: '삼다수 2L 24병 같이 나누실 분? (1인당 6병씩)\n내일 오전 배송으로 주문할게요. 6병 묶음이 4팩이라 뜯지 않고 1팩씩 나누면 돼요. 1층 무인택배함에 둘게요!',
+        content: '휴지 30롤 같이 사실 분? (1인 10롤씩)\n10롤 묶음 3개라 뜯지 않고 1묶음씩 나누면 돼요. 공동현관 앞에서 전달할게요!',
         comments: [
-          { id: 11, author: 9007, content: '저요! 생수 딱 떨어졌어요', createdAt: ago(1), reports: [], hidden: false },
+          { id: 11, author: 9007, content: '저요! 휴지 딱 떨어졌어요', createdAt: ago(1), reports: [], hidden: false },
         ],
       },
       {
         id: 2, buildingId: null, author: 9007, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(15), reports: [], hidden: false,
-        content: '코스트코 3겹 화장지 30롤, 10롤씩 3명 나눠요!\n혼자 살아서 30롤은 보관할 공간이 부족하네요. 10롤 비닐 그대로 나누니까 위생 걱정 없어요.',
+        content: '생수 2L×24병 나눠요! (1인 6병씩)\n6병 묶음 4팩이라 뜯지 않고 1팩씩 나누면 돼요. 비닐 포장 그대로라 위생 걱정 없어요.',
         comments: [
           { id: 21, author: 9012, content: '저도 참여하고 싶어요! 팟 열어주시면 바로 들어갈게요 🙌', createdAt: ago(8), reports: [], hidden: false },
           { id: 22, author: 9007, content: '감사해요! 팟 열기 버튼으로 바로 개설할게요 🎉', createdAt: ago(3), reports: [], hidden: false },
@@ -120,12 +126,12 @@ function seed() {
       },
       {
         id: 3, buildingId: null, author: 9001, category: 'SHARE', createdAt: ago(60), reports: [], hidden: false,
-        content: '스팸 클래식 200g 2캔 나눔해요\n본가에서 선물세트로 많이 보내주셨어요. 유통기한 넉넉해요. 1층 보관함에 둘게요!',
+        content: '세제 리필 나눔 후기\n지난주 세제 3L 리필팩을 3명이서 나눴는데 미개봉이라 깔끔했어요. 다음엔 섬유유연제도 같이 해요!',
         comments: [],
       },
       {
         id: 4, buildingId: null, author: 9005, category: 'QUESTION', createdAt: ago(180), reports: [], hidden: false,
-        content: '인하대 후문 쪽에서 트레이더스 가기 편한 방법 있나요?\n차 없이 장보러 가기 괜찮은 방법이나 꿀팁 있으면 알려주세요!',
+        content: '근처에 쓰레기봉투 묶음으로 파는 곳 있나요?\n20L 종량제 봉투를 한 번에 사서 나누고 싶어요.',
         comments: [],
       },
     ],

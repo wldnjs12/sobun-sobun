@@ -212,4 +212,13 @@ class CommunityPostServiceTest {
         service.deleteComment(10L, 200L);
         verify(commentRepository).delete(mine);
     }
+
+    @Test
+    void 목록에서_건물을_생략하면_내_소속_건물_글을_보여준다() {
+        when(postRepository.findByBuildingIdAndHiddenFalseOrderByIdDesc(MY_BUILDING))
+                .thenReturn(List.of(post(1L, MY_BUILDING, AUTHOR, CommunityCategory.GROUP_BUY_SUGGESTION)));
+
+        assertThat(service.list(null, AUTHOR, null)).hasSize(1);
+        verify(buildingAccessService).requireMembership(eq(AUTHOR), eq(MY_BUILDING), anyString());
+    }
 }

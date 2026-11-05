@@ -1,7 +1,8 @@
+import { Link } from 'react-router-dom'
 import Icon from '../../components/Icon.jsx'
 import styles from './EmptyPodState.module.css'
 
-/** 건물에 열린 팟이 하나도 없을 때 목록 자리에 보여주는 안내 (디자인 16번 화면). */
+/** 건물에 열린 공동구매가 하나도 없을 때 목록 자리에 보여주는 안내 (디자인 16번 화면). */
 export default function EmptyPodState({ onCreatePod }) {
   return (
     <>
@@ -18,23 +19,23 @@ export default function EmptyPodState({ onCreatePod }) {
 
         <span className={styles.statusBadge}>
           <Icon name="notifications_paused" size={14} />
-          모두 분배 완료 상태
+          모집중인 공동구매 없음
         </span>
-        <h1 className={styles.heading}>아직 열린 팟이 없어요</h1>
+        <h1 className={styles.heading}>아직 열린 공동구매가 없어요</h1>
         <p className={styles.description}>
-          같이 사고 싶은 상품이 있다면 첫 번째 팟을 만들어보세요. 같은 건물 이웃들이 금방 모일
-          거예요!
+          화장지·생수처럼 혼자 쓰기엔 많은 묶음 상품이 있다면 첫 공동구매를 열어보세요. 같은 건물 이웃들이 금방
+          모일 거예요.
         </p>
 
         <button type="button" className={styles.createButton} onClick={onCreatePod}>
           <Icon name="add_circle" size={20} />
-          첫 팟 만들기
+          첫 공동구매 열기
         </button>
-        {/* TODO: 투표함 기능은 아직 기획 문서에 없음 — 팀 논의 후 연결 */}
-        <button type="button" className={styles.voteLink}>
-          사고 싶은 것 투표함에 올리기
+        {/* 글쓰기 화면이 아니라 목록으로 보내는 이유: 커뮤니티 입장 GPS 확인(COMMUNITY_ENTER)은 목록에서 한다 */}
+        <Link to="/community" className={styles.voteLink}>
+          사고 싶은 것 커뮤니티에 제안하기
           <Icon name="arrow_forward" size={16} />
-        </button>
+        </Link>
       </section>
 
       <section className={styles.tip}>
@@ -43,12 +44,12 @@ export default function EmptyPodState({ onCreatePod }) {
         </div>
         <div>
           <div className={styles.tipHeader}>
-            <span className={styles.tipTitle}>소분 성공 확률 99% 팁</span>
-            <span className={styles.tipTag}>입주민 데이터</span>
+            <span className={styles.tipTitle}>나누기 좋은 물건</span>
           </div>
           <p className={styles.tipBody}>
-            코스트코 키친타올이나 대용량 세제처럼 부피가 크고 유통기한이 긴 생필품은 보통{' '}
-            <span className={styles.tipHighlight}>30분 안에 팟이 마감</span>돼요!
+            화장지 30롤, 생수 2L×24병처럼{' '}
+            <span className={styles.tipHighlight}>뜯지 않고 개수로 나눌 수 있는 묶음 상품</span>이 좋아요. 식재료
+            소분은 위생·보관 리스크가 커서 다루지 않아요.
           </p>
         </div>
       </section>

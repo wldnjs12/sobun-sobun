@@ -1,6 +1,6 @@
 # ③ 대표 수고비(정률) 반영 자동 정산식
 
-담당: 문소원(백엔드) + 홍수진(프론트) · 관련 화면: [S8~S12](../DESIGN_HANDOFF.md)
+> 기준 문서는 [docs/PRODUCT_SPEC.md](../PRODUCT_SPEC.md)입니다. 이 문서는 기능 배경·세부 규칙 참고용이며, 충돌하면 PRODUCT_SPEC을 따릅니다. 관련 화면: [DESIGN_HANDOFF S8~S12](../DESIGN_HANDOFF.md)
 
 ## 왜 필요한가 (근거)
 
@@ -33,9 +33,9 @@
 
 ## 건물 소속 검증 + hostPaymentLink UI (기획 개편 추가)
 
-> ⚠️ `confirm`/`getConfirmed`에 `userId` 파라미터가 추가되고, 요청자가 그 팟의 건물 소속인지 검증합니다(불일치 시 403) — 최지원의 ①(`BuildingAccessService`) 작업 머지 후 문소원이 적용. 상세 계약은 [../API_SPEC.md](../API_SPEC.md) ③ 섹션.
+> ⚠️ `confirm`/`getConfirmed`에 `userId` 파라미터가 추가되고, 요청자가 그 팟의 건물 소속인지 검증합니다(불일치 시 403) (`BuildingAccessService`). 상세 계약은 [../API_SPEC.md](../API_SPEC.md) ③ 섹션.
 >
-> 백엔드엔 이미 있는 `hostPaymentLink`(대표가 입력한 송금 링크/계좌)를 confirm 화면에 입력 필드로, 정산 결과 화면엔 표시+"보냈어요" 버튼으로 붙이는 작업이 아직 프론트에 없습니다 — 홍수진 담당, [design-changes.md](../design-changes.md) S11 참고.
+> `hostPaymentLink`(대표가 입력한 송금 링크/계좌)는 정산 확정 화면에서 입력하고, 정산 결과 화면에 표시 + "보냈어요" 버튼으로 보여줍니다.
 
 ## 엣지 케이스
 

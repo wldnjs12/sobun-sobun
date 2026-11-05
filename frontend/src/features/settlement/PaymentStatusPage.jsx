@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getMyUserId } from '../../api/currentUser.js'
 import { fetchParticipants, fetchPod } from '../pod/podApi.js'
-import { fetchSettlement } from './settlementApi.js'
+import { fetchSettlement, unitShareText } from './settlementApi.js'
 import styles from './Settlement.module.css'
 
 const REFRESH_MS = 10000 // 송금 신고는 실시간 이벤트가 없어서 10초마다 다시 불러온다
@@ -23,31 +23,57 @@ export default function PaymentStatusPage() {
   const [settlement, setSettlement] = useState(null)
   const [participants, setParticipants] = useState(null)
   const [error, setError] = useState(null)
+  const [podError, setPodError] = useState(null)
   const [updatedAt, setUpdatedAt] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const loadParticipants = useCallback(() => {
     fetchParticipants(podId)
       .then((list) => {
         setParticipants(list)
         setUpdatedAt(new Date())
+        setError(null)
       })
       .catch((e) => setError(e.message))
   }, [podId])
 
   useEffect(() => {
-    fetchPod(podId).then(setPod).catch(() => {})
-    fetchSettlement(podId).then(setSettlement)
+    setPodError(null)
+    fetchPod(podId).then(setPod).catch((e) => setPodError(e.message))
+    // 정산 금액은 없어도 송금 현황은 볼 수 있어서, 실패하면 금액만 숨긴다
+    fetchSettlement(podId).then(setSettlement).catch(() => setSettlement(null))
     loadParticipants()
     const timerId = setInterval(loadParticipants, REFRESH_MS)
     return () => clearInterval(timerId) // 화면을 떠나면 자동 새로고침 중지
-  }, [podId, loadParticipants])
+  }, [podId, loadParticipants, reloadKey])
 
-  if (error) {
+  const failure = podError ?? (participants === null ? error : null)
+  if (failure) {
     return (
       <div className={styles.page}>
         <PageHeader title="송금 현황" />
         <div className={styles.message}>
-          <p>{error}</p>
+          <p>송금 현황을 불러오지 못했어요. ({failure})</p>
+          <button type="button" className={styles.secondaryButton} onClick={() => setReloadKey((k) => k + 1)}>
+            <Icon name="refresh" size={18} /> 다시 시도
+          </button>
+          <Link to={`/pods/${podId}`} className={styles.textLink}>
+            팟 상세로 가기
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (pod && pod.hostUserId !== getMyUserId()) {
+    return (
+      <div className={styles.page}>
+        <PageHeader title="송금 현황" />
+        <div className={styles.message}>
+          <p>송금 현황은 팟장만 볼 수 있어요.</p>
+          <Link to={`/settlements/${podId}/result`} className={styles.textLink}>
+            정산 결과로 가기
+          </Link>
         </div>
       </div>
     )
@@ -78,6 +104,7 @@ export default function PaymentStatusPage() {
         <section className={styles.statusHero}>
           <span className={styles.statusPod}>
             {pod.targetParticipantCount}인 소분팟 · {pod.title}
+            {unitShareText(pod) && ` · ${unitShareText(pod)} 미개봉`}
           </span>
           <h2 className={styles.title}>
             {allPaid ? '🎉 모두 송금했어요' : `이웃 ${neighbors.length}명 중 ${paidCount}명 송금 완료`}
@@ -130,13 +157,14 @@ export default function PaymentStatusPage() {
               </li>
             ))}
           </ul>
+          {error && <p className={styles.error}>최신 현황을 불러오지 못했어요. 잠시 뒤 자동으로 다시 시도해요. ({error})</p>}
         </section>
 
         <div className={styles.infoBox}>
           <Icon name="account_balance_wallet" size={20} className={styles.primaryIcon} />
           <p>
-            이웃이 <strong>[보냈어요]</strong>를 누른 내역이에요. 실제로 쓰는 은행·토스 앱에서 입금을 꼭 확인한 뒤 소분해서 픽업
-            장소에 두세요.
+            이웃이 <strong>[보냈어요]</strong>를 누른 내역이에요. 실제로 쓰는 은행·토스 앱에서 입금을 꼭 확인한 뒤, 이웃 몫을
+            미개봉 상태 그대로 픽업 장소에 두세요.
           </p>
         </div>
       </main>
@@ -144,7 +172,7 @@ export default function PaymentStatusPage() {
       <div className={styles.ctaDock}>
         <button type="button" className={styles.primaryButton} onClick={() => navigate(`/pods/${podId}/pickup`)}>
           <Icon name="key" size={20} />
-          픽업 장소·비밀번호 확인하기
+          픽업 안내·확인 번호 보기
         </button>
       </div>
     </div>
