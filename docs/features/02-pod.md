@@ -1,6 +1,6 @@
 # ② 팟 개설·참여·실시간 정산 갱신 (핵심 기능)
 
-담당: 최지원(백엔드, 리드) + 도우현(프론트) · 관련 화면: [S4~S8](../DESIGN_HANDOFF.md)
+> 기준 문서는 [docs/PRODUCT_SPEC.md](../PRODUCT_SPEC.md)입니다. 이 문서는 기능 배경·세부 규칙 참고용이며, 충돌하면 PRODUCT_SPEC을 따릅니다. 관련 화면: [DESIGN_HANDOFF S4~S8](../DESIGN_HANDOFF.md)
 
 ## 왜 필요한가 (근거)
 
@@ -41,7 +41,7 @@
 
 ## 건물 소속 검증 (기획 개편 추가)
 
-> ⚠️ QR 삭제 후 온보딩이 "주소+GPS"로 바뀌면서, 팟 개설·참여·조회 전체에 "요청자가 그 팟의 건물 소속인지" 검증이 추가됩니다. 다르면 403. 상세 계약은 [../API_SPEC.md](../API_SPEC.md) ② 섹션, 구현은 최지원이 ①(`BuildingAccessService`) 작업과 함께 진행합니다. 추가로 팟 개설·참여 버튼을 누르면 ①의 GPS 재확인(`POST /auth/location-check`, purpose=`POD_CREATE`/`POD_JOIN`)을 먼저 통과해야 합니다 — 프론트 책임.
+> ⚠️ QR 삭제 후 온보딩이 "주소+GPS"로 바뀌면서, 팟 개설·참여·조회 전체에 "요청자가 그 팟의 건물 소속인지" 검증이 추가됩니다. 다르면 403. 상세 계약은 [../API_SPEC.md](../API_SPEC.md) ② 섹션 가드는 `BuildingAccessService.requireMembership`. 추가로 팟 개설·참여 버튼을 누르면 ①의 GPS 재확인(`POST /auth/location-check`, purpose=`POD_CREATE`/`POD_JOIN`)을 먼저 통과해야 합니다 — 프론트 책임.
 
 ## 엣지 케이스
 

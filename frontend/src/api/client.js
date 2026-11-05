@@ -1,6 +1,11 @@
+import { clearSession, getToken } from './currentUser.js'
+
 // 로컬 개발: vite.config.js가 /api를 8080으로 프록시하므로 상대경로로 충분하다.
 // 배포(Vercel): 프론트와 백엔드가 다른 도메인이라 VITE_API_BASE_URL(백엔드 Railway 주소)을 origin으로 붙인다.
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api`
+
+// 로그인 없이 쓰는 화면. 여기서 401이 나도 로그인 화면으로 다시 보내지 않는다 (무한 이동 방지)
+const PUBLIC_PAGES = ['/', '/login', '/signup']
 
 /**
  * 모든 API 응답이 { success, data, message, code? } 형태(백엔드 ApiResponse)라고 가정하고
@@ -8,10 +13,19 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL ?? ''}/api`
  *
  * 실패하면 Error를 던지는데, 화면에서 상황별로 다르게 처리할 수 있도록
  * error.code(예: 'OUT_OF_RANGE')와 error.status(HTTP 상태 코드)를 같이 붙여준다.
+ *
+ * 로그인(2026-11 개편): 저장된 토큰을 Authorization: Bearer 헤더로 자동으로 붙인다 → 화면 코드는 신경 쓸 필요 없음.
+ * 서버가 401 + code "UNAUTHORIZED"(토큰 없음·만료)를 주면 세션을 지우고 로그인 화면으로 보낸다.
+ * 이때 원래 가려던 주소를 ?next= 로 넘겨서, 로그인 후 그 화면으로 돌아오게 한다.
  */
 async function request(path, { headers, ...options } = {}) {
   // 기본 헤더 위에 호출한 쪽 헤더를 "덮어쓰지 않고 합친다" (X-User-Id 같은 헤더를 추가할 수 있게)
-  const mergedHeaders = { 'Content-Type': 'application/json', ...headers }
+  const token = getToken()
+  const mergedHeaders = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...headers,
+  }
   // 값이 undefined인 헤더는 지운다. 그대로 넘기면 fetch가 문자열 "undefined"로 보내버린다.
   Object.keys(mergedHeaders).forEach((key) => mergedHeaders[key] === undefined && delete mergedHeaders[key])
 
@@ -28,15 +42,29 @@ async function request(path, { headers, ...options } = {}) {
     })
   }
 
+  if (res.status === 401 && json.code === 'UNAUTHORIZED') {
+    clearSession()
+    redirectToLogin()
+  }
+
   if (!json.success) {
     throw Object.assign(new Error(json.message ?? '요청에 실패했습니다'), { code: json.code, status: res.status })
   }
   return json.data
 }
 
+/** 로그인 화면으로 이동. 지금 주소를 next로 넘긴다 (예: /login?next=%2Fpods%2F3) */
+function redirectToLogin() {
+  const { pathname, search } = window.location
+  if (PUBLIC_PAGES.includes(pathname)) return
+  window.location.replace(`/login?next=${encodeURIComponent(pathname + search)}`)
+}
+
 export const api = {
   get: (path, options) => request(path, options),
   post: (path, body, options) => request(path, { ...options, method: 'POST', body: JSON.stringify(body) }),
+  put: (path, body, options) => request(path, { ...options, method: 'PUT', body: JSON.stringify(body) }),
+  patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path, options) => request(path, { ...options, method: 'DELETE' }),
   /**
    * 파일 업로드(multipart). FormData를 보낼 때는 Content-Type을 직접 정하면 안 된다 —

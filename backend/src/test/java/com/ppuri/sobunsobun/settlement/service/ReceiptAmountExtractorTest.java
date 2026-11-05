@@ -44,7 +44,7 @@ class ReceiptAmountExtractorTest {
 
     @Test
     void 키워드_없는_숫자는_무시() {
-        assertThat(ReceiptAmountExtractor.extractTotal("양파 5kg 8,900\n대파 3,400")).isEmpty();
+        assertThat(ReceiptAmountExtractor.extractTotal("깨끗한나라 화장지 30롤 8,900\n리큐 세제 3L 3,400")).isEmpty();
     }
 
     @Test

@@ -20,6 +20,9 @@ public interface PodRepository extends JpaRepository<Pod, Long> {
     @Query("select p from Pod p where p.id = :id")
     Optional<Pod> findByIdForUpdate(@Param("id") Long id);
 
-    /** 건물 홈 화면(S4)용 — 마감되지 않은 팟만 최신순으로. */
-    List<Pod> findByBuildingIdAndClosedFalseOrderByIdDesc(Long buildingId);
+    /** 건물 홈 화면용 — 그 건물의 팟 전체, 최신순. 상태·검색어 필터와 정렬은 서비스에서 한다. */
+    List<Pod> findByBuildingIdOrderByIdDesc(Long buildingId);
+
+    /** 마이페이지 "내가 연 팟" */
+    List<Pod> findByHostUserIdOrderByIdDesc(Long hostUserId);
 }

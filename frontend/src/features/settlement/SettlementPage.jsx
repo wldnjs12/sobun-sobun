@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { getMyUserId } from '../../api/currentUser.js'
+import { isBuildingAccessDenied } from '../../api/client.js'
+import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { fetchPod } from '../pod/podApi.js'
-import { confirmSettlement, fetchSettlement, previewSettlement, recognizeReceipt } from './settlementApi.js'
-import { describePaymentLink, getSavedPaymentLink, savePaymentLink } from './paymentLink.js'
+import { confirmSettlement, fetchSettlement, previewSettlement, recognizeReceipt, unitShareText } from './settlementApi.js'
+import { describePaymentLink, getSavedPaymentLink, paymentLinkError, savePaymentLink } from './paymentLink.js'
 import styles from './Settlement.module.css'
 
 /**
@@ -33,23 +35,31 @@ export default function SettlementPage() {
 
   const cameraInput = useRef(null)
   const albumInput = useRef(null)
+  const [reloadKey, setReloadKey] = useState(0) // [다시 시도]를 누르면 올려서 아래 effect를 다시 실행
 
   useEffect(() => {
+    setLoadError(null)
     // 이미 정산했다면 결과 화면으로 바로 보낸다 (localStorage뿐이면 다른 기기에서 들어온 팟장이
-    // 이미 확정된 걸 모르고 다시 확정하려다 400에 막히므로, 서버에 직접 확인한다)
-    fetchSettlement(podId).then((settlement) => {
-      if (settlement) {
-        navigate(`/settlements/${podId}/result`, { replace: true })
-        return
-      }
-      fetchPod(podId).then(setPod).catch((e) => setLoadError(e.message))
-    })
-  }, [podId, navigate])
+    // 이미 확정된 걸 모르고 다시 확정하려다 400에 막히므로, 서버에 직접 확인한다).
+    // 정산 조회가 실패해도(권한·연결) 팟 정보는 따로 불러와서, 아래에서 "팟장만 가능" 등 알맞은 안내를 보여준다.
+    fetchSettlement(podId)
+      .catch(() => null)
+      .then((settlement) => {
+        if (settlement) {
+          navigate(`/settlements/${podId}/result`, { replace: true })
+          return
+        }
+        fetchPod(podId).then(setPod).catch(setLoadError)
+      })
+  }, [podId, navigate, reloadKey])
 
   // 미리보기용 사진 주소(blob:)는 브라우저 메모리를 잡아먹으므로, 바뀌거나 화면을 떠날 때 해제
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl])
 
-  if (loadError) return <Message text={loadError} podId={podId} />
+  if (isBuildingAccessDenied(loadError)) return <AccessDeniedView pageTitle="정산" what="팟" />
+  if (loadError) {
+    return <Message text={`팟 정보를 불러오지 못했어요. (${loadError.message})`} podId={podId} onRetry={() => setReloadKey((k) => k + 1)} />
+  }
   if (!pod) return <Message text="팟 정보를 불러오는 중이에요…" />
   if (pod.hostUserId !== getMyUserId()) {
     return <Message text="정산은 팟장만 진행할 수 있어요. 팟장이 영수증을 올리면 정산 금액을 알려드릴게요." podId={podId} />
@@ -95,6 +105,8 @@ export default function SettlementPage() {
   const validAmount = Number.isInteger(cost) && cost > 0
   const preview = previewSettlement(validAmount ? cost : 0, pod.commissionRate, pod.participantCount)
   const feePerPerson = preview.perPersonAmount - preview.baseShare
+  const linkError = paymentLinkError(paymentLink)
+  const unitShare = unitShareText(pod)
 
   const handleConfirm = async () => {
     setConfirming(true)
@@ -131,6 +143,7 @@ export default function SettlementPage() {
             <h2 className={styles.title}>영수증을 등록해주세요</h2>
             <p className={styles.body}>
               <strong>{pod.title}</strong> 구매 영수증의 결제 금액을 자동으로 읽어드려요.
+              {unitShare && ` 이웃들은 ${unitShare} 미개봉 상태로 가져가요.`}
             </p>
           </div>
 
@@ -271,7 +284,11 @@ export default function SettlementPage() {
               onChange={(e) => setPaymentLink(e.target.value)}
               aria-label="송금 링크 또는 계좌"
             />
-            {paymentLink.trim() && <LinkPreview link={paymentLink} />}
+            {linkError ? (
+              <p className={styles.error}>{linkError}</p>
+            ) : (
+              paymentLink.trim() && <LinkPreview link={paymentLink} />
+            )}
             <label className={styles.rememberRow}>
               <input type="checkbox" checked={rememberLink} onChange={(e) => setRememberLink(e.target.checked)} />
               이 정보를 다음 정산에도 기본으로 사용
@@ -297,7 +314,7 @@ export default function SettlementPage() {
           <button
             type="button"
             className={styles.primaryButton}
-            disabled={!validAmount || confirming}
+            disabled={!validAmount || confirming || Boolean(linkError)}
             onClick={handleConfirm}
           >
             {confirming ? '정산 확정 중…' : `1인 ${preview.perPersonAmount.toLocaleString()}원으로 정산하기`}
@@ -321,12 +338,17 @@ function LinkPreview({ link }) {
   )
 }
 
-function Message({ text, podId }) {
+function Message({ text, podId, onRetry }) {
   return (
     <div className={styles.page}>
       <PageHeader title="정산" />
       <div className={styles.message}>
         <p>{text}</p>
+        {onRetry && (
+          <button type="button" className={styles.secondaryButton} onClick={onRetry}>
+            <Icon name="refresh" size={18} /> 다시 시도
+          </button>
+        )}
         {podId && (
           <Link to={`/pods/${podId}`} className={styles.textLink}>
             팟 상세로 가기

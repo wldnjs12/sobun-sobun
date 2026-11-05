@@ -19,6 +19,14 @@
   text-align: center;
 }
 
+/* 에러 + [다시 불러오기] 버튼을 묶을 때 */
+div.stateText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .errorText {
   margin: 0;
   color: #ba1a1a;
@@ -76,6 +84,17 @@
   color: var(--color-on-surface-variant);
   font-size: 14px;
   line-height: 1.6;
+}
+
+/* 위치 권한 켜는 방법 단계 안내 */
+.gate ol {
+  max-width: 280px;
+  margin: 0 0 var(--space-sm);
+  padding-left: 20px;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+  line-height: 1.7;
+  text-align: left;
 }
 
 .gateIcon {

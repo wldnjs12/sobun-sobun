@@ -250,3 +250,23 @@
   color: var(--color-on-secondary-container);
   font-weight: 700;
 }
+
+/* ── 2026-11: 카테고리 배지·나눔 문구·비활성 카드 ── */
+.cardInactive {
+  opacity: 0.7;
+}
+
+.categoryBadge {
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.shareText {
+  color: var(--color-on-surface-variant);
+  font-size: 12px;
+  font-weight: 600;
+}

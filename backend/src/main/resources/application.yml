@@ -43,6 +43,9 @@ naver:
 # 주소+GPS 건물 인증 온보딩(① 지원). 키가 없으면 각 Config가 Stub 구현체를 자동 선택한다.
 juso:
   api-key: ${JUSO_API_KEY:}
+address-search:
+  # true면 Juso 장애(키 오류·타임아웃) 시 실패 대신 Stub 가짜 주소를 보여준다. 시연용, 기본 꺼짐.
+  demo-fallback: ${ADDRESS_DEMO_FALLBACK:false}
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
 location-check:

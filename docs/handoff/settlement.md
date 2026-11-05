@@ -2,7 +2,7 @@
 
 > ⚠️ **참고**: 2026-10-03 기획 개편으로 ③정산에 "건물 소속 검증"과 `hostPaymentLink` 프론트 UI가 추가될 예정입니다. 이 문서의 나머지 내용(OCR, 정산 계산)은 여전히 유효합니다 — 변경분은 [features/03-settlement.md](../features/03-settlement.md) 참고.
 
-담당: 문소원(백엔드) · 프론트 페어: 홍수진 · PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
+PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
 
 _최종 갱신: 2026-10-03_
 
@@ -137,7 +137,7 @@ Content-Type: application/json
    - `application-local.yml`은 **local 프로필로 실행해야** 읽힌다: `./gradlew bootRun --args='--spring.profiles.active=local'`. 기동 로그에 `The following 1 profile is active: "local"`과 `영수증 OCR: Naver Clova OCR(General) 사용`이 둘 다 보이면 실제 OCR이다.
    - **Invoke URL은 콘솔(CLOVA OCR → General 도메인 → API Gateway 연동)에서 그대로 복사**한다. `https://`로 시작하고 `/general`로 끝나야 한다. `http://`로 적으면 연결 단계에서 막혀 약 3초(연결 타임아웃) 뒤 `success=false`가 온다.
    - 키와 Invoke URL은 커밋·로그·채팅에 남기지 않는다. 서버도 실패 로그에 예외 종류만 남기도록 되어 있다.
-3. **테스트 건물**: 팟 생성에는 `building` 행이 필요하다 (② 서버가 `buildingId` 존재 검증). 앱을 한 번 실행해 테이블이 만들어진 뒤 [qr-auth 핸드오프](./qr-auth.md) 4번처럼 건물을 넣는다.
+3. **테스트 건물**: 팟 생성에는 `building` 행이 필요하다 (② 서버가 `buildingId` 존재 검증). 앱을 한 번 실행해 테이블이 만들어진 뒤 앱에서 주소 검색 → 건물 등록으로 건물을 만든다(키가 없으면 Stub 주소 목록).
 4. **전체 흐름** (건물 id=1, 사용자 1=대표, 2·3=참여자 기준):
    ```bash
    # 팟 생성 (참여자 0명으로 시작) → 응답의 data.id가 podId
@@ -201,15 +201,15 @@ Content-Type: application/json
 
 ## 7. 누가 알아야 하나
 
-- **홍수진 (프론트, 정산 화면 S8~S12)**
+- **정산 화면(프론트, S8~S12) 작업자**
   - 영수증 업로드 응답은 OCR이 실패해도 바깥 `success`가 `true`다. **`data.success === false`면 수동 입력 폼으로 전환**하고, `recognizedAmount`가 있으면 입력칸에 미리 채운다.
   - 공용 `src/api/client.js`의 `api.post`는 `Content-Type: application/json`을 고정하고 `JSON.stringify`를 해서 **파일 업로드에 쓸 수 없다**. `FormData`에 `receipt`로 담아 `fetch`를 직접 호출하고, `Content-Type`은 지정하지 않는다 (브라우저가 boundary를 붙임).
   - 확정 거절(400)은 `message`를 그대로 보여주면 된다. 화면에 쓸 값은 `finalAmount`, `perPersonAmount`, `participantCount`.
-- **최지원 (② 팟 백엔드)**
+- **② 팟 백엔드 작업자**
   - 정산은 `Pod` 엔티티의 **`participantCount` 필드(Integer)** 를 JPQL 문자열로 읽는다. 필드 이름·타입을 바꾸거나 참여자 수 의미를 바꾸면(예: 대표 제외) 컴파일은 되지만 **실행 중 정산 확정이 깨진다** (정산 테스트는 이 조회를 mock으로 대체해서 못 잡음).
   - 정산 확정은 `closed`를 확인하지 않는다. 확정 후에도 팟이 열려 있으면 참여/취소로 인원이 바뀔 수 있으니, "마감된 팟만 확정" 규칙을 어디서 막을지 같이 정해야 한다.
   - `PodRepository`가 develop에 들어왔으니 `PodTableParticipantCountReader`를 그쪽으로 교체해도 될지 확인 부탁.
-- **도우현 (프론트, 팟 화면)**
+- **팟 화면(프론트) 작업자**
   - 팟장이 마감한 뒤 `/settlements/:podId`로 이동한다 (PR #4 `PodCompletePage`의 "영수증 올리고 정산 요청하기" 버튼). 경로 파라미터는 **팟 id**다.
   - 정산 참여자 수는 서버의 `participantCount`를 그대로 쓰기 때문에, 팟 생성 직후 팟장 참여(`joinPod`)가 실패해서 0명으로 남으면 마감도 정산도 안 된다.
   - 정산 결과를 지금은 팟장 브라우저 localStorage(`getSavedSettlement`)에만 두고 있다. `GET /settlements/{podId}`로 바꿔야 다른 기기의 참여자도 결과를 본다. 바꿀 곳: `SettlementResultPage.jsx`(state 없을 때 조회, `null`이면 대기 화면), `SettlementPage.jsx`(진입 시 이미 정산했는지 확인), `MyPage.jsx`(팟별 정산 상태).
@@ -223,6 +223,6 @@ Content-Type: application/json
 - [x] 실제 Clova OCR 키로 영수증 인식 확인 (1장, 27,600원 일치 · 단색 이미지 실패 처리 확인)
 - [ ] 다른 형식의 영수증 몇 장 더 인식률 확인 (데모용 영수증 사진으로 리허설 때 1번 이상)
 - [x] 로컬 DB에서 4번 전체 흐름 curl 확인 (Stub OCR 기준)
-- [ ] 정산 확정을 마감된 팟에만 허용할지 지원님과 결정
+- [ ] 정산 확정을 마감된 팟에만 허용할지 팟 담당과 결정
 - [x] 확정 결과 조회 API `GET /settlements/{podId}` (PR #7)
-- [ ] 프론트 3곳을 `getSavedSettlement` 대신 결과 조회 API로 전환 (도우현)
+- [ ] 프론트 3곳을 `getSavedSettlement` 대신 결과 조회 API로 전환

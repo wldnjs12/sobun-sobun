@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import styles from './BottomNav.module.css'
 
-// 기획 개편(design-changes.md S15): 홈·최저가·마이 → 팟·커뮤니티·내 팟·마이
+// 하단 탭: 팟·커뮤니티·내 팟·마이 (docs/PRODUCT_SPEC.md 화면 명세)
 const TABS = [
   { to: '/home', icon: 'shopping_basket', label: '팟' },
   { to: '/community', icon: 'forum', label: '커뮤니티' },

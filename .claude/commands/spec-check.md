@@ -1,6 +1,6 @@
 ---
 description: 현재 브랜치의 변경사항을 관련 기획/설계 문서와 대조해서 확인합니다 (읽기 전용, 코드 수정 없음)
-argument-hint: "[기능 키워드 (예: pod, auth, settlement, product) — 생략 시 변경 파일로 자동 추정]"
+argument-hint: "[기능 키워드 (예: pod, auth, settlement, community) — 생략 시 변경 파일로 자동 추정]"
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Read, Glob, Grep
 ---
 
@@ -9,9 +9,10 @@ allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git b
 1. `git branch --show-current`로 브랜치 확인, `git diff develop...HEAD --stat`과 `git log develop..HEAD --oneline`으로 이번 브랜치에서 무엇이 바뀌었는지 파악해.
 2. 어떤 기능인지 정해:
    - 인자($ARGUMENTS)가 있으면 그걸 키워드로 써.
-   - 없으면 바뀐 파일 경로로 추정해 (`backend/.../auth` → ①, `backend/.../pod` → ②, `backend/.../settlement` → ③, `backend/.../product` → ④).
+   - 없으면 바뀐 파일 경로로 추정해 (`backend/.../auth` → ①, `backend/.../pod` → ②, `backend/.../settlement` → ③, `backend/.../community` → ⑤).
 3. 아래 문서 중 관련된 것들을 읽어:
-   - `docs/features/01-onboarding.md` / `02-pod.md` / `03-settlement.md` / `04-product-search.md` 중 해당하는 것
+   - `docs/PRODUCT_SPEC.md` (기준 문서 — 화면 동작·정책·결정 기록)
+   - `docs/features/01-onboarding.md` / `02-pod.md` / `03-settlement.md` / `05-community.md` 중 해당하는 것 (배경 참고용, 충돌하면 PRODUCT_SPEC 우선)
    - `docs/API_SPEC.md`의 해당 기능 섹션 (엔드포인트, 요청/응답 모양)
    - `docs/ERD.md`의 관련 엔티티
    - 루트 `CLAUDE.md` (패키지 구조, `ApiResponse<T>` 규칙, 브랜치 규칙 등 공통 컨벤션)
