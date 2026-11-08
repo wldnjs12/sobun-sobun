@@ -1,5 +1,6 @@
 import Icon from '../../components/Icon.jsx'
-import { categoryIcon, podImage } from './podApi.js'
+import { categoryIcon } from './podApi.js'
+import usePodPhoto from './usePodPhoto.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
 import styles from './PodCard.module.css'
 
@@ -11,7 +12,7 @@ const STATUS_LABEL = { CLOSED: '모집 마감', CANCELLED: '모집 취소' }
  */
 export default function PodCard({ pod, onJoin }) {
   const remainingText = useRemainingTime(pod.deadline)
-  const imageUrl = podImage(pod)
+  const imageUrl = usePodPhoto(pod)
 
   // 목록에서는 "다 모이면 이 가격"을 보여주려고 목표 인원으로 나눈다
   const perPersonPrice = calcPerPersonPrice(pod.totalAmount, pod.commissionRate, pod.targetParticipantCount)

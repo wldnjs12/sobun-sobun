@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { connectPodSocket } from '../../api/socket.js'
@@ -7,7 +7,8 @@ import { isBuildingAccessDenied } from '../../api/client.js'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import JoinConfirmSheet from './JoinConfirmSheet.jsx'
 import useLocationCheck from '../onboarding/useLocationCheck.jsx'
-import { cancelJoinPod, cancelPod, categoryIcon, closePod, fetchMyParticipation, fetchPod, joinPod, podImage } from './podApi.js'
+import { cancelJoinPod, cancelPod, categoryIcon, closePod, fetchMyParticipation, fetchPod, joinPod } from './podApi.js'
+import usePodPhoto from './usePodPhoto.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
 import styles from './PodDetailPage.module.css'
 
@@ -33,7 +34,10 @@ export default function PodDetailPage() {
   // 화면 안에서 띄우는 확인 패널: null | 'cancelPod' | 'close' | 'leave'
   const [confirming, setConfirming] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [notice, setNotice] = useState(null)
+  // 개설 화면에서 "사진만 못 올렸어요" 같은 안내를 state로 넘겨주면 첫 화면에 띄운다
+  const [notice, setNotice] = useState(useLocation().state?.notice ?? null)
+  // 훅은 아래 early return(에러·로딩)보다 먼저 불러야 한다 — pod가 아직 null이어도 괜찮다
+  const photoUrl = usePodPhoto(pod)
 
   // 소켓 콜백 안에서 "직전 상태"를 알아야 무엇이 바뀌었는지 알 수 있다.
   // useState 값은 콜백이 만들어질 때의 값으로 굳어버리므로, 항상 최신값을 담는 useRef를 쓴다.
@@ -207,8 +211,8 @@ export default function PodDetailPage() {
         </div>
 
         <div className={styles.gallery}>
-          {podImage(pod) ? (
-            <img src={podImage(pod)} alt="" className={styles.galleryImage} />
+          {photoUrl ? (
+            <img src={photoUrl} alt="" className={styles.galleryImage} />
           ) : (
             <Icon name={categoryIcon(pod.category)} size={56} className={styles.galleryPlaceholder} />
           )}

@@ -221,4 +221,28 @@ class PodTest {
 
         assertThatThrownBy(() -> pod.update(100L, false, titleOnly("x"))).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void 사진을_올릴_때마다_버전이_1씩_오르고_삭제하면_null이_된다() {
+        Pod pod = newPod(3);
+        assertThat(pod.getImageVersion()).isNull();
+
+        pod.changeImage(100L, false);
+        pod.changeImage(100L, false);
+        assertThat(pod.getImageVersion()).isEqualTo(2);
+
+        pod.removeImage(100L, false);
+        assertThat(pod.getImageVersion()).isNull();
+    }
+
+    @Test
+    void 사진은_글_수정과_같은_조건에서만_바꿀_수_있다() {
+        Pod pod = newPod(3);
+
+        assertThatThrownBy(() -> pod.changeImage(999L, false)).isInstanceOf(PodForbiddenException.class);
+        assertThatThrownBy(() -> pod.changeImage(100L, true)).isInstanceOf(IllegalStateException.class);
+        pod.cancel(100L);
+        assertThatThrownBy(() -> pod.changeImage(100L, false)).isInstanceOf(IllegalStateException.class);
+        assertThat(pod.getImageVersion()).isNull();
+    }
 }
