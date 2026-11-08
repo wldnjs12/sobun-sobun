@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
 import { fetchMyParticipation, fetchPod, markPickedUp } from '../pod/podApi.js'
@@ -8,7 +8,10 @@ import styles from './Settlement.module.css'
 
 /**
  * 비대면 픽업 안내 (S12 · Stitch 13번).
- * 확인 번호(Pod.pickupPin)는 참여자에게만 내려오고(GET /pods/{id}/me), 수령 완료는 자가신고(POST /pods/{id}/picked-up)다.
+ * 수령 완료는 자가신고(POST /pods/{id}/picked-up)다. 누르면 완료 팝업을 띄우고 건물 홈 / 내 팟으로 보낸다.
+ *
+ * 2026-11-08: 픽업 확인 번호(PIN) 표시를 뺐다. 팟 하나에 번호가 하나뿐이고(참여자 모두 같은 번호),
+ * 보관함도 대표의 번호 확인 화면도 없어서 아무도 확인하지 않는 숫자였다. 서버의 pickupPin 필드는 API 호환을 위해 그대로 둔다.
  *
  * 2026-11 개편:
  *   - 건물 안 어디서 받는지는 팟마다 달라서, 팟장이 적은 pickupNote(예 "1층 공동현관 앞")를 그대로 보여준다.
@@ -24,6 +27,8 @@ export default function PickupPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const [pickingUp, setPickingUp] = useState(false)
   const [error, setError] = useState(null)
+  const [showDone, setShowDone] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setLoadError(null)
@@ -40,6 +45,7 @@ export default function PickupPage() {
     setError(null)
     try {
       setParticipation(await markPickedUp(podId))
+      setShowDone(true)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -130,19 +136,6 @@ export default function PickupPage() {
               <strong>{spot ?? '팟장이 아직 픽업 장소를 적지 않았어요'}</strong>
             </div>
           </div>
-          <div className={styles.pinBox}>
-            <span className={styles.resultLabel}>
-              <Icon name="pin" size={16} /> 픽업 확인 번호
-            </span>
-            {participation.pickupPin ? (
-              <strong className={styles.pinValue}>{participation.pickupPin}</strong>
-            ) : (
-              <strong className={styles.pinPending}>번호가 아직 없어요</strong>
-            )}
-            <span className={styles.pinHint}>
-              이 팟 참여자만 볼 수 있는 번호예요. 보관함을 쓰면 비밀번호로, 아니면 내 몫 확인용으로 써요.
-            </span>
-          </div>
         </section>
 
         <section className={styles.breakdown}>
@@ -192,6 +185,49 @@ export default function PickupPage() {
           {pickedUp ? '수령 완료! 잘 쓰세요' : pickingUp ? '처리 중…' : '물건을 꺼냈어요 · 수령 완료'}
         </button>
       </div>
+
+      {showDone && (
+        <PickupDonePopup
+          title={pod.title}
+          unitShare={unitShare}
+          onHome={() => navigate('/home', { replace: true })}
+          onMyPods={() => navigate('/my-pods', { replace: true })}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * [수령 완료]를 누른 직후 뜨는 완료 팝업. 그냥 버튼 글자만 바뀌면 "눌린 건지" 알기 어려워서,
+ * 끝났다는 걸 확실히 보여주고 다음 갈 곳(건물 홈 / 내 팟)을 고르게 한다.
+ * navigate에 replace를 쓰는 이유: 뒤로 가기를 눌렀을 때 이미 끝난 픽업 화면으로 되돌아오지 않게.
+ */
+function PickupDonePopup({ title, unitShare, onHome, onMyPods }) {
+  return (
+    <div className={styles.popupBackdrop}>
+      <section className={styles.popup} role="alertdialog" aria-modal="true" aria-labelledby="pickup-done-title">
+        <span className={styles.popupIcon}>
+          <Icon name="check_circle" size={40} />
+        </span>
+        <h2 id="pickup-done-title" className={styles.popupTitle}>
+          수령 완료!
+        </h2>
+        <p className={styles.popupBody}>
+          <b>{title}</b>
+          {unitShare ? ` · ${unitShare}` : ''}
+          <br />
+          내 몫을 잘 받았어요.
+          <br />
+          팟장에게도 수령 완료로 표시돼요.
+        </p>
+        <button type="button" className={styles.primaryButton} onClick={onHome} autoFocus>
+          <Icon name="home" size={20} /> 건물 홈으로
+        </button>
+        <button type="button" className={styles.popupSecondary} onClick={onMyPods}>
+          내 팟에서 보기
+        </button>
+      </section>
     </div>
   )
 }

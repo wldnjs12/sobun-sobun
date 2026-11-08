@@ -4,7 +4,12 @@
 
 PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
 
-_최종 갱신: 2026-10-03_
+_최종 갱신: 2026-11-08 · 브랜치: feature/pickup-done-popup_
+
+> **2026-11-08 픽업 화면 변경** (`frontend/src/features/settlement/PickupPage.jsx`)
+> - [물건을 꺼냈어요 · 수령 완료]를 누르면 "수령 완료!" 팝업이 뜬다. 팝업에서 [건물 홈으로](`/home`) 또는 [내 팟에서 보기](`/my-pods`)로 이동한다. 이동할 때 `replace`를 써서 뒤로 가기로 픽업 화면에 돌아오지 않게 했다.
+> - 픽업 확인 번호(PIN) 표시를 뺐다(PRODUCT_SPEC **D27**). 팟당 번호가 하나라 확인 수단이 못 됐기 때문이다. 서버 `pickupPin`과 `GET /pods/{id}/me` 응답은 호환을 위해 그대로 두었다.
+> - 아직 화면으로는 확인하지 못했다. 배포 후 리허설에서 폰으로 확인한다.
 
 ## 1. 한 줄 요약
 

@@ -557,34 +557,6 @@
   color: var(--color-on-primary);
 }
 
-.pinBox {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--space-md);
-  border: 2px dashed var(--color-primary-fixed-dim);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-}
-
-.pinPending {
-  color: var(--color-primary);
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.pinValue {
-  color: var(--color-primary);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-}
-
-.pinHint {
-  color: var(--color-on-surface-variant);
-  font-size: 12px;
-}
-
 .pickupSteps {
   display: flex;
   flex-direction: column;
@@ -1044,4 +1016,79 @@
 .statusWaiting {
   background: var(--color-secondary-fixed);
   color: var(--color-secondary);
+}
+
+/* ── 수령 완료 팝업 (2026-11-08) ── */
+.popupBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(11, 28, 48, 0.45);
+  animation: popupFade 0.2s ease-out;
+}
+
+.popup {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg, 24px) var(--space-md);
+  border-radius: 24px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  animation: popupRise 0.25s ease-out;
+}
+
+.popupIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+.popupTitle {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.popupBody {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.popupBody b {
+  color: var(--color-on-surface);
+}
+
+.popupSecondary {
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+@keyframes popupFade {
+  from { opacity: 0; }
+}
+
+@keyframes popupRise {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
 }
