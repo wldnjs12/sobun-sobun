@@ -210,7 +210,7 @@ export default function SettlementPage() {
       ) : (
         <main className={styles.mainWithCta}>
           <div>
-            <span className={styles.eyebrow}>🧾 영수증 금액 확인</span>
+            <span className={styles.eyebrow}>영수증 금액 확인</span>
             <h2 className={styles.title}>금액을 확인해주세요</h2>
             <p className={styles.body}>
               {ocrFailed

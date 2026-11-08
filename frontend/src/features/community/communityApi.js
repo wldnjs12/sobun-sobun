@@ -19,10 +19,10 @@ import { BUILDING } from '../pod/podApi.js'
 const USE_MOCK = false
 
 export const CATEGORIES = [
-  { key: 'GROUP_BUY_SUGGESTION', label: '공구 제안', emoji: '🔥' },
-  { key: 'SHARE', label: '나눔', emoji: '🎁' },
-  { key: 'QUESTION', label: '질문', emoji: '💬' },
-  { key: 'FREE', label: '자유', emoji: '☕' },
+  { key: 'GROUP_BUY_SUGGESTION', label: '공구 제안' },
+  { key: 'SHARE', label: '나눔' },
+  { key: 'QUESTION', label: '질문' },
+  { key: 'FREE', label: '자유' },
 ]
 export const categoryOf = (key) => CATEGORIES.find((c) => c.key === key) ?? CATEGORIES[3]
 
@@ -120,7 +120,7 @@ function seed() {
         id: 2, buildingId: null, author: 9007, category: 'GROUP_BUY_SUGGESTION', createdAt: ago(15), reports: [], hidden: false,
         content: '생수 2L×24병 나눠요! (1인 6병씩)\n6병 묶음 4팩이라 뜯지 않고 1팩씩 나누면 돼요. 비닐 포장 그대로라 위생 걱정 없어요.',
         comments: [
-          { id: 21, author: 9012, content: '저도 참여하고 싶어요! 팟 열어주시면 바로 들어갈게요 🙌', createdAt: ago(8), reports: [], hidden: false },
+          { id: 21, author: 9012, content: '저도 참여하고 싶어요! 팟 열어주시면 바로 들어갈게요', createdAt: ago(8), reports: [], hidden: false },
           { id: 22, author: 9007, content: '감사해요! 팟 열기 버튼으로 바로 개설할게요', createdAt: ago(3), reports: [], hidden: false },
         ],
       },

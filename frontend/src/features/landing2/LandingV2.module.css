@@ -1044,7 +1044,7 @@
 
 .packItem {
   position: relative;
-  font-size: 40px;
+  color: #3b5b85;
   filter: drop-shadow(0 6px 8px rgba(11, 28, 48, 0.25));
 }
 

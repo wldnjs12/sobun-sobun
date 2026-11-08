@@ -411,7 +411,8 @@
 }
 
 .hostEmoji {
-  font-size: 20px;
+  flex-shrink: 0;
+  color: var(--color-primary);
 }
 
 .hostTitle {

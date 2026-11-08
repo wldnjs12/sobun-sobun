@@ -70,7 +70,7 @@ export default function CommunityWritePage() {
               className={`${styles.segmentItem} ${category === c.key ? styles.segmentActive : ''}`}
               onClick={() => setCategory(c.key)}
             >
-              {c.emoji} {c.label}
+              {c.label}
             </button>
           ))}
         </div>

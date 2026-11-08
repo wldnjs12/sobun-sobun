@@ -219,7 +219,7 @@ export default function PodCompletePage() {
         {isHost && !pod.closed && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
-              <span className={styles.hostEmoji}>🏁</span>
+              <Icon name="flag" size={22} className={styles.hostEmoji} />
               <div>
                 <h4 className={styles.hostTitle}>모집을 마감해주세요</h4>
                 <p className={styles.hostBody}>
@@ -251,7 +251,7 @@ export default function PodCompletePage() {
         {settlement && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
-              <span className={styles.hostEmoji}>🧾</span>
+              <Icon name="receipt_long" size={22} className={styles.hostEmoji} />
               <div>
                 <h4 className={styles.hostTitle}>정산이 확정됐어요</h4>
                 <p className={styles.hostBody}>
@@ -274,7 +274,7 @@ export default function PodCompletePage() {
         {isHost && pod.closed && !settlement && (
           <section className={styles.hostCard}>
             <div className={styles.hostHeader}>
-              <span className={styles.hostEmoji}>🛍️</span>
+              <Icon name="shopping_bag" size={22} className={styles.hostEmoji} />
               <div>
                 <h4 className={styles.hostTitle}>대표 확인 필요</h4>
                 <p className={styles.hostBody}>
