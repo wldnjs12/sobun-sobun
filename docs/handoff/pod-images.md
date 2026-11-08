@@ -1,6 +1,6 @@
 # 핸드오프: ② 팟 예시 사진 + 학교 시연 데이터
 
-_최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/demo-script → feature/fee-label-no-emoji → feature/empty-slot-icon → feature/demo-script-refresh_
+_최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/demo-script → feature/fee-label-no-emoji → feature/empty-slot-icon → feature/demo-script-refresh → feature/remove-ui-emoji_
 
 > **시연 대본·루트는 [../DEMO_SCRIPT.md](../DEMO_SCRIPT.md)** (2026-11-08 갱신). 노트북(sobun01, 대표) + 폰(sobun02, 참여자)이 키친타월 팟 하나로 개설 → 실시간 참여 → 정산 → 픽업까지 진행하는 3~4분 구성이다. 2026-11-08에 리허설 데이터를 재시드했다. 모집 중인 팟은 모집 취소하고 처음 상태(화장지 2/3 · 생수 2/4 · 세제 1/3 · 물티슈 3/5 · 컵라면 4/4)로 새로 만들었다. 리허설 때 마감된 옛 화장지 팟(id 1)은 [내 팟]에 기록으로만 남아 있다. 같은 날 밤 최신 main(#74, 상품 사진 업로드·이모지 제거·[+ 열기] 위치 이동)에 맞춰 대본을 다시 맞췄고, 리허설용 "하리보 젤리" 팟(id 11)은 DB에서 지웠다.
 
@@ -19,6 +19,7 @@ _최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/
   - 커뮤니티 글 4개 + 댓글.
 
 - (2026-11-08) 화면 문구에서 장식용 이모지(⭐ ✨)를 뺐다. AI가 만든 티가 난다는 피드백 때문이다. 대상: 팟 개설의 수고비율 "추천" 라벨, 송금 확인 요청 완료 제목, 건물 확인 안내. 앞으로 화면 문구에는 이모지 대신 Material 아이콘(`Icon`)을 쓴다.
+- (2026-11-08) 남은 이모지도 모두 뺐다. 모집 완료 화면 대표 카드는 Material 아이콘(flag·receipt_long·shopping_bag)으로 바꿨다. 커뮤니티 카테고리 칩·배지는 글자만 남겼다(카테고리별 색 배지는 그대로). 영수증 확인 화면의 머리말에서도 이모지를 뺐다. 랜딩 `/intro2`의 궤도·상자 그림은 아이콘으로 바꿨고, 띠 문구는 글자만 남겼다(구분자 ✦ → ·). `frontend/src`에 이모지는 하나도 남지 않았다.
 - (2026-11-08) 팟 상세 참여 이웃 목록의 빈자리 아이콘을 `star`에서 `person_add`로 바꿨다. 별은 의미가 없고 장식처럼 보였는데, 사람 추가 아이콘은 "눌러서 참여"라는 뜻이 바로 보인다.
 
 ## 기획 대비 확인 (spec-check)

@@ -23,7 +23,7 @@ const SOLO_PRICE = calcPerPersonPrice(DEMO.total, DEMO.rate, 1)
 const SHARE_PRICE = calcPerPersonPrice(DEMO.total, DEMO.rate, DEMO.people)
 
 const HOOK_ITEMS = ['화장지 30롤', '생수 24병', '세탁세제 4개입', '물티슈 10팩', '키친타월 12롤']
-const MARQUEE_TOP = ['🧻 화장지', '💧 생수 2L', '🧴 샴푸', '🧺 세탁세제', '🧽 수세미', '🍜 라면', '🗑️ 쓰레기봉투', '🧼 바디워시']
+const MARQUEE_TOP = ['화장지', '생수 2L', '샴푸', '세탁세제', '수세미', '라면', '쓰레기봉투', '바디워시']
 const MARQUEE_BOTTOM = ['미개봉 그대로', '같은 건물만', '수수료 0원', '비대면 픽업', '영수증 자동 인식', '익명 커뮤니티', '실시간 참여', '수고비 5%']
 
 const STORY = [
@@ -266,11 +266,11 @@ function Hero({ reduceMotion }) {
 
         <div className={styles.heroVisual} aria-hidden="true">
           <div className={styles.orbit}>
-            <span className={styles.orbitItem} style={{ '--i': 0 }}>🧻</span>
-            <span className={styles.orbitItem} style={{ '--i': 1 }}>💧</span>
-            <span className={styles.orbitItem} style={{ '--i': 2 }}>🧴</span>
-            <span className={styles.orbitItem} style={{ '--i': 3 }}>🧺</span>
-            <span className={styles.orbitItem} style={{ '--i': 4 }}>🍜</span>
+            <span className={styles.orbitItem} style={{ '--i': 0 }}><Icon name="layers" size={28} /></span>
+            <span className={styles.orbitItem} style={{ '--i': 1 }}><Icon name="water_drop" size={28} /></span>
+            <span className={styles.orbitItem} style={{ '--i': 2 }}><Icon name="sanitizer" size={28} /></span>
+            <span className={styles.orbitItem} style={{ '--i': 3 }}><Icon name="local_laundry_service" size={28} /></span>
+            <span className={styles.orbitItem} style={{ '--i': 4 }}><Icon name="ramen_dining" size={28} /></span>
           </div>
           <RoundBlock />
           <div className={styles.priceChip}>
@@ -438,7 +438,7 @@ function Marquee() {
         <div className={`${styles.marqueeTrack} ${styles.marqueeReverse}`}>
           {[...MARQUEE_BOTTOM, ...MARQUEE_BOTTOM].map((item, i) => (
             <span key={i} className={styles.marqueeWord}>
-              {item} <i>✦</i>
+              {item} <i>·</i>
             </span>
           ))}
         </div>
@@ -629,7 +629,7 @@ function StorySlider({ reduceMotion }) {
                 {/* 뜯지 않은 상자: 사람마다 색이 다른 봉인 테이프 + 품목 하나 + "미개봉" 표시 */}
                 <div className={styles.packBox}>
                   <span className={styles.packTape} />
-                  <span className={styles.packItem}>🧻</span>
+                  <Icon name="layers" size={40} className={styles.packItem} />
                   <span className={styles.packSeal}>
                     <Icon name="verified" size={12} filled /> 미개봉
                   </span>

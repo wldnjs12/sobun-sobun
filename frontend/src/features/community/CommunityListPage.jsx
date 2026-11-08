@@ -70,7 +70,7 @@ export default function CommunityListPage() {
                 className={`${styles.chip} ${category === c.key ? styles.chipActive : ''}`}
                 onClick={() => setCategory(c.key)}
               >
-                {c.label} {c.emoji}
+                {c.label}
               </button>
             ))}
           </div>
@@ -147,7 +147,7 @@ function PostCard({ post }) {
           <small>{timeAgo(post.createdAt)}</small>
         </span>
         <span className={`${styles.categoryBadge} ${styles[`cat_${post.category}`]}`}>
-          {cat.emoji} {cat.label}
+          {cat.label}
         </span>
       </div>
       <h3 className={styles.cardTitle}>{title}</h3>

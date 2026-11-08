@@ -167,7 +167,7 @@ export default function CommunityDetailPage() {
       <main className={styles.detailMain}>
         <div className={styles.detailTop}>
           <span className={`${styles.categoryBadge} ${styles[`cat_${post.category}`]}`}>
-            {cat.emoji} {cat.label}
+            {cat.label}
           </span>
           <span className={styles.muted}>{timeAgo(post.createdAt)}</span>
         </div>
