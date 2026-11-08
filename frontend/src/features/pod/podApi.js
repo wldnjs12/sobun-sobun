@@ -41,6 +41,29 @@ export function categoryIcon(key) {
   return CATEGORIES.find((c) => c.key === key)?.icon ?? 'inventory_2'
 }
 
+/**
+ * 팟 카드·상세에 보여줄 예시 사진 (frontend/public/pods/, 출처는 같은 폴더 CREDITS.md).
+ * 팟에 사진 업로드 기능이 아직 없어서, 제목 키워드 → 카테고리 순으로 어울리는 사진을 고른다.
+ * 왜 키워드를 먼저 보나: "물티슈"도 "휴지·물티슈" 카테고리라 카테고리만 보면 화장지 사진이 나온다.
+ * 맞는 사진이 없으면 null → 화면은 기존처럼 카테고리 아이콘을 보여준다.
+ */
+const IMAGE_BY_KEYWORD = [
+  ['물티슈', 'wipes'],
+  ['키친타월', 'kitchen-towel'],
+  ['생수', 'water'],
+  ['라면', 'noodles'],
+  ['세제', 'detergent'],
+  ['화장지', 'tissue'],
+  ['휴지', 'tissue'],
+]
+const IMAGE_BY_CATEGORY = { TISSUE: 'tissue', LAUNDRY: 'detergent', KITCHEN: 'kitchen-towel' }
+
+export function podImage(pod) {
+  const title = pod?.title ?? ''
+  const name = IMAGE_BY_KEYWORD.find(([keyword]) => title.includes(keyword))?.[1] ?? IMAGE_BY_CATEGORY[pod?.category]
+  return name ? `/pods/${name}.jpg` : null
+}
+
 const withMe = (options = {}) => ({ ...options, headers: { 'X-User-Id': String(getMyUserId()), ...options.headers } })
 
 /** 서버 Pod 응답 → 화면용 객체 */

@@ -7,7 +7,7 @@ import { isBuildingAccessDenied } from '../../api/client.js'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import JoinConfirmSheet from './JoinConfirmSheet.jsx'
 import useLocationCheck from '../onboarding/useLocationCheck.jsx'
-import { cancelJoinPod, cancelPod, categoryIcon, closePod, fetchMyParticipation, fetchPod, joinPod } from './podApi.js'
+import { cancelJoinPod, cancelPod, categoryIcon, closePod, fetchMyParticipation, fetchPod, joinPod, podImage } from './podApi.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
 import styles from './PodDetailPage.module.css'
 
@@ -207,7 +207,11 @@ export default function PodDetailPage() {
         </div>
 
         <div className={styles.gallery}>
-          <Icon name={categoryIcon(pod.category)} size={56} className={styles.galleryPlaceholder} />
+          {podImage(pod) ? (
+            <img src={podImage(pod)} alt="" className={styles.galleryImage} />
+          ) : (
+            <Icon name={categoryIcon(pod.category)} size={56} className={styles.galleryPlaceholder} />
+          )}
           <span className={styles.galleryTag}>{pod.shareLabel}</span>
         </div>
 

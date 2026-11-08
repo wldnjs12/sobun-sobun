@@ -1,5 +1,5 @@
 import Icon from '../../components/Icon.jsx'
-import { categoryIcon } from './podApi.js'
+import { categoryIcon, podImage } from './podApi.js'
 import { calcDiscountRate, calcPerPersonPrice, useRemainingTime } from './podUtils.js'
 import styles from './PodCard.module.css'
 
@@ -11,6 +11,7 @@ const STATUS_LABEL = { CLOSED: '모집 마감', CANCELLED: '모집 취소' }
  */
 export default function PodCard({ pod, onJoin }) {
   const remainingText = useRemainingTime(pod.deadline)
+  const imageUrl = podImage(pod)
 
   // 목록에서는 "다 모이면 이 가격"을 보여주려고 목표 인원으로 나눈다
   const perPersonPrice = calcPerPersonPrice(pod.totalAmount, pod.commissionRate, pod.targetParticipantCount)
@@ -28,7 +29,11 @@ export default function PodCard({ pod, onJoin }) {
     <article className={`${styles.card} ${isOpen ? '' : styles.cardInactive}`}>
       <div className={styles.top}>
         <div className={styles.thumbnail}>
-          <Icon name={categoryIcon(pod.category)} size={36} className={styles.thumbnailPlaceholder} />
+          {imageUrl ? (
+            <img src={imageUrl} alt="" className={styles.thumbnailImage} loading="lazy" />
+          ) : (
+            <Icon name={categoryIcon(pod.category)} size={36} className={styles.thumbnailPlaceholder} />
+          )}
           <span className={styles.unitBadge}>{pod.shareLabel}</span>
         </div>
 
