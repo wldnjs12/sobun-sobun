@@ -83,6 +83,13 @@ public class Pod {
     @Column(length = 20)
     private PodStatus status;
 
+    /**
+     * 대표가 올린 상품 사진의 버전. null이면 사진 없음 → 프론트가 예시 사진이나 카테고리 아이콘을 보여준다.
+     * 사진 바이트는 PodImage(pod_image 테이블)에 따로 둔다 — 목록을 불러올 때마다 사진까지 읽지 않으려고.
+     * 사진을 바꿀 때마다 1씩 올라가서, 프론트가 캐시해 둔 옛 사진 대신 새 사진을 받아오게 한다.
+     */
+    private Integer imageVersion;
+
     @Builder
     public Pod(Long buildingId, Long hostUserId, String title, BigDecimal totalAmount,
                Integer targetParticipantCount, BigDecimal commissionRate, LocalDateTime deadline,
@@ -197,11 +204,20 @@ public class Pod {
         status = PodStatus.CANCELLED;
     }
 
-    /**
-     * 대표의 글 수정. 모집중이고 대표 외 참여자가 없을 때만 가능하다
-     * (이미 참여한 이웃은 바뀌기 전 조건을 보고 들어왔기 때문). null인 값은 바꾸지 않는다.
-     */
-    public void update(Long requesterId, boolean hasOtherParticipants, PodUpdate change) {
+    /** 대표의 상품 사진 등록·교체. 글 수정과 같은 조건 — 이웃이 보고 참여한 사진이 나중에 바뀌면 안 되므로. */
+    public void changeImage(Long requesterId, boolean hasOtherParticipants) {
+        requireEditable(requesterId, hasOtherParticipants);
+        imageVersion = imageVersion == null ? 1 : imageVersion + 1;
+    }
+
+    /** 대표의 상품 사진 삭제. 조건은 changeImage와 같다. */
+    public void removeImage(Long requesterId, boolean hasOtherParticipants) {
+        requireEditable(requesterId, hasOtherParticipants);
+        imageVersion = null;
+    }
+
+    /** 글·사진을 고칠 수 있는 조건: 대표 + 모집중 + 대표 외 참여자 없음 (PRODUCT_SPEC D10) */
+    private void requireEditable(Long requesterId, boolean hasOtherParticipants) {
         if (!isHost(requesterId)) {
             throw new PodForbiddenException("대표만 글을 수정할 수 있어요.");
         }
@@ -211,6 +227,14 @@ public class Pod {
         if (hasOtherParticipants) {
             throw new IllegalStateException("이미 참여한 이웃이 있어서 수정할 수 없어요.");
         }
+    }
+
+    /**
+     * 대표의 글 수정. 모집중이고 대표 외 참여자가 없을 때만 가능하다
+     * (이미 참여한 이웃은 바뀌기 전 조건을 보고 들어왔기 때문). null인 값은 바꾸지 않는다.
+     */
+    public void update(Long requesterId, boolean hasOtherParticipants, PodUpdate change) {
+        requireEditable(requesterId, hasOtherParticipants);
         int newTarget = change.targetParticipantCount() != null ? change.targetParticipantCount() : targetParticipantCount;
         if (newTarget < Math.max(participantCount, 1)) {
             throw new PodRuleViolationException("목표 인원은 현재 참여 인원보다 적을 수 없어요.");

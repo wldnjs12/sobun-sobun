@@ -204,3 +204,62 @@ export async function fetchParticipants(podId) {
 export async function markPickedUp(podId) {
   return api.post(`/pods/${podId}/picked-up`, undefined, withMe())
 }
+
+/**
+ * 대표가 올린 상품 사진 (팟당 1장). 백엔드: pod/controller/PodImageController.java
+ *
+ * 사진은 <img src="/api/...">로 바로 못 띄운다 — <img>는 로그인 토큰을 못 붙여서 서버가 "같은 건물인지" 확인할 수 없기 때문.
+ * 그래서 다른 API처럼 토큰을 붙여 JSON으로 받고, 그 안의 dataUrl("data:image/jpeg;base64,...")을 src에 넣는다.
+ * 같은 사진을 화면마다 다시 받지 않도록 "팟 id + 버전"으로 기억해 둔다. 사진을 바꾸면 버전이 올라가서 새로 받는다.
+ */
+const podPhotoCache = new Map()
+
+export function fetchPodPhoto(podId, version) {
+  const key = `${podId}:${version}`
+  if (!podPhotoCache.has(key)) {
+    const request = api.get(`/pods/${podId}/image`, withMe()).then((image) => image.dataUrl)
+    // 실패한 요청은 기억하지 않는다 → 다음에 화면을 열 때 다시 시도
+    request.catch(() => podPhotoCache.delete(key))
+    podPhotoCache.set(key, request)
+  }
+  return podPhotoCache.get(key)
+}
+
+/** 사진 등록·교체 (대표만, 글 수정과 같은 조건). 올리기 전에 800px JPEG로 줄인다. 결과: imageVersion이 올라간 팟 */
+export async function uploadPodPhoto(podId, file) {
+  const formData = new FormData()
+  formData.append('image', await shrinkImage(file), 'photo.jpg')
+  return toPod(await api.upload(`/pods/${podId}/image`, formData))
+}
+
+/** 사진 삭제 → 다시 예시 사진·아이콘으로 보인다. */
+export async function deletePodPhoto(podId) {
+  return toPod(await api.delete(`/pods/${podId}/image`, withMe()))
+}
+
+/**
+ * 휴대폰 사진(보통 3~10MB)을 긴 변 800px JPEG(보통 200KB 안팎)로 줄인다. 서버 제한은 2MB.
+ * canvas에 작게 다시 그린 뒤 JPEG로 뽑는 방식이라, 사진 속 위치 정보(EXIF)도 함께 사라진다.
+ * 브라우저가 못 읽는 형식이면 원본을 그대로 보낸다 (서버가 JPG·PNG·WEBP가 아니면 거절해서 안내 문구가 뜬다).
+ */
+const MAX_PHOTO_SIDE = 800
+
+async function shrinkImage(file) {
+  let bitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch {
+    return file
+  }
+  const scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(bitmap.width * scale)
+  canvas.height = Math.round(bitmap.height * scale)
+  const context = canvas.getContext('2d')
+  context.fillStyle = '#fff' // 투명 PNG의 투명한 부분이 JPEG에서 검게 나오지 않게 흰 배경을 깐다
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  bitmap.close()
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85))
+  return blob ?? file
+}

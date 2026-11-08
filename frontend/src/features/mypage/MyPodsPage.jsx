@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import AppHeader from '../../components/AppHeader.jsx'
 import BottomNav from '../../components/BottomNav.jsx'
 import Icon from '../../components/Icon.jsx'
-import { BUILDING, categoryIcon, podImage } from '../pod/podApi.js'
+import { BUILDING, categoryIcon } from '../pod/podApi.js'
+import usePodPhoto from '../pod/usePodPhoto.js'
 import { calcPerPersonPrice } from '../pod/podUtils.js'
 import useMyPods from './useMyPods.js'
 import styles from './MyPage.module.css'
@@ -89,12 +90,7 @@ export default function MyPodsPage() {
           {visible.map(({ pod, status, role: myRole }) => (
             <Link key={pod.id} to={status.link} className={styles.item}>
               <span className={styles.thumb}>
-                {/* 건물 홈 카드(PodCard)와 같은 기준으로 사진을 고르고, 맞는 사진이 없으면 카테고리 아이콘 */}
-                {podImage(pod) ? (
-                  <img src={podImage(pod)} alt="" className={styles.thumbImage} loading="lazy" />
-                ) : (
-                  <Icon name={categoryIcon(pod.category)} size={26} />
-                )}
+                <PodThumb pod={pod} />
               </span>
               <div className={styles.itemInfo}>
                 <span className={`${styles.statusTag} ${styles[status.key] ?? ''}`}>
@@ -117,5 +113,15 @@ export default function MyPodsPage() {
 
       <BottomNav />
     </div>
+  )
+}
+
+/** 목록 한 줄의 사진. 대표가 올린 사진 → 예시 사진 → 카테고리 아이콘 순 (훅은 반복문 안에서 못 불러서 컴포넌트로 뺐다) */
+function PodThumb({ pod }) {
+  const photoUrl = usePodPhoto(pod)
+  return photoUrl ? (
+    <img src={photoUrl} alt="" className={styles.thumbImage} loading="lazy" />
+  ) : (
+    <Icon name={categoryIcon(pod.category)} size={26} />
   )
 }

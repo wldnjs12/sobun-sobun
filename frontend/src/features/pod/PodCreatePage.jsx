@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
-import { CATEGORIES, createPod, updatePod } from './podApi.js'
+import { CATEGORIES, createPod, deletePodPhoto, fetchPodPhoto, updatePod, uploadPodPhoto } from './podApi.js'
 import { calcPerPersonPrice } from './podUtils.js'
 import useLocationCheck from '../onboarding/useLocationCheck.jsx'
 import styles from './PodCreatePage.module.css'
@@ -114,6 +114,38 @@ export function PodForm({ mode = 'create', initialPod = null }) {
   const [submitTried, setSubmitTried] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState(null)
+  // 상품 사진 (선택). photo = 새로 고른 사진 { file, previewUrl }, existingPhoto = 수정 모드에서 이미 올라가 있던 사진
+  const photoInput = useRef(null)
+  const [photo, setPhoto] = useState(null)
+  const [existingPhoto, setExistingPhoto] = useState(null)
+  const [removePhoto, setRemovePhoto] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const shownPhoto = photo?.previewUrl ?? (removePhoto ? null : existingPhoto)
+
+  useEffect(() => {
+    if (initialPod?.imageVersion == null) return
+    fetchPodPhoto(initialPod.id, initialPod.imageVersion).then(setExistingPhoto).catch(() => {})
+  }, [initialPod?.id, initialPod?.imageVersion])
+
+  // 미리보기용 임시 주소(blob:)는 직접 해제해야 메모리에서 사라진다 — 사진을 바꾸거나 화면을 떠날 때 해제
+  useEffect(() => () => photo && URL.revokeObjectURL(photo.previewUrl), [photo])
+
+  const handlePhoto = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // 같은 사진을 다시 골라도 onChange가 오도록 비워둔다
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('사진 파일만 올릴 수 있어요.')
+      return
+    }
+    setPhotoError(null)
+    setPhoto({ file, previewUrl: URL.createObjectURL(file) })
+  }
+
+  const clearPhoto = () => {
+    setPhoto(null)
+    setRemovePhoto(true)
+  }
 
   const deadline = resolveDeadline(deadlineKey, customDeadline)
   const tonightPassed = new Date().getHours() >= 22
@@ -177,8 +209,17 @@ export function PodForm({ mode = 'create', initialPod = null }) {
     setServerError(null)
     try {
       const pod = await createPod(form())
+      // 사진은 팟이 생긴 뒤에 올린다(팟 id가 필요). 사진만 실패해도 팟은 이미 열렸으니 상세로 가서 안내한다.
+      let notice = null
+      if (photo) {
+        try {
+          await uploadPodPhoto(pod.id, photo.file)
+        } catch (err) {
+          notice = `공동구매는 열었지만 사진을 올리지 못했어요. 수정에서 다시 올려주세요. (${err.message})`
+        }
+      }
       // replace: 뒤로가기 했을 때 다시 생성 폼으로 돌아오지 않게 기록을 바꿔치기
-      navigate(`/pods/${pod.id}`, { replace: true })
+      navigate(`/pods/${pod.id}`, { replace: true, state: notice ? { notice } : undefined })
     } catch (err) {
       setServerError(err.message)
       setSubmitting(false)
@@ -190,6 +231,8 @@ export function PodForm({ mode = 'create', initialPod = null }) {
     setServerError(null)
     try {
       await updatePod(initialPod.id, form())
+      if (photo) await uploadPodPhoto(initialPod.id, photo.file)
+      else if (removePhoto && initialPod.imageVersion != null) await deletePodPhoto(initialPod.id)
       navigate(`/pods/${initialPod.id}`, { replace: true })
     } catch (err) {
       setServerError(err.message)
@@ -279,6 +322,33 @@ export function PodForm({ mode = 'create', initialPod = null }) {
           />
           <span className={styles.fieldHint}>{description.length}/500</span>
           <FieldError message={errorOf('description')} />
+
+          <span className={styles.fieldLabel}>상품 사진 (선택)</span>
+          <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={handlePhoto} />
+          {shownPhoto ? (
+            <div className={styles.photoPreview}>
+              <img src={shownPhoto} alt="선택한 상품 사진" className={styles.photoImage} />
+              <div className={styles.photoActions}>
+                <button type="button" className={styles.photoAction} onClick={() => photoInput.current?.click()}>
+                  <Icon name="cached" size={16} />
+                  바꾸기
+                </button>
+                <button type="button" className={styles.photoAction} onClick={clearPhoto}>
+                  <Icon name="delete" size={16} />
+                  지우기
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className={styles.photoPicker} onClick={() => photoInput.current?.click()}>
+              <Icon name="add_a_photo" size={24} />
+              사진 추가
+            </button>
+          )}
+          <p className={styles.fieldHint}>
+            안 올리면 품목에 맞는 예시 사진이 보여요. 송장처럼 주소·이름이 적힌 부분은 안 보이게 찍어주세요.
+          </p>
+          <FieldError message={photoError} />
         </section>
 
         {/* ── 개수·인원 ── */}
