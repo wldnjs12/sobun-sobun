@@ -121,7 +121,7 @@ function seed() {
         content: '생수 2L×24병 나눠요! (1인 6병씩)\n6병 묶음 4팩이라 뜯지 않고 1팩씩 나누면 돼요. 비닐 포장 그대로라 위생 걱정 없어요.',
         comments: [
           { id: 21, author: 9012, content: '저도 참여하고 싶어요! 팟 열어주시면 바로 들어갈게요 🙌', createdAt: ago(8), reports: [], hidden: false },
-          { id: 22, author: 9007, content: '감사해요! 팟 열기 버튼으로 바로 개설할게요 🎉', createdAt: ago(3), reports: [], hidden: false },
+          { id: 22, author: 9007, content: '감사해요! 팟 열기 버튼으로 바로 개설할게요', createdAt: ago(3), reports: [], hidden: false },
         ],
       },
       {

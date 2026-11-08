@@ -107,7 +107,7 @@ export default function PaymentStatusPage() {
             {unitShareText(pod) && ` · ${unitShareText(pod)} 미개봉`}
           </span>
           <h2 className={styles.title}>
-            {allPaid ? '🎉 모두 송금했어요' : `이웃 ${neighbors.length}명 중 ${paidCount}명 송금 완료`}
+            {allPaid ? '모두 송금했어요' : `이웃 ${neighbors.length}명 중 ${paidCount}명 송금 완료`}
           </h2>
           <div className={styles.statusBar}>
             <span style={{ width: `${percent}%` }} />

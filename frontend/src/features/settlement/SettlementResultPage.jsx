@@ -157,7 +157,7 @@ export default function SettlementResultPage() {
             </>
           ) : (
             <>
-              <h2 className={styles.title}>정산이 확정됐어요 🎉</h2>
+              <h2 className={styles.title}>정산이 확정됐어요</h2>
               <p className={styles.body}>
                 {isHost ? '이웃들에게 1인 금액과 송금 정보가 보여요.' : '팟장이 영수증 확인을 마쳤어요. 내 몫을 확인하고 송금해 주세요.'}
               </p>
