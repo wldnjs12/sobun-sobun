@@ -171,8 +171,8 @@ export default function PaymentStatusPage() {
 
       <div className={styles.ctaDock}>
         <button type="button" className={styles.primaryButton} onClick={() => navigate(`/pods/${podId}/pickup`)}>
-          <Icon name="key" size={20} />
-          픽업 안내·확인 번호 보기
+          <Icon name="inventory_2" size={20} />
+          물건 두기 안내 보기
         </button>
       </div>
     </div>
