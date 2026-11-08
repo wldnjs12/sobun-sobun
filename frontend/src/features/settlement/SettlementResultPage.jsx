@@ -152,7 +152,7 @@ export default function SettlementResultPage() {
           </span>
           {paid && !isHost ? (
             <>
-              <h2 className={styles.title}>송금 확인을 요청했어요 ✨</h2>
+              <h2 className={styles.title}>송금 확인을 요청했어요</h2>
               <p className={styles.body}>팟장이 입금을 확인하는 동안 픽업 장소를 미리 확인해 보세요.</p>
             </>
           ) : (
