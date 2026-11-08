@@ -6,9 +6,8 @@ _최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/
 
 > **2026-11-08 추가: 대표가 실제 상품 사진을 올릴 수 있다** (브랜치 feature/pod-photo-upload, PRODUCT_SPEC D28).
 > - 개설·수정 화면의 "상품 사진 (선택)"에서 1장. 프론트가 긴 변 800px JPEG로 줄여 `POST /api/pods/{id}/image`로 올리고, 서버는 `pod_image` 테이블(bytea)에 저장한다. `pod.image_version`이 null이 아니면 사진이 있다는 뜻.
-> - 화면(건물 홈 카드·상세·내 팟)은 `usePodPhoto(pod)` 훅 하나로 고른다: 올린 사진 → 아래 예시 사진 → 카테고리 아이콘.
+> - 화면(건물 홈 카드·상세·내 팟·참여 확인 시트·모집 완료)은 `usePodPhoto(pod)` 훅 하나로 고른다: 올린 사진 → 아래 예시 사진 → 카테고리 아이콘.
 > - 등록·교체·삭제는 글 수정과 같은 조건(대표 + 모집중 + 대표 외 참여자 없음), 조회는 같은 건물만.
-> - 아직 안 바꾼 곳: 참여 확인 시트(`JoinConfirmSheet`)와 모집 완료 화면(`PodCompletePage`)은 원래부터 `pod.imageUrl`(항상 null)을 써서 아이콘만 나온다.
 
 ## 이번 작업 요약
 - 팟 카드(건물 홈)와 팟 상세 상단에 **품목별 예시 사진**을 표시한다. 팟에 사진 업로드 기능이 없어서 프론트가 사진을 고른다.

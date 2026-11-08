@@ -83,7 +83,6 @@ function toPod(raw) {
     totalLabel: raw.totalUnits != null && raw.unitLabel ? `${raw.totalUnits}${raw.unitLabel}` : null,
     // 정산·픽업 화면이 pickupSpot으로 읽는다. 대표가 적은 안내가 없으면 중립 문구
     pickupSpot: raw.pickupNote || '대표가 안내하는 장소',
-    imageUrl: null,
   }
 }
 
