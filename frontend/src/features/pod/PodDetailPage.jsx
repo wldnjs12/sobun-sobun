@@ -329,6 +329,23 @@ export default function PodDetailPage() {
           </div>
         </section>
 
+        {/* ── 참여자 채팅 (대표 + 참여자만) ── */}
+        {(isHost || joined) && (
+          <section className={styles.card}>
+            <div className={styles.cardTitleGroup}>
+              <Icon name="forum" size={20} className={styles.primaryIcon} />
+              <h3 className={styles.cardTitle}>참여자 채팅</h3>
+            </div>
+            <p className={styles.progressHint}>이 팟에 참여한 이웃끼리만 보여요. 픽업 시간·장소를 맞춰 보세요.</p>
+            <div className={styles.hostActions}>
+              <button type="button" className={styles.primaryButton} onClick={() => navigate(`/pods/${pod.id}/chat`)}>
+                <Icon name="chat" size={18} />
+                채팅 열기
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* ── 픽업 ── */}
         <section className={styles.card}>
           <div className={styles.cardTitleGroup}>

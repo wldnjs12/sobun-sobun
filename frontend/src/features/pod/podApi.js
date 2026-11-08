@@ -262,3 +262,20 @@ async function shrinkImage(file) {
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85))
   return blob ?? file
 }
+
+/**
+ * 팟 참여자 채팅 (대표 + 참여자만, 아니면 403). 백엔드: pod/controller/PodChatController.java
+ * 결과: { myLabel, messages: [{ id, senderLabel, content, createdAt }] }
+ *   - 보낸 사람은 "대표" / "이웃 N"으로만 온다 (닉네임 비공개, PRODUCT_SPEC D24)
+ *   - myLabel: 내 라벨. 아직 한 번도 안 보냈으면 null → 첫 메시지를 보낸 응답의 senderLabel이 내 라벨
+ * afterId를 주면 그보다 새 메시지만 온다 (실시간 연결이 끊겼을 때 빈 곳 채우기·폴링용).
+ */
+export async function fetchPodMessages(podId, afterId) {
+  const query = afterId != null ? `?after=${afterId}` : ''
+  return api.get(`/pods/${podId}/messages${query}`, withMe())
+}
+
+/** 메시지 보내기. 빈 메시지·500자 초과는 서버가 400으로 거절한다. 보낸 메시지(senderLabel 포함)를 돌려준다. */
+export async function sendPodMessage(podId, content) {
+  return api.post(`/pods/${podId}/messages`, { content }, withMe())
+}

@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * 팟 API 전용 에러 변환. 전역 핸들러(GlobalExceptionHandler)에 없는 경우만 여기서 처리한다.
- * assignableTypes로 팟 컨트롤러(PodController·PodImageController)에만 적용되게 묶어서 다른 기능(정산·커뮤니티)의 응답에는 영향이 없다.
+ * assignableTypes로 팟 컨트롤러(PodController·PodImageController·PodChatController)에만 적용되게 묶어서 다른 기능(정산·커뮤니티)의 응답에는 영향이 없다.
  *
  * 왜 필요한가: @Valid 검증 실패는 기본적으로 Spring 기본 에러 JSON(ApiResponse 형식 아님)으로 나가서
  * 프론트가 한국어 메시지를 못 꺼낸다. 여기서 첫 번째 검증 메시지를 ApiResponse.fail로 감싸 400으로 돌려준다.
  */
-@RestControllerAdvice(assignableTypes = {PodController.class, PodImageController.class})
+@RestControllerAdvice(assignableTypes = {PodController.class, PodImageController.class, PodChatController.class})
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class PodExceptionHandler {
 
