@@ -160,6 +160,33 @@
   text-decoration: none;
 }
 
+/* 내 팟 카드: 위는 팟 링크(.item), 아래는 [참여자 채팅] 버튼. 배경·그림자는 카드 쪽에서 한 번만 */
+.itemCard {
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-sm);
+}
+
+.itemCard .item {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.itemChat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-surface-container);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .thumb {
   flex-shrink: 0;
   width: 56px;
