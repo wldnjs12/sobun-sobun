@@ -174,9 +174,9 @@
 }
 
 /*
- * 칩 목록만 가로로 스크롤하고 [+ 열기]는 오른쪽 끝에 고정한다.
- * 예전엔 줄 전체(.chipRow)가 스크롤돼서, 화면 폭에 맞게 줄어든 .chips 밖으로 칩이 삐져나와 [+ 열기] 버튼과 겹쳤다.
+ * 카테고리 칩 목록. 칩이 많으면 이 안에서만 가로로 스크롤한다.
  * min-width: 0 — flex 자식은 기본값(auto) 때문에 내용보다 작아지지 않아서, 이걸 줘야 남은 폭만 차지하고 안에서 스크롤된다.
+ * ([+ 열기]는 2026-11-08 탭 줄로 옮김)
  */
 .chips {
   flex: 1;
@@ -325,10 +325,19 @@
   border-color: var(--color-primary);
 }
 
-.tabs {
+/* 탭 + [+ 열기]를 한 줄에. 밑줄은 이 줄 전체에 긋고, 버튼은 밑줄 위로 살짝 띄워 가운데 맞춤 */
+.tabBar {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   border-bottom: 1px solid var(--color-surface-container-high);
+}
+
+.tabs {
+  display: flex;
+  align-self: stretch;
+  gap: var(--space-sm);
 }
 
 .tab {
