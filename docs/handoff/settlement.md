@@ -4,7 +4,13 @@
 
 PR: [#2](https://github.com/wldnjs12/sobun-sobun/pull/2) (→ `develop`, 머지됨), [#7](https://github.com/wldnjs12/sobun-sobun/pull/7) (결과 조회 API) · 관련 문서: [03-settlement](../features/03-settlement.md), [API_SPEC ③](../API_SPEC.md), [ERD](../ERD.md), [API_KEYS](../API_KEYS.md)
 
-_최종 갱신: 2026-11-08 · 브랜치: feature/pickup-done-popup_
+_최종 갱신: 2026-11-08 · 브랜치: feature/host-dropoff-screen_
+
+> **2026-11-08 팟장용 물건 두기 화면** (`HostDropoffView.jsx`)
+> - 팟장이 `/pods/:podId/pickup`을 열면 참여자용 "가져가면 돼요" 대신 **"이웃 몫을 픽업 장소에 두면 돼요"** 화면이 뜬다. 팟장은 물건을 갖다 두는 쪽이라 할 일이 반대이기 때문이다.
+> - 화면 구성: 두는 장소(`pickupNote`), 두는 방법 3단계(입금 확인 → 1인 몫씩 미개봉으로 나누기 → 장소에 두고 메모 붙이기), **이웃별 수령 현황**(`GET /pods/{id}/participants`의 `pickedUp`, 10초마다 갱신), [송금 현황 보기]·[건물 홈으로].
+> - 송금 현황의 하단 버튼 `픽업 안내·확인 번호 보기` → `물건 두기 안내 보기` (PIN은 이미 없앰).
+> - 서버 변경 없음. "갖다 뒀어요" 같은 팟장 상태는 서버에 없어서 기록하지 않는다.
 
 > **2026-11-08 픽업 화면 변경** (`frontend/src/features/settlement/PickupPage.jsx`)
 > - [물건을 꺼냈어요 · 수령 완료]를 누르면 "수령 완료!" 팝업이 뜬다. 팝업에서 [건물 홈으로](`/home`) 또는 [내 팟에서 보기](`/my-pods`)로 이동한다. 이동할 때 `replace`를 써서 뒤로 가기로 픽업 화면에 돌아오지 않게 했다.

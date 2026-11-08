@@ -107,7 +107,7 @@ export default function PaymentStatusPage() {
             {unitShareText(pod) && ` · ${unitShareText(pod)} 미개봉`}
           </span>
           <h2 className={styles.title}>
-            {allPaid ? '🎉 모두 송금했어요' : `이웃 ${neighbors.length}명 중 ${paidCount}명 송금 완료`}
+            {allPaid ? '모두 송금했어요' : `이웃 ${neighbors.length}명 중 ${paidCount}명 송금 완료`}
           </h2>
           <div className={styles.statusBar}>
             <span style={{ width: `${percent}%` }} />
@@ -171,8 +171,8 @@ export default function PaymentStatusPage() {
 
       <div className={styles.ctaDock}>
         <button type="button" className={styles.primaryButton} onClick={() => navigate(`/pods/${podId}/pickup`)}>
-          <Icon name="key" size={20} />
-          픽업 안내·확인 번호 보기
+          <Icon name="inventory_2" size={20} />
+          물건 두기 안내 보기
         </button>
       </div>
     </div>
