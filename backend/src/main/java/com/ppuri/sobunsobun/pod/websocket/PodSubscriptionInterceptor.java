@@ -5,6 +5,7 @@ import com.ppuri.sobunsobun.global.exception.BuildingAccessDeniedException;
 import com.ppuri.sobunsobun.auth.service.BuildingAccessService;
 import com.ppuri.sobunsobun.pod.domain.Pod;
 import com.ppuri.sobunsobun.pod.repository.PodRepository;
+import com.ppuri.sobunsobun.pod.service.PodChatGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -22,12 +23,15 @@ import java.util.regex.Pattern;
  * CONNECT 시점에 받은 로그인 토큰(Authorization: Bearer ...)의 사용자 소속을 비교해서, 다른 건물이면 구독을 거부한다.
  * 왜 X-User-Id를 안 믿나: STOMP 헤더는 HTTP 로그인 필터(SessionAuthFilter)를 거치지 않아서,
  * 클라이언트가 보낸 X-User-Id를 그대로 쓰면 남의 id로 다른 건물 채널을 엿들을 수 있다.
+ *
+ * 채팅(/topic/pods/{id}/chat)은 더 좁다: 같은 건물이어도 그 팟의 대표·참여자가 아니면 거부한다 (PodChatGuard).
  */
 @Component
 @RequiredArgsConstructor
 public class PodSubscriptionInterceptor implements ChannelInterceptor {
 
     private static final Pattern POD_TOPIC = Pattern.compile("^/topic/pods/(\\d+)$");
+    private static final Pattern POD_CHAT_TOPIC = Pattern.compile("^/topic/pods/(\\d+)/chat$");
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String SESSION_USER_ID_KEY = "userId";
@@ -37,6 +41,7 @@ public class PodSubscriptionInterceptor implements ChannelInterceptor {
     private final PodRepository podRepository;
     private final BuildingAccessService buildingAccessService;
     private final AccountSessionService accountSessionService;
+    private final PodChatGuard podChatGuard;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -49,6 +54,7 @@ public class PodSubscriptionInterceptor implements ChannelInterceptor {
             rememberUserId(accessor);
         } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
             guardPodTopicSubscription(accessor);
+            guardPodChatSubscription(accessor);
         }
         return message;
     }
@@ -70,16 +76,32 @@ public class PodSubscriptionInterceptor implements ChannelInterceptor {
             return;
         }
 
+        Long userId = requireUserId(accessor);
+
+        Long podId = Long.valueOf(matcher.group(1));
+        Pod pod = podRepository.findById(podId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팟입니다: " + podId));
+        buildingAccessService.requireMembership(userId, pod.getBuildingId(), "다른 건물의 팟 채널은 구독할 수 없어요.");
+    }
+
+    /** 채팅 구독: 같은 건물 + 그 팟의 대표·참여자만. 아니면 예외 → 구독 거부(STOMP ERROR 프레임) */
+    private void guardPodChatSubscription(StompHeaderAccessor accessor) {
+        String destination = accessor.getDestination();
+        Matcher matcher = destination == null ? null : POD_CHAT_TOPIC.matcher(destination);
+        if (matcher == null || !matcher.matches()) {
+            return;
+        }
+        podChatGuard.requireChatMember(Long.valueOf(matcher.group(1)), requireUserId(accessor));
+    }
+
+    /** CONNECT 때 토큰으로 확인해 둔 사용자. 토큰이 없었으면 거부한다. */
+    private static Long requireUserId(StompHeaderAccessor accessor) {
         Long userId = accessor.getSessionAttributes() == null
                 ? null
                 : (Long) accessor.getSessionAttributes().get(SESSION_USER_ID_KEY);
         if (userId == null) {
             throw new BuildingAccessDeniedException("로그인이 필요해요.");
         }
-
-        Long podId = Long.valueOf(matcher.group(1));
-        Pod pod = podRepository.findById(podId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팟입니다: " + podId));
-        buildingAccessService.requireMembership(userId, pod.getBuildingId(), "다른 건물의 팟 채널은 구독할 수 없어요.");
+        return userId;
     }
 }

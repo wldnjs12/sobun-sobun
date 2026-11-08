@@ -34,3 +34,31 @@ export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
   client.activate()
   return client
 }
+
+/**
+ * 팟 참여자 채팅 구독. 새 메시지가 오면 onMessage(message)를 부른다.
+ * 보내기는 소켓이 아니라 REST(sendPodMessage)로 한다 — 소켓으로 보내다 에러가 나면 연결이 끊기기 때문.
+ *
+ * onConnect / onClose로 "지금 실시간으로 받고 있는지"를 알려준다. 화면은 끊겨 있는 동안 3초마다 GET으로 새 메시지를 가져온다(폴링).
+ * 서버는 그 팟의 대표·참여자가 아니면 구독을 거부한다 → onDenied 후 재연결을 멈춘다.
+ */
+export function connectPodChatSocket(podId, onMessage, { onConnect, onClose, onDenied } = {}) {
+  const client = new Client({
+    brokerURL: `${WS_BASE_URL}/ws-sobun/websocket`,
+    connectHeaders: { Authorization: `Bearer ${getToken() ?? ''}` },
+    reconnectDelay: 3000,
+    onConnect: () => {
+      client.subscribe(`/topic/pods/${podId}/chat`, (message) => onMessage(JSON.parse(message.body)))
+      onConnect?.()
+    },
+    onWebSocketClose: () => onClose?.(),
+    onStompError: (frame) => {
+      console.warn('채팅 실시간 연결이 거부됐어요:', frame.headers?.message)
+      client.deactivate()
+      onClose?.()
+      onDenied?.(frame)
+    },
+  })
+  client.activate()
+  return client
+}

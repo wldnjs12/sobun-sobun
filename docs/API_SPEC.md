@@ -115,8 +115,12 @@
 | GET | /pods/{id}/image | **(2026-11-08)** 상품 사진 조회 (다른 건물이면 403, 사진 없으면 404) | - | `{ podId, version, contentType, dataUrl }` |
 | DELETE | /pods/{id}/image | **(2026-11-08)** 상품 사진 삭제 — 등록과 같은 조건 | - | `Pod` (`imageVersion` null) |
 | WS | /ws-sobun (STOMP) | 실시간 채널. `connectHeaders`에 `X-User-Id` | 구독: `/topic/pods/{id}` (다른 건물이면 구독 거부) | `PodAmountUpdateEvent` |
+| GET | /pods/{id}/messages?after= | **(2026-11-08)** 참여자 채팅 이전 메시지(보낸 순서). `after`(메시지 id)를 주면 그보다 새 것만 — 대표·참여자만, 아니면 403 `POD_FORBIDDEN` | - | `{ myLabel, messages: ChatMessage[] }` |
+| POST | /pods/{id}/messages | **(2026-11-08)** 채팅 보내기 — 대표·참여자만(403), 빈 메시지·500자 초과는 400. 저장 후 `/topic/pods/{id}/chat`으로 방송 | `{ content }` | `ChatMessage` |
+| WS | 구독 `/topic/pods/{id}/chat` | **(2026-11-08)** 새 채팅 메시지 실시간 수신. 그 팟의 대표·참여자가 아니면 구독 거부 | - | `ChatMessage` |
 
 - 기존 `GET /pods?buildingId=&userId=`에 `keyword`·`category`가 추가됩니다. 요청자의 건물은 서버가 토큰 사용자 기준으로 확인하며, `buildingId` 쿼리가 남을지는 통합 시 확정(남더라도 내 건물이 아니면 403).
+- 채팅 `ChatMessage` = `{ id, podId, senderLabel, content, createdAt }`. 보낸 사람은 `senderLabel`("대표" / "이웃 N", 이웃 번호는 채팅에서 처음 말한 순서)로만 알려주고 userId·닉네임은 넣지 않습니다(PRODUCT_SPEC D24). `myLabel`은 내 라벨(아직 안 보냈으면 `null`)이라 화면이 `senderLabel === myLabel`로 내 메시지를 구분합니다. 보내기는 STOMP가 아니라 REST입니다 — STOMP로 보내다 에러가 나면 연결이 끊기기 때문(PRODUCT_SPEC D29).
 - 요청자 식별은 토큰(→ `X-User-Id`)으로 합니다. 개설 요청의 `buildingId`/`hostUserId`는 서버가 내 계정·내 건물로 채웁니다(통합 시 확정).
 - 대표는 개설 직후 자동으로 첫 참여자가 됩니다. 그래서 `targetParticipantCount`·`participantCount`에는 **대표가 포함**됩니다.
 
