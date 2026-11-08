@@ -18,6 +18,12 @@ _최종 갱신: 2026-11-05 · 브랜치: feature/household-replan (아직 push �
 | `feature/community-settlement` | 건물 단위 격리 복귀, 정산은 대표·참여자만, 송금 링크 https만, GPS 실패 원인별 안내 |
 | 통합 커밋 | STOMP 구독 토큰 검증, 팟 수정 라우트, 반경 1km 코드 제거 |
 
+### 2026-11-08 GPS 허용 반경 100m → 20km (도우현, 브랜치 feature/location-radius-20km)
+- 증상: 배포 사이트(sobun-sobun-eight.vercel.app)에서 팀원들이 "인하로 100"(인하대) 등으로 등록 후 커뮤니티·팟 진입 시 "등록한 건물 근처가 아니에요" — 서버 `POST /auth/location-check`가 **400 `OUT_OF_RANGE`** (버그 아님, 의도된 응답)
+- 원인: 넓은 캠퍼스 주소도 좌표 **한 점**으로 저장돼 100m 안에 들기 어렵고, 노트북은 와이파이로 위치를 짐작해 수백 m 오차
+- 변경: `LocationCheckService.ALLOWED_RADIUS_METERS` 100 → **20,000**. 테스트는 상수를 기준으로 계산하게 바꿔서 반경을 다시 바꿔도 그대로 통과. 건물 확인 화면 문구 "반경 20km", `docs/features/01-onboarding.md` 갱신
+- ⚠️ 20km면 사실상 "인천 근처면 통과"라 건물 인증 효과가 약함 — 정식 운영 전 실측 후 다시 좁힐 것. 위치와 무관하게 통과시키려면 반경 대신 `LOCATION_CHECK_DEMO_MODE=true`(Railway 환경변수)도 있음
+
 ### 2026-11-04 세션 (QA)
 - Playwright 로컬 QA 1·2차: API 접근 제어, 개설→참여→마감→정산→송금→픽업, 커뮤니티, 수정·취소. 결과 11건(중간 2, 낮음 9) → `docs/FEEDBACK.md`
 - 수정: **F-1** 정산 확정 후 모집 완료 화면(`PodCompletePage.jsx`)이 갱신되지 않던 문제 → 마감된 팟이면 10초마다 정산 여부를 확인해 참여자에겐 [정산 결과 보고 송금하기], 대표에겐 [송금 현황 보기] 표시. **F-3** "대표이" → "대표가". **F-9** 숨겨진/삭제된 커뮤니티 글(404) 안내 문구(`CommunityDetailPage.jsx`)
