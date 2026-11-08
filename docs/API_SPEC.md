@@ -107,7 +107,7 @@
 | POST | /pods/{id}/join | 참여 (대표가 아니면 최근 `POD_JOIN` 위치 확인 필요) | - | `Pod` |
 | DELETE | /pods/{id}/join | 참여 취소 (마감 전) | - | `Pod` |
 | POST | /pods/{id}/close | 모집 마감 (대표만, 참여자 1명 이상) | - | `Pod` |
-| GET | /pods/{id}/me | 내 참여/송금/수령 상태 + 픽업 PIN | - | `MyParticipationResponse` |
+| GET | /pods/{id}/me | 내 참여/송금/수령 상태 (+ `pickupPin`: 호환용, 화면에서 안 씀 — PRODUCT_SPEC D27) | - | `MyParticipationResponse` |
 | GET | /pods/{id}/participants | 참여자별 송금/수령 현황 (대표만) | - | `ParticipantStatusResponse[]` |
 | POST | /pods/{id}/paid | "보냈어요" 자가 신고 | - | `MyParticipationResponse` |
 | POST | /pods/{id}/picked-up | "수령 완료" 자가 신고 | - | `MyParticipationResponse` |
