@@ -76,7 +76,7 @@
 
 ### GPS 2차 확인
 
-- **허용 반경**: 내 건물 좌표에서 100m(`LocationCheckService.ALLOWED_RADIUS_METERS`). Haversine 공식, **반드시 서버에서 판정**.
+- **허용 반경**: 내 건물 좌표에서 기본 20km(임시값, `location-check.allowed-radius-meters`, 환경변수 `LOCATION_CHECK_RADIUS_METERS`). Haversine 공식, **반드시 서버에서 판정**.
 - **데모 고정 좌표 모드**: 서버 환경변수 `LOCATION_CHECK_DEMO_MODE=true`로만 켜짐, 기본 꺼짐.
 - **위치 개인정보**: 원본 좌표는 저장하지 않고 판정 결과(성공/실패, 시각, 목적)만 `LOCATION_CHECK`에 남깁니다.
 - **실패 응답**: `400` · `code: "OUT_OF_RANGE"`. 위치 권한 거부·타임아웃은 서버까지 오지 않고 프론트에서 처리합니다.
@@ -107,7 +107,7 @@
 | POST | /pods/{id}/join | 참여 (대표가 아니면 최근 `POD_JOIN` 위치 확인 필요) | - | `Pod` |
 | DELETE | /pods/{id}/join | 참여 취소 (마감 전) | - | `Pod` |
 | POST | /pods/{id}/close | 모집 마감 (대표만, 참여자 1명 이상) | - | `Pod` |
-| GET | /pods/{id}/me | 내 참여/송금/수령 상태 + 픽업 PIN | - | `MyParticipationResponse` |
+| GET | /pods/{id}/me | 내 참여/송금/수령 상태 (+ `pickupPin`: 호환용, 화면에서 안 씀 — PRODUCT_SPEC D27) | - | `MyParticipationResponse` |
 | GET | /pods/{id}/participants | 참여자별 송금/수령 현황 (대표만) | - | `ParticipantStatusResponse[]` |
 | POST | /pods/{id}/paid | "보냈어요" 자가 신고 | - | `MyParticipationResponse` |
 | POST | /pods/{id}/picked-up | "수령 완료" 자가 신고 | - | `MyParticipationResponse` |

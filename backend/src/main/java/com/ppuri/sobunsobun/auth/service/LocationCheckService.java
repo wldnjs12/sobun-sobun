@@ -9,6 +9,7 @@ import com.ppuri.sobunsobun.auth.domain.User;
 import com.ppuri.sobunsobun.auth.domain.UserRepository;
 import com.ppuri.sobunsobun.auth.dto.LocationCheckRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +19,18 @@ import java.time.LocalDateTime;
 /**
  * GPS 2차 확인. 행동(팟 개설·참여·커뮤니티 입장) 직전마다 호출되고, 결과를 캐시하지 않고 매번 재판정한다 (docs/PRODUCT_SPEC.md 결정 기록).
  *
- * ALLOWED_RADIUS_METERS: 임시값(100m). 실내 GPS 오차가 기기마다 달라 데모 리허설 때 실측 후 조정 필요
- * — 최종 확정 전까지 이 상수 하나만 바꾸면 되도록 유지한다 (docs/PRODUCT_SPEC.md).
+ * ALLOWED_RADIUS_METERS: 임시값(20km). 처음엔 100m였지만 넓은 캠퍼스 주소(좌표 한 점)·노트북 와이파이 위치 오차(수백 m)
+ * 때문에 팀 테스트가 계속 OUT_OF_RANGE로 막혀서 2026-11-08 20km로 넓혔다. 사실상 "인천 근처면 통과"라
+ * 건물 인증 효과는 약하므로, 정식 운영 전에는 실측 후 다시 좁혀야 한다.
+ * 실제 판정은 location-check.allowed-radius-meters(환경변수 LOCATION_CHECK_RADIUS_METERS) 값을 쓰고, 이 상수는 그 기본값이다
+ * — 재배포 없이 Railway 환경변수만 바꿔 반경을 조정할 수 있다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LocationCheckService {
 
-    static final double ALLOWED_RADIUS_METERS = 100.0;
+    static final double ALLOWED_RADIUS_METERS = 20_000.0;
     /**
      * 위치 확인 통과 후 실제 행동(팟 개설·참여)까지 허용하는 시간. 프론트는 통과하자마자 바로 API를 부르므로
      * 보통 몇 초면 충분하지만, 느린 네트워크·바텀시트 재시도를 고려해 넉넉히 3분으로 둔다.
@@ -40,6 +45,9 @@ public class LocationCheckService {
     @Value("${location-check.demo-mode:false}")
     private boolean demoMode;
 
+    @Value("${location-check.allowed-radius-meters:20000}")
+    private double allowedRadiusMeters = ALLOWED_RADIUS_METERS;
+
     @Transactional
     public boolean check(Long userId, LocationCheckRequest request) {
         User user = userRepository.findById(userId)
@@ -52,7 +60,10 @@ public class LocationCheckService {
         double distance = distanceMeters(
                 building.getLatitude(), building.getLongitude(),
                 coordinates[0], coordinates[1]);
-        boolean success = distance <= ALLOWED_RADIUS_METERS;
+        boolean success = distance <= allowedRadiusMeters;
+        // 좌표는 남기지 않고 거리만 로그로 남긴다 — 실패 시 "몇 m 벗어났는지" 보고 반경을 조정하려고.
+        log.info("위치 확인 buildingId={} purpose={} distance={}m radius={}m success={}",
+                building.getId(), request.purpose(), Math.round(distance), Math.round(allowedRadiusMeters), success);
 
         // 원본 좌표는 저장하지 않는다 — 판정 결과·시각·목적만 남긴다 (개인정보 보호).
         locationCheckRepository.save(
