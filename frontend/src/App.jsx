@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import OnboardingPage from './features/onboarding/OnboardingPage.jsx'
+import LandingPage from './features/landing/LandingPage.jsx'
 import AddressSearchPage from './features/onboarding/AddressSearchPage.jsx'
 import BuildingConfirmPage from './features/onboarding/BuildingConfirmPage.jsx'
 import BuildingHomePage from './features/pod/BuildingHomePage.jsx'
@@ -82,6 +83,8 @@ export default function App() {
         <Routes>
           {/* ① 온보딩: 시작 → 회원가입/로그인 → 주소 검색(S1') → 건물 확인·동 선택(S1'')
               GPS 2차 확인(S2')·실패 시트(S3)는 화면이 아니라 각 행동 버튼에서 뜬다 (useLocationCheck) */}
+          {/* 시연·발표용 랜딩 페이지. 로그인 여부와 상관없이 열린다 */}
+          <Route path="/intro" element={<LandingPage />} />
           <Route path="/" element={<GuestOnly><OnboardingPage /></GuestOnly>} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><SignupPage /></GuestOnly>} />
