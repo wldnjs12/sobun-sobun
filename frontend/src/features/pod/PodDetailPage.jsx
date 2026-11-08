@@ -309,7 +309,7 @@ export default function PodDetailPage() {
               <button type="button" className={styles.emptySlot} onClick={() => setSheetOpen(true)}>
                 <div className={styles.participantLeft}>
                   <span className={styles.emptySlotAvatar}>
-                    <Icon name="star" size={20} />
+                    <Icon name="person_add" size={20} />
                   </span>
                   <div>
                     <div className={styles.emptySlotTitle}>
