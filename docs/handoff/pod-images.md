@@ -1,8 +1,8 @@
 # 핸드오프: ② 팟 예시 사진 + 학교 시연 데이터
 
-_최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/demo-script → feature/fee-label-no-emoji → feature/empty-slot-icon_
+_최종 갱신: 2026-11-08 · 브랜치: feature/pod-example-images → feature/demo-script → feature/fee-label-no-emoji → feature/empty-slot-icon → feature/demo-script-refresh_
 
-> **시연 대본·루트는 [../DEMO_SCRIPT.md](../DEMO_SCRIPT.md)** (2026-11-08 갱신). 노트북(sobun01, 대표) + 폰(sobun02, 참여자)이 키친타월 팟 하나로 개설 → 실시간 참여 → 정산 → 픽업까지 진행하는 3~4분 구성이다. 2026-11-08에 리허설 데이터를 재시드했다. 모집 중인 팟은 모집 취소하고 처음 상태(화장지 2/3 · 생수 2/4 · 세제 1/3 · 물티슈 3/5 · 컵라면 4/4)로 새로 만들었다. 리허설 때 마감된 옛 화장지 팟(id 1)은 [내 팟]에 기록으로만 남아 있다.
+> **시연 대본·루트는 [../DEMO_SCRIPT.md](../DEMO_SCRIPT.md)** (2026-11-08 갱신). 노트북(sobun01, 대표) + 폰(sobun02, 참여자)이 키친타월 팟 하나로 개설 → 실시간 참여 → 정산 → 픽업까지 진행하는 3~4분 구성이다. 2026-11-08에 리허설 데이터를 재시드했다. 모집 중인 팟은 모집 취소하고 처음 상태(화장지 2/3 · 생수 2/4 · 세제 1/3 · 물티슈 3/5 · 컵라면 4/4)로 새로 만들었다. 리허설 때 마감된 옛 화장지 팟(id 1)은 [내 팟]에 기록으로만 남아 있다. 같은 날 밤 최신 main(#74, 상품 사진 업로드·이모지 제거·[+ 열기] 위치 이동)에 맞춰 대본을 다시 맞췄고, 리허설용 "하리보 젤리" 팟(id 11)은 DB에서 지웠다.
 
 > **2026-11-08 추가: 대표가 실제 상품 사진을 올릴 수 있다** (브랜치 feature/pod-photo-upload, PRODUCT_SPEC D28).
 > - 개설·수정 화면의 "상품 사진 (선택)"에서 1장. 프론트가 긴 변 800px JPEG로 줄여 `POST /api/pods/{id}/image`로 올리고, 서버는 `pod_image` 테이블(bytea)에 저장한다. `pod.image_version`이 null이 아니면 사진이 있다는 뜻.
