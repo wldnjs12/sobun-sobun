@@ -6,7 +6,7 @@ import Icon from '../../components/Icon.jsx'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import PodCard from './PodCard.jsx'
 import EmptyPodState from './EmptyPodState.jsx'
-import { BUILDING, CATEGORIES, fetchNeighborhoodPods } from './podApi.js'
+import { BUILDING, CATEGORIES, fetchMyPods, fetchNeighborhoodPods } from './podApi.js'
 import styles from './BuildingHomePage.module.css'
 
 const STATUS_TABS = [
@@ -34,6 +34,15 @@ export default function BuildingHomePage() {
   const [error, setError] = useState(null)
   // 응답이 늦게 온 "예전 검색" 결과가 최신 결과를 덮어쓰지 않도록 요청 번호를 센다
   const requestSeq = useRef(0)
+  // 내가 참여한 팟 id 목록. 팟 목록 응답에는 "내가 연 팟(isHost)"만 있고 "참여했는지"는 없어서,
+  // 마이페이지의 '참여한 팟' API로 따로 받아와 카드에 표시한다. 실패해도 목록은 그대로 보여준다.
+  const [joinedIds, setJoinedIds] = useState(() => new Set())
+
+  useEffect(() => {
+    fetchMyPods('joined')
+      .then((list) => setJoinedIds(new Set(list.map((p) => p.id))))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const timerId = setTimeout(() => setKeyword(keywordInput.trim()), SEARCH_DELAY_MS)
@@ -168,7 +177,12 @@ export default function BuildingHomePage() {
           <>
             <div className={styles.feed}>
               {pods.map((pod) => (
-                <PodCard key={pod.id} pod={pod} onJoin={goToPod} />
+                <PodCard
+                  key={pod.id}
+                  pod={pod}
+                  onJoin={goToPod}
+                  myRole={pod.isHost ? 'host' : joinedIds.has(pod.id) ? 'joined' : null}
+                />
               ))}
             </div>
 

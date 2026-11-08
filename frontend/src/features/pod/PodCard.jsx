@@ -6,11 +6,19 @@ import styles from './PodCard.module.css'
 
 const STATUS_LABEL = { CLOSED: '모집 마감', CANCELLED: '모집 취소' }
 
+// 내가 관계된 팟 표시: 'joined'(참여함)는 파란색, 'host'(내가 연 팟)는 노란색
+const MY_ROLE = {
+  joined: { label: '내가 참여한 팟', icon: 'check_circle', className: 'cardJoined' },
+  host: { label: '내가 연 팟', icon: 'star', className: 'cardHost' },
+}
+
 /**
  * 건물 홈 목록의 팟 카드 1개.
  * 카드를 누르면 onJoin(pod)을 호출하고, 실제 참여는 팟 상세 화면에서 처리한다.
+ * myRole이 있으면(참여함/내가 연 팟) 카드 테두리·바탕색과 맨 위 띠로 다른 팟과 구분한다.
  */
-export default function PodCard({ pod, onJoin }) {
+export default function PodCard({ pod, onJoin, myRole = null }) {
+  const role = MY_ROLE[myRole]
   const remainingText = useRemainingTime(pod.deadline)
   const imageUrl = usePodPhoto(pod)
 
@@ -27,7 +35,13 @@ export default function PodCard({ pod, onJoin }) {
   const stateText = STATUS_LABEL[pod.status] ?? (pod.deadlinePassed ? '마감 시간 지남' : remainingText)
 
   return (
-    <article className={`${styles.card} ${isOpen ? '' : styles.cardInactive}`}>
+    <article className={`${styles.card} ${isOpen ? '' : styles.cardInactive} ${role ? styles[role.className] : ''}`}>
+      {role && (
+        <div className={styles.myRibbon}>
+          <Icon name={role.icon} size={16} filled />
+          {role.label}
+        </div>
+      )}
       <div className={styles.top}>
         <div className={styles.thumbnail}>
           {imageUrl ? (
@@ -87,11 +101,12 @@ export default function PodCard({ pod, onJoin }) {
 
           <button
             type="button"
-            className={`${styles.joinButton} ${isLastSeat ? styles.joinButtonUrgent : ''}`}
+            className={`${styles.joinButton} ${isLastSeat && !role ? styles.joinButtonUrgent : ''}`}
             onClick={() => onJoin(pod)}
           >
-            {isOpen && !isFull && !pod.isHost ? '참여하기' : '보러가기'}
-            <Icon name={isLastSeat ? 'local_fire_department' : 'arrow_forward'} size={16} />
+            {role ? '내 팟 보기' : isOpen && !isFull ? '참여하기' : '보러가기'}
+            {/* "마지막 1자리" 재촉 표시는 아직 참여 안 한 사람에게만 */}
+            <Icon name={isLastSeat && !role ? 'local_fire_department' : 'arrow_forward'} size={16} />
           </button>
         </div>
       </div>
