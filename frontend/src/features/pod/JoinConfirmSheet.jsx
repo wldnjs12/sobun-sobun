@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon.jsx'
+import usePodPhoto from './usePodPhoto.js'
 import styles from './JoinConfirmSheet.module.css'
 
 /**
@@ -9,6 +10,7 @@ import styles from './JoinConfirmSheet.module.css'
  */
 export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checking, error, onConfirm, onClose }) {
   const [agreed, setAgreed] = useState(false)
+  const photoUrl = usePodPhoto(pod)
 
   // ESC 키로도 닫히게
   useEffect(() => {
@@ -52,8 +54,8 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
         <div className={styles.body}>
           <div className={styles.itemCard}>
             <div className={styles.itemThumb}>
-              {pod.imageUrl ? (
-                <img src={pod.imageUrl} alt="" />
+              {photoUrl ? (
+                <img src={photoUrl} alt="" />
               ) : (
                 <Icon name="inventory_2" size={32} className={styles.itemPlaceholder} />
               )}

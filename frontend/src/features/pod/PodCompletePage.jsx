@@ -6,6 +6,7 @@ import { connectPodSocket } from '../../api/socket.js'
 import { isBuildingAccessDenied } from '../../api/client.js'
 import AccessDeniedView from '../../components/AccessDeniedView.jsx'
 import { closePod, fetchPod } from './podApi.js'
+import usePodPhoto from './usePodPhoto.js'
 import { fetchSettlement } from '../settlement/settlementApi.js'
 import { calcPerPersonPrice } from './podUtils.js'
 import styles from './PodCompletePage.module.css'
@@ -31,6 +32,8 @@ export default function PodCompletePage() {
   const [closeError, setCloseError] = useState(null)
   const [settlement, setSettlement] = useState(null)
   const navigate = useNavigate()
+  // 훅은 아래 early return(에러·로딩)보다 먼저 불러야 한다 — pod가 아직 null이어도 괜찮다
+  const photoUrl = usePodPhoto(pod)
 
   // 정산 확정은 실시간 이벤트가 없어서, 마감된 팟이면 정산 여부를 10초마다 다시 확인한다.
   // 확정되면 "영수증 올리면…" 안내 대신 정산 결과/송금 현황으로 가는 버튼을 보여준다.
@@ -199,8 +202,8 @@ export default function PodCompletePage() {
         {/* ── 상품 요약 ── */}
         <section className={`${styles.card} ${styles.product}`}>
           <div className={styles.productThumb}>
-            {pod.imageUrl ? (
-              <img src={pod.imageUrl} alt="" />
+            {photoUrl ? (
+              <img src={photoUrl} alt="" />
             ) : (
               <Icon name="inventory_2" size={28} className={styles.productPlaceholder} />
             )}
