@@ -84,7 +84,7 @@ export default function BuildingConfirmPage() {
           <h1 className={styles.heroCardTitle}>
             <span className={styles.accentText}>{fullName}</span>
             <br />
-            이웃으로 등록돼요 ✨
+            이웃으로 등록돼요
           </h1>
           <p className={styles.heroAddress}>
             <Icon name="location_on" size={18} />

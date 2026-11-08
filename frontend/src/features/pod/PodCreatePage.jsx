@@ -15,7 +15,7 @@ const UNIT_PICKS = ['롤', '팩', '개', '병', '매']
 const FEE_OPTIONS = [
   { rate: 0, label: '봉사' },
   { rate: 0.03, label: '가벼운 팁' },
-  { rate: 0.05, label: '추천 ⭐' },
+  { rate: 0.05, label: '추천' },
   { rate: 0.08, label: '정성 포장' },
 ]
 
