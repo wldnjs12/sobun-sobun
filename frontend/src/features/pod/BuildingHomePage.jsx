@@ -97,19 +97,26 @@ export default function BuildingHomePage() {
           />
         </div>
 
-        <div className={styles.tabs} role="tablist" aria-label="모집 상태">
-          {STATUS_TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={status === t.key}
-              className={`${styles.tab} ${status === t.key ? styles.tabActive : ''}`}
-              onClick={() => setStatus(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* 탭 줄 오른쪽 끝에 [+ 열기] — 탭(tablist) 밖에 둬야 화면 낭독기가 버튼을 탭으로 착각하지 않는다 */}
+        <div className={styles.tabBar}>
+          <div className={styles.tabs} role="tablist" aria-label="모집 상태">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={status === t.key}
+                className={`${styles.tab} ${status === t.key ? styles.tabActive : ''}`}
+                onClick={() => setStatus(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button type="button" className={styles.createChip} onClick={goToCreatePod}>
+            <Icon name="add" size={16} className={styles.createChipIcon} />
+            열기
+          </button>
         </div>
 
         <div className={styles.chipRow}>
@@ -125,10 +132,6 @@ export default function BuildingHomePage() {
               </button>
             ))}
           </div>
-          <button type="button" className={styles.createChip} onClick={goToCreatePod}>
-            <Icon name="add" size={16} className={styles.createChipIcon} />
-            열기
-          </button>
         </div>
 
         {loading && <ListSkeleton />}
