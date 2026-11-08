@@ -345,6 +345,28 @@ export default function PodDetailPage() {
             </div>
           </section>
         )}
+        {/* 비참여자에게는 채팅이 "없는" 게 아니라 "참여하면 생긴다"는 걸 알려준다 (취소된 팟은 참여할 수 없어서 안내도 뺀다) */}
+        {!isHost && !joined && pod.status !== 'CANCELLED' && (
+          <section className={`${styles.card} ${styles.cardMuted}`}>
+            <div className={styles.cardTitleGroup}>
+              <Icon name="lock" size={20} className={styles.secondaryIcon} />
+              <h3 className={styles.cardTitle}>참여자 채팅</h3>
+            </div>
+            <p className={styles.progressHint}>
+              {canJoin
+                ? '참여하면 이웃들과 채팅할 수 있어요. 픽업 시간·장소를 함께 맞춰요.'
+                : '이 팟에 참여한 이웃끼리만 채팅할 수 있어요.'}
+            </p>
+            {canJoin && (
+              <div className={styles.hostActions}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setSheetOpen(true)}>
+                  <Icon name="shopping_bag" size={18} />
+                  참여하고 채팅하기
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── 픽업 ── */}
         <section className={styles.card}>
