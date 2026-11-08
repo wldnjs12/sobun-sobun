@@ -73,7 +73,8 @@ class LocationCheckServiceTest {
         givenUserAndBuilding();
 
         assertThatThrownBy(() -> locationCheckService.check(USER_ID,
-                new LocationCheckRequest(LAT + 0.0100, LON, LocationCheckPurpose.POD_JOIN))) // 약 1.1km 북쪽
+                new LocationCheckRequest(LAT + metersNorth(LocationCheckService.ALLOWED_RADIUS_METERS + 1_000), LON,
+                        LocationCheckPurpose.POD_JOIN))) // 허용 반경보다 1km 더 북쪽
                 .isInstanceOf(LocationCheckException.class)
                 .extracting("code").isEqualTo("OUT_OF_RANGE");
 
@@ -83,16 +84,21 @@ class LocationCheckServiceTest {
     }
 
     @Test
-    void 반경_기본값_경계_안쪽은_통과하고_바깥쪽은_실패() {
+    void 허용_반경_경계_안쪽은_통과하고_바깥쪽은_실패() {
         givenUserAndBuilding();
-        double metersPerDegreeLat = Math.PI / 180 * 6_371_000; // ≈ 111,195m
+        double radius = LocationCheckService.ALLOWED_RADIUS_METERS; // 반경 값을 바꿔도 이 테스트는 그대로 쓸 수 있게
 
         assertThat(locationCheckService.check(USER_ID,
-                new LocationCheckRequest(LAT + (LocationCheckService.DEFAULT_ALLOWED_RADIUS_METERS - 0.1) / metersPerDegreeLat, LON, LocationCheckPurpose.POD_CREATE)))
+                new LocationCheckRequest(LAT + metersNorth(radius - 1), LON, LocationCheckPurpose.POD_CREATE)))
                 .isTrue();
         assertThatThrownBy(() -> locationCheckService.check(USER_ID,
-                new LocationCheckRequest(LAT + (LocationCheckService.DEFAULT_ALLOWED_RADIUS_METERS + 0.1) / metersPerDegreeLat, LON, LocationCheckPurpose.POD_CREATE)))
+                new LocationCheckRequest(LAT + metersNorth(radius + 1), LON, LocationCheckPurpose.POD_CREATE)))
                 .isInstanceOf(LocationCheckException.class);
+    }
+
+    /** 북쪽으로 meters만큼 이동한 위도 차이 (위도 1도 ≈ 111,195m) */
+    private static double metersNorth(double meters) {
+        return meters / (Math.PI / 180 * 6_371_000);
     }
 
     @Test
