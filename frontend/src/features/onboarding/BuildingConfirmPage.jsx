@@ -19,7 +19,7 @@ const DETAIL_MAX = 50 // 서버 BuildingRegisterRequest.detailAddress 제한과 
  * 상세주소(호수·층)는 선택 입력. 본인만 보는 값이라 서버는 다른 이웃에게 절대 보여주지 않는다 (docs/PRODUCT_SPEC.md).
  *
  * 디자인에서 뺀 것:
- *   - "위치 GPS 100% 일치·반경 50m" → 등록 단계에선 GPS를 안 보고, 반경은 100m (행동할 때 확인)
+ *   - "위치 GPS 100% 일치·반경 50m" → 등록 단계에선 GPS를 안 보고, 반경은 기본 500m (행동할 때 확인, 서버 LocationCheckService)
  *   - "42명 활동 중", 동별 "18명 소분중" → 서버가 주지 않는 숫자라서
  */
 export default function BuildingConfirmPage() {
@@ -79,7 +79,7 @@ export default function BuildingConfirmPage() {
               {needsDong ? '아파트' : '주택·빌라'}
             </span>
             <Icon name={needsDong ? 'apartment' : 'home_work'} size={72} className={styles.heroBuildingIcon} />
-            <span className={styles.heroRadius}>팟 열 때 반경 100m 확인</span>
+            <span className={styles.heroRadius}>팟 열 때 반경 500m 확인</span>
           </div>
           <h1 className={styles.heroCardTitle}>
             <span className={styles.accentText}>{fullName}</span>

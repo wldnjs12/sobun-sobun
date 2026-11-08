@@ -76,7 +76,7 @@
 
 ### GPS 2차 확인
 
-- **허용 반경**: 내 건물 좌표에서 100m(`LocationCheckService.ALLOWED_RADIUS_METERS`). Haversine 공식, **반드시 서버에서 판정**.
+- **허용 반경**: 내 건물 좌표에서 기본 500m(`location-check.allowed-radius-meters`, 환경변수 `LOCATION_CHECK_RADIUS_METERS`). Haversine 공식, **반드시 서버에서 판정**.
 - **데모 고정 좌표 모드**: 서버 환경변수 `LOCATION_CHECK_DEMO_MODE=true`로만 켜짐, 기본 꺼짐.
 - **위치 개인정보**: 원본 좌표는 저장하지 않고 판정 결과(성공/실패, 시각, 목적)만 `LOCATION_CHECK`에 남깁니다.
 - **실패 응답**: `400` · `code: "OUT_OF_RANGE"`. 위치 권한 거부·타임아웃은 서버까지 오지 않고 프론트에서 처리합니다.
