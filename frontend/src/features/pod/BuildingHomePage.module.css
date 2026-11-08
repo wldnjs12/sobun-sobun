@@ -169,16 +169,26 @@
 .chipRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-xs);
-  overflow-x: auto; /* 칩이 많아지면 가로로 스크롤 */
   padding: 4px 0;
+}
+
+/*
+ * 칩 목록만 가로로 스크롤하고 [+ 열기]는 오른쪽 끝에 고정한다.
+ * 예전엔 줄 전체(.chipRow)가 스크롤돼서, 화면 폭에 맞게 줄어든 .chips 밖으로 칩이 삐져나와 [+ 열기] 버튼과 겹쳤다.
+ * min-width: 0 — flex 자식은 기본값(auto) 때문에 내용보다 작아지지 않아서, 이걸 줘야 남은 폭만 차지하고 안에서 스크롤된다.
+ */
+.chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
   scrollbar-width: none;
 }
 
-.chips {
-  display: flex;
-  gap: var(--space-xs);
+.chips::-webkit-scrollbar {
+  display: none;
 }
 
 .chip {
