@@ -36,6 +36,12 @@ _최종 갱신: 2026-11-05 · 브랜치: feature/household-replan (아직 push �
 - 정산 `/api/settlements`: `POST /receipts`, `POST /{podId}/confirm`, `GET /{podId}`
 - 커뮤니티 `/api/community`: `GET|POST /posts`, `GET|DELETE /posts/{id}`, `POST /posts/{id}/comments`, `DELETE /comments/{id}`, `POST /posts/{id}/report`, `POST /comments/{id}/report`
 
+## 시연용 랜딩 페이지 `/intro` (2026-11-08, 도우현, 브랜치 feature/landing-page)
+- `frontend/src/features/landing/` — 발표·시연 때 서비스 소개용. 로그인 여부와 상관없이 열림(`App.jsx`에 가드 없이 등록), [시작하기]는 `/`(시작 화면)로 이동
+- 구성: 히어로(휴대폰 화면에서 참여 1→3명, 1인 금액 23,090 → 7,697원 반복 애니메이션 — 서버 연결 없음) / 문제(설문 88·79·56%, 단가 격차 30~53%) / 차별점 3개 / 이용 4단계 + 정산 예시 / 기존 동네 공구 비교표 / 신뢰·안전 / 비즈니스 모델(참여 수수료 0, 수고비 5%, 제휴 마트)
+- 숫자는 문서 근거만 사용: 설문 = PRODUCT_SPEC 2절, 단가 격차 = features/02-pod.md. 예시 금액은 앱과 같은 `calcPerPersonPrice`로 계산 → 정산식이 바뀌면 랜딩 숫자도 자동으로 맞춰짐
+- 앱 화면(480px)과 달리 최대 1160px 폭. 960px·600px에서 한 줄로 쌓임. 움직임 줄이기 설정이면 애니메이션 끔
+
 ## 알려진 제한사항 / TODO
 - FEEDBACK 낮음 항목 미수정: F-4 "대표/팟장" 용어 혼용(정산·송금·픽업 화면은 "팟장"), F-5 혼자일 때 1인당 금액이 전액으로 크게 보임, F-6 송금 전에도 내 팟에서 "정산 완료", F-7 건물 미등록 계정의 403 문구, F-8 송금 현황은 주기 새로고침, F-10 GPS 실패 문장 중복, F-11 공구 제안 → 팟 개설 시 카테고리 기본값
 - 코드 내 TODO 주석 없음
