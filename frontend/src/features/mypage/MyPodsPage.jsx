@@ -88,25 +88,35 @@ export default function MyPodsPage() {
           )}
 
           {visible.map(({ pod, status, role: myRole }) => (
-            <Link key={pod.id} to={status.link} className={styles.item}>
-              <span className={styles.thumb}>
-                <PodThumb pod={pod} />
-              </span>
-              <div className={styles.itemInfo}>
-                <span className={`${styles.statusTag} ${styles[status.key] ?? ''}`}>
-                  {myRole === 'host' ? '대표 · ' : ''}
-                  {status.label}
+            // 카드 = 팟으로 가는 링크 + 아래 [참여자 채팅] 버튼. 링크 안에 버튼을 넣을 수 없어서(HTML 규칙) 둘을 나란히 둔다
+            <div key={pod.id} className={styles.itemCard}>
+              <Link to={status.link} className={styles.item}>
+                <span className={styles.thumb}>
+                  <PodThumb pod={pod} />
                 </span>
-                <strong className={styles.itemTitle}>{pod.title}</strong>
-                <span className={styles.itemSub}>
-                  내 몫: {pod.shareLabel} · {pod.participantCount}/{pod.targetParticipantCount}명 참여
-                </span>
-              </div>
-              <div className={styles.itemPrice}>
-                {(status.price ?? calcPerPersonPrice(pod.totalAmount, pod.commissionRate, pod.participantCount)).toLocaleString()}원
-                <Icon name="chevron_right" size={20} />
-              </div>
-            </Link>
+                <div className={styles.itemInfo}>
+                  <span className={`${styles.statusTag} ${styles[status.key] ?? ''}`}>
+                    {myRole === 'host' ? '대표 · ' : ''}
+                    {status.label}
+                  </span>
+                  <strong className={styles.itemTitle}>{pod.title}</strong>
+                  <span className={styles.itemSub}>
+                    내 몫: {pod.shareLabel} · {pod.participantCount}/{pod.targetParticipantCount}명 참여
+                  </span>
+                </div>
+                <div className={styles.itemPrice}>
+                  {(status.price ?? calcPerPersonPrice(pod.totalAmount, pod.commissionRate, pod.participantCount)).toLocaleString()}원
+                  <Icon name="chevron_right" size={20} />
+                </div>
+              </Link>
+              {/* 내 팟 = 내가 열었거나 참여한 팟이라 모두 채팅 가능 (서버도 대표·참여자만 허용). 취소된 팟은 숨긴다 */}
+              {status.key !== 'cancelled' && (
+                <Link to={`/pods/${pod.id}/chat`} className={styles.itemChat}>
+                  <Icon name="forum" size={18} />
+                  참여자 채팅
+                </Link>
+              )}
+            </div>
           ))}
         </section>
       </main>
