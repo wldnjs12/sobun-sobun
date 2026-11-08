@@ -111,6 +111,9 @@
 | GET | /pods/{id}/participants | 참여자별 송금/수령 현황 (대표만) | - | `ParticipantStatusResponse[]` |
 | POST | /pods/{id}/paid | "보냈어요" 자가 신고 | - | `MyParticipationResponse` |
 | POST | /pods/{id}/picked-up | "수령 완료" 자가 신고 | - | `MyParticipationResponse` |
+| POST | /pods/{id}/image | **(2026-11-08)** 상품 사진 등록·교체 — 수정과 같은 조건(대표 + 모집중 + 대표 외 참여자 없음) | multipart: `image` (JPG/PNG/WEBP, 2MB 이하) | `Pod` (`imageVersion` +1) |
+| GET | /pods/{id}/image | **(2026-11-08)** 상품 사진 조회 (다른 건물이면 403, 사진 없으면 404) | - | `{ podId, version, contentType, dataUrl }` |
+| DELETE | /pods/{id}/image | **(2026-11-08)** 상품 사진 삭제 — 등록과 같은 조건 | - | `Pod` (`imageVersion` null) |
 | WS | /ws-sobun (STOMP) | 실시간 채널. `connectHeaders`에 `X-User-Id` | 구독: `/topic/pods/{id}` (다른 건물이면 구독 거부) | `PodAmountUpdateEvent` |
 
 - 기존 `GET /pods?buildingId=&userId=`에 `keyword`·`category`가 추가됩니다. 요청자의 건물은 서버가 토큰 사용자 기준으로 확인하며, `buildingId` 쿼리가 남을지는 통합 시 확정(남더라도 내 건물이 아니면 403).
@@ -161,13 +164,14 @@
   "targetParticipantCount": 3, "participantCount": 2,
   "commissionRate": 0.05, "perPersonAmount": 11498,
   "deadline": "2026-11-10T20:00:00", "deadlinePassed": false, "status": "OPEN", "closed": false,
-  "originalPrice": null, "pickupNote": "1층 공동현관 앞"
+  "originalPrice": null, "pickupNote": "1층 공동현관 앞", "imageVersion": 1
 }
 ```
 
 - 대표 판별은 `isHost`(보는 사람이 대표인지). 도로명주소·좌표는 넣지 않습니다. `buildingId`/`hostUserId`가 응답에 남을지는 통합 시 확정.
 - `deadlinePassed`: 마감 예정일이 지났는지(표시용, 자동 마감 아님). 픽업 PIN은 이 응답에 없고 참여자 전용 `GET /pods/{id}/me`에만 있습니다.
 - `status`: `OPEN` / `CLOSED` / `CANCELLED`. `closed`는 호환용(`status != OPEN`).
+- `imageVersion`: 대표가 올린 상품 사진의 버전(올릴 때마다 +1). `null`이면 사진 없음 → 프론트가 제목·카테고리로 고른 예시 사진(`public/pods`)이나 카테고리 아이콘을 보여줍니다. 사진은 `GET /pods/{id}/image`로 따로 받습니다(`<img>`는 토큰을 못 붙여서 같은 건물 확인을 위해 JSON의 `dataUrl`로 내려줌). 프론트는 올리기 전에 긴 변 800px JPEG로 줄입니다(위치 정보 EXIF도 제거됨).
 - `perPersonAmount` = 총액 × (1 + 수고비율) ÷ **현재 참여자 수**(대표 포함, 0이면 1로 계산), 원 단위 올림 — 기존 공식 그대로.
 
 ### 수정·취소 규칙 (2026-11 개편)

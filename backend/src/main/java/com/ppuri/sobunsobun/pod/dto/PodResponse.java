@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
  *
  * 팟은 같은 건물 이웃끼리만 보므로 위치 정보(주소·호수 등)는 넣지 않는다.
  * pickupPin도 여기엔 없다 — 참여자 전용이라 MyParticipationResponse에만 있다.
+ *
+ * imageVersion: 대표가 올린 상품 사진의 버전. null이면 사진 없음. 사진 자체는 GET /api/pods/{id}/image로 따로 받는다.
  */
 public record PodResponse(
         Long id,
@@ -34,7 +36,8 @@ public record PodResponse(
         Boolean closed,
         String status,
         String pickupNote,
-        BigDecimal originalPrice
+        BigDecimal originalPrice,
+        Integer imageVersion
 ) {
     /** 보는 사람(viewerId) 정보 없이 만들 때(테스트 등) */
     public static PodResponse from(Pod pod) {
@@ -64,7 +67,8 @@ public record PodResponse(
                 pod.getClosed(),
                 pod.getStatus().name(),
                 pod.getPickupNote(),
-                pod.getOriginalPrice()
+                pod.getOriginalPrice(),
+                pod.getImageVersion()
         );
     }
 }
