@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import AppHeader from '../../components/AppHeader.jsx'
 import BottomNav from '../../components/BottomNav.jsx'
 import Icon from '../../components/Icon.jsx'
-import { BUILDING, categoryIcon } from '../pod/podApi.js'
+import { BUILDING, categoryIcon, podImage } from '../pod/podApi.js'
 import { calcPerPersonPrice } from '../pod/podUtils.js'
 import useMyPods from './useMyPods.js'
 import styles from './MyPage.module.css'
@@ -89,7 +89,12 @@ export default function MyPodsPage() {
           {visible.map(({ pod, status, role: myRole }) => (
             <Link key={pod.id} to={status.link} className={styles.item}>
               <span className={styles.thumb}>
-                <Icon name={categoryIcon(pod.category)} size={26} />
+                {/* 건물 홈 카드(PodCard)와 같은 기준으로 사진을 고르고, 맞는 사진이 없으면 카테고리 아이콘 */}
+                {podImage(pod) ? (
+                  <img src={podImage(pod)} alt="" className={styles.thumbImage} loading="lazy" />
+                ) : (
+                  <Icon name={categoryIcon(pod.category)} size={26} />
+                )}
               </span>
               <div className={styles.itemInfo}>
                 <span className={`${styles.statusTag} ${styles[status.key] ?? ''}`}>
