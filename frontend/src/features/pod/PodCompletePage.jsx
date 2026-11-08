@@ -306,11 +306,12 @@ export default function PodCompletePage() {
         {/* ── 비대면 픽업 ── */}
         <section className={styles.card}>
           <div className={styles.cardTitle}>
-            <Icon name="lock_open" size={20} className={styles.primaryIcon} />
+            <Icon name="handshake" size={20} className={styles.primaryIcon} />
             비대면 픽업 안내
           </div>
           <p className={styles.bodyText}>
-            픽업 장소: <strong>{pod.pickupSpot}</strong>. 정산이 끝나면 픽업 화면에서 수령 비밀번호를 알려드려요.
+            픽업 장소: <strong>{pod.pickupSpot}</strong>. 정산이 끝나면 픽업 화면에서 뜯지 않은 상태인지 확인하고
+            [수령 완료]를 눌러주세요.
           </p>
         </section>
 

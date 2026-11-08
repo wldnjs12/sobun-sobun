@@ -2,13 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import Icon from '../../components/Icon.jsx'
+import { getMyUserId } from '../../api/currentUser.js'
 import { fetchMyParticipation, fetchPod, markPickedUp } from '../pod/podApi.js'
+import HostDropoffView from './HostDropoffView.jsx'
 import { unitShareText } from './settlementApi.js'
 import styles from './Settlement.module.css'
 
 /**
  * 비대면 픽업 안내 (S12 · Stitch 13번).
  * 수령 완료는 자가신고(POST /pods/{id}/picked-up)다. 누르면 완료 팝업을 띄우고 건물 홈 / 내 팟으로 보낸다.
+ *
+ * 팟장이 이 주소를 열면 "가져가세요" 대신 "픽업 장소에 두세요" 화면(HostDropoffView)을 보여준다.
+ * 팟장은 물건을 갖다 두는 사람이라, 참여자용 안내와 [수령 완료] 버튼이 맞지 않기 때문이다.
  *
  * 2026-11-08: 픽업 확인 번호(PIN) 표시를 뺐다. 팟 하나에 번호가 하나뿐이고(참여자 모두 같은 번호),
  * 보관함도 대표의 번호 확인 화면도 없어서 아무도 확인하지 않는 숫자였다. 서버의 pickupPin 필드는 API 호환을 위해 그대로 둔다.
@@ -79,6 +84,11 @@ export default function PickupPage() {
         </div>
       </div>
     )
+  }
+
+  // 팟장도 참여자 목록에 들어 있어서(joined=true) joined 확인보다 먼저 가른다
+  if (pod.isHost || pod.hostUserId === getMyUserId()) {
+    return <HostDropoffView pod={pod} podId={podId} />
   }
 
   if (!participation.joined) {
