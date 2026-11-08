@@ -119,6 +119,12 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* 아직 쓸 수 없는 기능 안내 카드 (예: 비참여자의 참여자 채팅) — 흐리게 */
+.cardMuted {
+  background: var(--color-surface-container-low);
+  box-shadow: none;
+}
+
 .cardHeader {
   display: flex;
   align-items: center;
