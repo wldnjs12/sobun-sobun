@@ -1042,16 +1042,86 @@
   opacity: 0.85;
 }
 
-.packItem {
+/* 롤 3개를 피라미드로 쌓기 (아래 2 + 위 1) */
+.rollStack {
+  --roll: 33px; /* 롤 지름 */
   position: relative;
-  color: #3b5b85;
-  filter: drop-shadow(0 6px 8px rgba(11, 28, 48, 0.25));
+  margin-top: 18px; /* 위쪽 "미개봉" 표시와 겹치지 않게 조금 아래로 */
+  width: calc(var(--roll) * 2.05);
+  height: calc(var(--roll) * 1.85);
+  filter: drop-shadow(0 6px 8px rgba(11, 28, 48, 0.28));
+}
+
+.rollStack .roll:nth-child(1) {
+  left: 0;
+  bottom: 0;
+}
+
+.rollStack .roll:nth-child(2) {
+  right: 0;
+  bottom: 0;
+}
+
+.rollStack .roll:nth-child(3) {
+  left: 50%;
+  top: 0;
+  margin-left: calc(var(--roll) / -2);
+}
+
+/* 휴지 롤 1개: 세워 둔 원기둥 */
+.roll {
+  --cap: calc(var(--roll) * 0.38); /* 위·아래 타원 높이 (원기둥을 비스듬히 내려다본 정도) */
+  position: absolute;
+  width: var(--roll);
+  height: calc(var(--roll) * 1.05);
+}
+
+/* 몸통: 왼쪽 그림자 → 가운데 밝음 → 오른쪽 그림자로 둥글게 + 아주 옅은 엠보싱 줄 */
+.rollBody {
+  position: absolute;
+  top: calc(var(--cap) / 2);
+  bottom: calc(var(--cap) / 2);
+  left: 0;
+  right: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 5px, rgba(150, 165, 185, 0.12) 5px 6px),
+    linear-gradient(90deg, #c3ccd8 0%, #f3f6fa 22%, #ffffff 42%, #eef2f7 70%, #aeb9c7 100%);
+}
+
+/* 아랫면: 몸통 끝을 둥글게 마무리 */
+.rollBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--cap);
+  border-radius: 50%;
+  background: linear-gradient(90deg, #b7c1ce, #e9eef4 45%, #a5b1c0);
+}
+
+/* 윗면: 흰 휴지 → 갈색 심지(마분지) → 가운데 구멍 */
+.rollTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--cap);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    #4a3523 0 15%,
+    #b98b5e 16% 24%,
+    #d9b48a 25% 30%,
+    #ffffff 31% 86%,
+    #dfe5ec 90%
+  );
+  box-shadow: inset 0 -1px 0 rgba(150, 165, 185, 0.6);
 }
 
 .packSeal {
   position: absolute;
+  top: 6px; /* 아래쪽에 두면 쌓은 휴지 롤을 가려서 위로 */
   right: 6px;
-  bottom: 6px;
   display: inline-flex;
   align-items: center;
   gap: 2px;

@@ -629,7 +629,11 @@ function StorySlider({ reduceMotion }) {
                 {/* 뜯지 않은 상자: 사람마다 색이 다른 봉인 테이프 + 품목 하나 + "미개봉" 표시 */}
                 <div className={styles.packBox}>
                   <span className={styles.packTape} />
-                  <Icon name="layers" size={40} className={styles.packItem} />
+                  <div className={styles.rollStack}>
+                    <ToiletRoll />
+                    <ToiletRoll />
+                    <ToiletRoll />
+                  </div>
                   <span className={styles.packSeal}>
                     <Icon name="verified" size={12} filled /> 미개봉
                   </span>
@@ -651,6 +655,20 @@ function StorySlider({ reduceMotion }) {
         </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * CSS로 그린 휴지 롤 1개 (이모지·이미지 없이). 세워 둔 원기둥을 세 조각으로 그린다:
+ *   몸통(좌우 명암으로 둥글게) + 아랫면 타원 + 윗면 타원(흰 휴지 → 갈색 심지 → 가운데 구멍)
+ */
+function ToiletRoll() {
+  return (
+    <span className={styles.roll}>
+      <span className={styles.rollBottom} />
+      <span className={styles.rollBody} />
+      <span className={styles.rollTop} />
+    </span>
   )
 }
 
