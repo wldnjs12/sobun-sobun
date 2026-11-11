@@ -1413,6 +1413,80 @@
   }
 }
 
+/* 직접 해보기 안내 줄 */
+.tryHint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(249, 189, 34, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(249, 189, 34, 0.45);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tryHint > span:first-child {
+  color: var(--yellow);
+}
+
+.tryHint b {
+  color: var(--yellow);
+}
+
+.tryHintDone {
+  background: rgba(74, 222, 128, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.5);
+}
+
+.tryHintDone > span:first-child {
+  color: #4ade80;
+}
+
+.tryReplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--navy);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 실제로 누를 수 있는 [참여하기] */
+.miniButtonLive {
+  width: 100%;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 눌러보라고 깜빡이는 테두리 */
+.miniButtonInvite {
+  animation: invite 1.4s ease-in-out infinite;
+}
+
+@keyframes invite {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 189, 34, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(249, 189, 34, 0);
+  }
+}
+
 .blockedCard {
   display: flex;
   align-items: center;
@@ -2160,13 +2234,14 @@
     padding: 96px 16px;
   }
 
-  /* 휴대폰 화면에선 두 화면을 위아래로 */
+  /* 휴대폰 화면에서도 두 화면을 나란히 두되 작게 줄인다 — 내가 누르는 순간 대표 화면이 바뀌는 게 같이 보여야 해서 */
   .syncPhones {
-    flex-direction: column;
+    gap: 4px;
+    zoom: 0.62;
   }
 
-  .syncLink {
-    transform: rotate(90deg);
+  .tryHint {
+    font-size: 13px;
   }
 
 

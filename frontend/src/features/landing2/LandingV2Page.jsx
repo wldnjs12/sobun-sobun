@@ -121,10 +121,12 @@ function useAutoTour(allowed) {
     }
     window.addEventListener('wheel', onUser, { passive: true })
     window.addEventListener('touchmove', onUser, { passive: true })
+    window.addEventListener('pointerdown', onUser, { passive: true }) // 체험 버튼을 누르는 동안 다른 섹션으로 넘어가지 않게
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener('wheel', onUser)
       window.removeEventListener('touchmove', onUser)
+      window.removeEventListener('pointerdown', onUser)
       window.removeEventListener('keydown', onKey)
       clearTimeout(resumeTimer.current)
     }
@@ -686,26 +688,48 @@ function LiveSync({ reduceMotion }) {
   const [count, setCount] = useState(reduceMotion ? LIVE_POD.target : 1)
   const [tapping, setTapping] = useState(false)
   const [visible, ref] = useInView(0.3)
+  // 방문객이 [참여하기]를 직접 누르면 자동 재생을 멈추고 "직접 해보기" 흐름으로 바뀐다
+  const [tried, setTried] = useState(false)
+  const followTimer = useRef(0)
+
+  // 직접 누름: 내가 이웃 1로 참여(2명) → 1.4초 뒤 다른 이웃도 참여(3명, 모집 완료)
+  const tryJoin = () => {
+    if (count !== 1 && tried) return
+    setTried(true)
+    setTapping(true)
+    setTimeout(() => setTapping(false), 500)
+    setCount(2)
+    clearTimeout(followTimer.current)
+    followTimer.current = setTimeout(() => setCount(LIVE_POD.target), 1400)
+  }
+  const replay = () => {
+    clearTimeout(followTimer.current)
+    setCount(1)
+  }
+  useEffect(() => () => clearTimeout(followTimer.current), [])
 
   useEffect(() => {
-    if (!visible || reduceMotion) return undefined
+    if (!visible || reduceMotion || tried) return undefined
     let tapTimer = 0
-    let current = 1 // setCount 안에서 다른 상태를 바꾸지 않으려고 지금 인원을 따로 들고 있는다
+    // 아무도 안 누를 때 보여주는 자동 재생. 1명 상태에서 두 칸(4.8초) 머물러서 방문객이 직접 누를 틈을 준다
+    const SEQUENCE = [1, 1, 2, 3]
+    let step = 0
     setCount(1)
     const timerId = setInterval(() => {
-      if (current === 1) {
+      step = (step + 1) % SEQUENCE.length
+      const next = SEQUENCE.at(step)
+      if (next === 2) {
         // 이웃 화면의 [참여하기]를 누르는 모습(물결)을 보여주면서 인원을 늘린다
         setTapping(true)
         tapTimer = setTimeout(() => setTapping(false), 500)
       }
-      current = current >= LIVE_POD.target ? 1 : current + 1
-      setCount(current)
+      setCount(next)
     }, 2400)
     return () => {
       clearInterval(timerId)
       clearTimeout(tapTimer)
     }
-  }, [visible, reduceMotion])
+  }, [visible, reduceMotion, tried])
 
   return (
     <section id="live" ref={ref} className={styles.building}>
@@ -734,14 +758,41 @@ function LiveSync({ reduceMotion }) {
           </ul>
         </div>
 
-        <div className={styles.syncStage} aria-hidden="true">
+        <div className={styles.syncStage}>
+          {/* 로그인 없이 앱의 핵심(내가 누르면 다른 화면이 바로 바뀜)을 직접 해보게 한다 — 서버와는 연결 안 됨 */}
+          <div className={`${styles.tryHint} ${tried && count >= LIVE_POD.target ? styles.tryHintDone : ''}`} aria-live="polite">
+            {tried && count >= LIVE_POD.target ? (
+              <>
+                <Icon name="celebration" size={18} /> 모집 완료! 누르는 순간 모든 화면이 함께 바뀌었죠?
+                <button type="button" className={styles.tryReplay} onClick={replay}>
+                  <Icon name="replay" size={16} /> 다시 해보기
+                </button>
+              </>
+            ) : tried && count === 2 ? (
+              <>
+                <Icon name="bolt" size={18} /> 대표 화면도 바로 2명으로! 다른 이웃도 참여하는 중…
+              </>
+            ) : (
+              <>
+                <Icon name="touch_app" size={18} /> 이웃 화면의 <b>[참여하기]</b>를 직접 눌러보세요
+              </>
+            )}
+          </div>
           <div className={styles.syncPhones}>
             <MiniPhone label="대표 화면" icon="person" count={count} />
             <div className={styles.syncLink}>
               <span key={count} className={styles.syncPulse} />
               <Icon name="sync_alt" size={22} />
             </div>
-            <MiniPhone label="이웃 화면" icon="group" count={count} neighbor tapping={tapping} />
+            <MiniPhone
+              label="이웃 화면 (나)"
+              icon="group"
+              count={count}
+              neighbor
+              tapping={tapping}
+              onJoin={count === 1 ? tryJoin : undefined}
+              invite={count === 1}
+            />
           </div>
           <div className={styles.blockedCard}>
             <span className={styles.blockedIcon}>
@@ -759,7 +810,7 @@ function LiveSync({ reduceMotion }) {
 }
 
 /** 실시간 섹션의 작은 휴대폰 한 대. 대표 화면과 이웃 화면이 같은 count를 받아 동시에 바뀐다 */
-function MiniPhone({ label, icon, count, neighbor = false, tapping = false }) {
+function MiniPhone({ label, icon, count, neighbor = false, tapping = false, onJoin, invite = false }) {
   const full = count >= LIVE_POD.target
   const joined = !neighbor || count >= 2 // 이웃 화면은 2명째부터 "참여함"
   const price = calcPerPersonPrice(DEMO.total, DEMO.rate, count)
@@ -797,10 +848,22 @@ function MiniPhone({ label, icon, count, neighbor = false, tapping = false }) {
             <span>지금 1인당</span>
             <strong key={count}>{price.toLocaleString()}원</strong>
           </div>
-          <div className={`${styles.miniButton} ${joined ? styles.miniButtonDone : ''} ${tapping ? styles.miniButtonTap : ''}`}>
-            {neighbor ? (joined ? '참여했어요' : '참여하기') : full ? '모집 마감하기' : '모집 중이에요'}
-            {tapping && <span className={styles.tapRipple} />}
-          </div>
+          {/* 이웃 화면의 [참여하기]만 실제로 누를 수 있는 버튼 (방문객 체험용) */}
+          {onJoin ? (
+            <button
+              type="button"
+              className={`${styles.miniButton} ${styles.miniButtonLive} ${invite ? styles.miniButtonInvite : ''} ${tapping ? styles.miniButtonTap : ''}`}
+              onClick={onJoin}
+            >
+              참여하기
+              {tapping && <span className={styles.tapRipple} />}
+            </button>
+          ) : (
+            <div className={`${styles.miniButton} ${joined ? styles.miniButtonDone : ''} ${tapping ? styles.miniButtonTap : ''}`}>
+              {neighbor ? (joined ? '참여했어요' : '참여하기') : full ? '모집 마감하기' : '모집 중이에요'}
+              {tapping && <span className={styles.tapRipple} />}
+            </div>
+          )}
         </div>
       </div>
     </div>
