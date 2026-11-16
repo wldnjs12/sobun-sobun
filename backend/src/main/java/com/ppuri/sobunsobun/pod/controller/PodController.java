@@ -4,8 +4,10 @@ import com.ppuri.sobunsobun.global.common.ApiResponse;
 import com.ppuri.sobunsobun.pod.dto.MyParticipationResponse;
 import com.ppuri.sobunsobun.pod.dto.ParticipantStatusResponse;
 import com.ppuri.sobunsobun.pod.dto.PodCreateRequest;
+import com.ppuri.sobunsobun.pod.dto.PodImpactResponse;
 import com.ppuri.sobunsobun.pod.dto.PodResponse;
 import com.ppuri.sobunsobun.pod.dto.PodUpdateRequest;
+import com.ppuri.sobunsobun.pod.service.PodImpactService;
 import com.ppuri.sobunsobun.pod.service.PodService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class PodController {
     private static final String USER_ID = "X-User-Id";
 
     private final PodService podService;
+    private final PodImpactService podImpactService;
 
     @PostMapping
     public ApiResponse<PodResponse> create(@RequestHeader(USER_ID) Long userId,
@@ -53,6 +56,12 @@ public class PodController {
     public ApiResponse<List<PodResponse>> listMine(@RequestHeader(USER_ID) Long userId,
                                                    @RequestParam(required = false) String role) {
         return ApiResponse.ok(podService.listMine(userId, role));
+    }
+
+    /** 임팩트 리포트: 내 건물의 성사율·절약액·과잉구매 회피량·정산 완료율 (화면 /impact) */
+    @GetMapping("/impact")
+    public ApiResponse<PodImpactResponse> impact(@RequestHeader(USER_ID) Long userId) {
+        return ApiResponse.ok(podImpactService.impactOfMyBuilding(userId));
     }
 
     @GetMapping("/{podId}")

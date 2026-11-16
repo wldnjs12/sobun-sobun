@@ -1,7 +1,7 @@
 /* ⑤ 커뮤니티 화면(목록 S16 · 상세 S17 · 글쓰기 S18)이 같이 쓰는 스타일 */
 
 .page {
-  max-width: 480px;
+  max-width: var(--page-max);
   min-height: 100vh;
   margin: 0 auto;
   background: var(--color-surface);
@@ -47,7 +47,7 @@ div.stateText {
   box-shadow: var(--shadow-md);
   color: var(--color-on-primary);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .primaryButton:disabled {
@@ -191,7 +191,7 @@ div.stateText {
   background: rgba(255, 255, 255, 0.85);
   color: var(--color-secondary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .promoTitle {
@@ -199,7 +199,7 @@ div.stateText {
   z-index: 1;
   margin: 0;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .promoBody {
@@ -224,7 +224,7 @@ div.stateText {
   background: #fff;
   color: var(--color-secondary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .promoDeco {
@@ -310,7 +310,7 @@ div.stateText {
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -337,7 +337,7 @@ div.stateText {
 .cardTitle {
   margin: 0;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 24px;
 }
 
@@ -370,13 +370,13 @@ div.stateText {
 
 .suggestHint {
   color: var(--color-secondary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* 글쓰기 둥근 버튼: 하단 탭 바로 위, 화면 폭 480px 기준 오른쪽 */
 .fab {
   position: fixed;
-  right: max(16px, calc(50% - 240px + 16px));
+  right: max(16px, calc(50% - var(--shell-offset) / 2 - var(--page-max) / 2 + 16px));
   bottom: 84px;
   z-index: 45;
   display: inline-flex;
@@ -388,7 +388,7 @@ div.stateText {
   box-shadow: 0 8px 20px rgba(0, 97, 148, 0.35);
   color: var(--color-on-primary);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -452,7 +452,7 @@ div.stateText {
   background: var(--color-surface-container-high);
   color: var(--color-primary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   vertical-align: middle;
 }
 
@@ -466,7 +466,7 @@ div.stateText {
 .postTitle {
   margin: 0 0 12px;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 28px;
 }
 
@@ -495,13 +495,13 @@ div.stateText {
   gap: 4px;
   color: var(--color-primary-fixed-dim);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .podCtaTitle {
   margin: 0;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .podCtaBody {
@@ -523,7 +523,7 @@ div.stateText {
   background: var(--color-secondary-container);
   color: var(--color-on-secondary-container);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .comments {
@@ -539,7 +539,7 @@ div.stateText {
 .commentsTitle {
   margin: 0 0 6px;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .commentsTitle span {
@@ -571,7 +571,7 @@ div.stateText {
   background: var(--color-primary-fixed);
   color: var(--color-primary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .commentAvatarWriter {
@@ -615,11 +615,11 @@ div.stateText {
 .commentDock {
   position: fixed;
   bottom: 0;
-  left: 50%;
+  left: calc(50% + var(--shell-offset) / 2);
   transform: translateX(-50%);
   z-index: 40;
   width: 100%;
-  max-width: 480px;
+  max-width: var(--page-max);
   box-sizing: border-box;
   display: flex;
   gap: var(--space-sm);
@@ -653,7 +653,7 @@ div.stateText {
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .commentSend:disabled {
@@ -663,7 +663,7 @@ div.stateText {
 .toast {
   position: fixed;
   top: 72px;
-  left: 50%;
+  left: calc(50% + var(--shell-offset) / 2);
   transform: translateX(-50%);
   z-index: 80;
   padding: 10px 18px;
@@ -767,7 +767,7 @@ div.stateText {
   background: var(--color-surface-container-lowest);
   box-shadow: var(--shadow-sm);
   color: var(--color-primary);
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .writeHint {
@@ -811,11 +811,11 @@ div.stateText {
 .writeDock {
   position: fixed;
   bottom: 0;
-  left: 50%;
+  left: calc(50% + var(--shell-offset) / 2);
   transform: translateX(-50%);
   z-index: 40;
   width: 100%;
-  max-width: 480px;
+  max-width: var(--page-max);
   box-sizing: border-box;
   display: flex;
   padding: var(--space-md) var(--margin-mobile) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));

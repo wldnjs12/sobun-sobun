@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import { getMyNickname, logout } from '../api/currentUser.js'
 import styles from './AppHeader.module.css'
 
 /** 팟·커뮤니티·내 팟·마이 화면 상단에 공통으로 붙는 헤더 (건물명 + 알림 + 계정 메뉴). */
+const SECTION = { '/home': '공동구매', '/community': '커뮤니티', '/my-pods': '내 팟', '/mypage': '마이페이지', '/impact': '임팩트 리포트', '/notifications': '알림' }
+
 export default function AppHeader({ buildingName }) {
+  const section = SECTION[useLocation().pathname]
   const [menuOpen, setMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const menuRef = useRef(null)
@@ -36,6 +39,12 @@ export default function AppHeader({ buildingName }) {
         <span className={styles.buildingName}>{buildingName}</span>
         <Icon name="expand_more" size={18} className={styles.chevron} />
       </Link>
+      {/* 데스크톱: 건물 / 섹션 브레드크럼 (건물 전환·알림·계정은 사이드바에 있다) */}
+      <div className={styles.crumbs}>
+        <span className={styles.crumbMuted}>{buildingName}</span>
+        <span className={styles.crumbSlash}>/</span>
+        <span>{section ?? '소분소분'}</span>
+      </div>
       <div className={styles.actions}>
         <Link to="/notifications" aria-label="알림" className={styles.iconButton}>
           <Icon name="notifications" size={24} />

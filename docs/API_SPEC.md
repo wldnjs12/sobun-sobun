@@ -225,3 +225,16 @@
 - **`CommunityPostSummary`**: `{ id, category, content, preview(60자), commentCount, suggestable, mine, createdAt }` — 작성자 정보 없음.
 - **`CommunityPostDetail`**: `{ id, category, authorLabel, content, suggestable, mine, createdAt, comments: [{ id, authorLabel, content, mine, createdAt }] }`.
 - **에러 코드**: 없는/숨김 글 404 · 중복 신고·본인 글 신고 409 · 다른 건물·건물 미등록 403(`BUILDING_ACCESS_DENIED`) · 남의 글 삭제 403 · 빈 내용/길이 초과(글 2000자, 댓글 500자)/잘못된 카테고리 400. 구현 상세: [handoff/community.md](./handoff/community.md)
+
+### `GET /api/pods/impact` — 건물 임팩트 리포트 (2026-11-16 추가)
+
+요청자 건물의 팟·참여 기록만 집계합니다(건물 단위 격리). 화면: `/impact`.
+
+```json
+{ "totalPods": 5, "openPods": 4, "closedPods": 1, "cancelledPods": 0, "successRate": 1.0,
+  "neighborsJoined": 9, "unitsShared": 12, "surplusUnitsAvoided": 36, "moneySaved": 0,
+  "transactedAmount": 20790, "avgFillMinutes": 0.0, "paymentRate": 0.0, "pickupRate": 0.0 }
+```
+
+- 비율(`successRate`·`paymentRate`·`pickupRate`)과 `avgFillMinutes`는 표본이 없으면 `null`.
+- 계산식은 `PodImpactCalculator`(순수 함수) 주석과 `PodImpactCalculatorTest` 참고. 송금·수령 완료율은 대표를 뺀 이웃 기준.
