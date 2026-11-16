@@ -279,3 +279,8 @@ export async function fetchPodMessages(podId, afterId) {
 export async function sendPodMessage(podId, content) {
   return api.post(`/pods/${podId}/messages`, { content }, withMe())
 }
+
+/** 임팩트 리포트 (내 건물 집계). 백엔드: PodImpactService */
+export function fetchImpact() {
+  return api.get('/pods/impact')
+}

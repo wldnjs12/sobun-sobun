@@ -38,6 +38,8 @@ export default function PodDetailPage() {
   const [notice, setNotice] = useState(useLocation().state?.notice ?? null)
   // 훅은 아래 early return(에러·로딩)보다 먼저 불러야 한다 — pod가 아직 null이어도 괜찮다
   const photoUrl = usePodPhoto(pod)
+  // 실시간 연결 상태: 'connecting' | 'live' | 'offline'. 받은 이벤트 수와 마지막 수신 시각도 보여준다 (시연 때 "진짜 실시간"을 증명)
+  const [live, setLive] = useState({ state: 'connecting', events: 0, lastAt: null })
 
   // 소켓 콜백 안에서 "직전 상태"를 알아야 무엇이 바뀌었는지 알 수 있다.
   // useState 값은 콜백이 만들어질 때의 값으로 굳어버리므로, 항상 최신값을 담는 useRef를 쓴다.
@@ -58,6 +60,7 @@ export default function PodDetailPage() {
     reload().catch(setError)
 
     const client = connectPodSocket(podId, async (event) => {
+      setLive((l) => ({ ...l, state: 'live', events: l.events + 1, lastAt: new Date() }))
       const before = latestPod.current
       let updated
       try {
@@ -89,6 +92,8 @@ export default function PodDetailPage() {
       }
     }, {
       // 실시간 구독을 서버가 거부 = 다른 건물 팟 (REST 403보다 먼저 올 수도 있어서 여기서도 처리)
+      onConnect: () => setLive((l) => ({ ...l, state: 'live' })),
+      onClose: () => setLive((l) => ({ ...l, state: 'offline' })),
       onDenied: () => setError(Object.assign(new Error('다른 건물의 팟에는 접근할 수 없어요.'), { code: 'BUILDING_ACCESS_DENIED' })),
     })
     return () => client.deactivate()
@@ -178,6 +183,7 @@ export default function PodDetailPage() {
       <PageHeader title="공동구매 상세" />
 
       <main className={styles.main}>
+        <div className={styles.colMain}>
         {isCancelled && (
           <div className={`${styles.statusBanner} ${styles.statusCancelled}`} role="status">
             <Icon name="block" size={18} />
@@ -243,8 +249,12 @@ export default function PodDetailPage() {
           )}
         </section>
 
+        </div>
+
+        <div className={styles.colSide}>
         {/* ── 가격 카드 ── */}
         <section className={`${styles.card} ${styles.priceCard}`}>
+          <LiveIndicator live={live} />
           {notice && (
             <div className={styles.ribbon}>
               <Icon name="campaign" size={16} className={styles.ribbonIcon} />
@@ -260,7 +270,7 @@ export default function PodDetailPage() {
             {discountRate !== null && <span className={styles.saveBadge}>약 {discountRate}% 절약</span>}
           </div>
           <div className={styles.priceRow}>
-            <span className={styles.priceBig}>{myPrice.toLocaleString()}</span>
+            <span className={`${styles.priceBig} num`}>{myPrice.toLocaleString()}</span>
             <span className={styles.priceWon}>원</span>
             {pod.originalPrice && (
               <span className={styles.priceOriginal}>혼자 살 때 {pod.originalPrice.toLocaleString()}원</span>
@@ -271,13 +281,40 @@ export default function PodDetailPage() {
           </p>
         </section>
 
+          {/* ── 하단 고정 바 ── */}
+          <div className={styles.dock}>
+            <div className={styles.dockPrice}>
+              <span className={styles.dockLabel}>
+                1인당 {discountRate !== null && <span className={styles.dockDiscount}>{discountRate}%↓</span>}
+              </span>
+              <span className={styles.dockAmount}>
+                {myPrice.toLocaleString()}
+                <small>원</small>
+              </span>
+            </div>
+            <DockAction
+              pod={pod}
+              isHost={isHost}
+              joined={joined}
+              isFull={isFull}
+              canJoin={canJoin}
+              canLeave={canLeave}
+              canClose={canClose}
+              seatsLeft={seatsLeft}
+              busy={busy}
+              onJoin={() => setSheetOpen(true)}
+              onAsk={setConfirming}
+              onNavigate={navigate}
+            />
+          </div>
+
         {/* ── 모집 현황 ── */}
         <section className={styles.card}>
           <div className={styles.cardHeader}>
             <div className={styles.cardTitleGroup}>
               <Icon name="group" size={20} className={styles.primaryIcon} />
               <h3 className={styles.cardTitle}>모집 현황</h3>
-              <span className={styles.countText}>
+              <span className={`${styles.countText} num`}>
                 {pod.participantCount} / {pod.targetParticipantCount}명
               </span>
             </div>
@@ -415,34 +452,8 @@ export default function PodDetailPage() {
             onCancel={() => setConfirming(null)}
           />
         )}
-      </main>
-
-      {/* ── 하단 고정 바 ── */}
-      <div className={styles.dock}>
-        <div className={styles.dockPrice}>
-          <span className={styles.dockLabel}>
-            1인당 {discountRate !== null && <span className={styles.dockDiscount}>{discountRate}%↓</span>}
-          </span>
-          <span className={styles.dockAmount}>
-            {myPrice.toLocaleString()}
-            <small>원</small>
-          </span>
         </div>
-        <DockAction
-          pod={pod}
-          isHost={isHost}
-          joined={joined}
-          isFull={isFull}
-          canJoin={canJoin}
-          canLeave={canLeave}
-          canClose={canClose}
-          seatsLeft={seatsLeft}
-          busy={busy}
-          onJoin={() => setSheetOpen(true)}
-          onAsk={setConfirming}
-          onNavigate={navigate}
-        />
-      </div>
+      </main>
 
       {sheetOpen && (
         <JoinConfirmSheet
@@ -599,6 +610,21 @@ function Fallback({ message, onRetry }) {
           </>
         )}
       </p>
+    </div>
+  )
+}
+
+/** 실시간(STOMP) 연결 상태 표시. 이웃이 참여하면 이벤트 수가 올라가고 점이 깜빡인다. */
+function LiveIndicator({ live }) {
+  const label = { connecting: '연결 중', live: '실시간 연결됨', offline: '재연결 중' }[live.state]
+  return (
+    <div className={`${styles.live} ${styles[`live_${live.state}`]}`} aria-live="polite">
+      <span key={live.events} className={styles.liveDot} />
+      <span>{label}</span>
+      <span className={styles.liveMeta}>
+        STOMP · /topic/pods · 수신 {live.events}
+        {live.lastAt && ` · ${live.lastAt.toTimeString().slice(0, 8)}`}
+      </span>
     </div>
   )
 }

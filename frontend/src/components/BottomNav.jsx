@@ -25,7 +25,7 @@ export default function BottomNav() {
         >
           {({ isActive }) => (
             <>
-              <Icon name={tab.icon} size={24} filled={isActive} />
+              <Icon name={tab.icon} size={22} filled={isActive} />
               <span className={styles.label}>{tab.label}</span>
             </>
           )}

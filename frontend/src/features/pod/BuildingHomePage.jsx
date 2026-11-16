@@ -7,12 +7,25 @@ import { isBuildingAccessDenied } from '../../api/client.js'
 import PodCard from './PodCard.jsx'
 import EmptyPodState from './EmptyPodState.jsx'
 import { BUILDING, CATEGORIES, fetchMyPods, fetchNeighborhoodPods } from './podApi.js'
+import { calcDiscountRate, calcPerPersonPrice } from './podUtils.js'
 import styles from './BuildingHomePage.module.css'
 
 const STATUS_TABS = [
   { key: 'OPEN', label: '모집중' },
   { key: 'ALL', label: '전체' },
 ]
+
+// 나와 관계된 팟만 보기 — 이미 받은 목록을 화면에서 거른다 (서버 요청 없음)
+const MINE_FILTERS = [
+  { key: 'HOST', label: '내가 연 팟', icon: 'star' },
+  { key: 'JOINED', label: '참여한 팟', icon: 'check_circle' },
+]
+
+// 내 팟 필터만 켰는데 0개일 때 보여줄 안내 (검색어·카테고리까지 걸렸으면 일반 "조건에 맞는 팟 없음"을 쓴다)
+const MINE_EMPTY = {
+  HOST: { title: '아직 내가 연 공동구매가 없어요', body: '필요한 물건을 직접 열면 같은 건물 이웃이 함께해요.' },
+  JOINED: { title: '아직 참여한 공동구매가 없어요', body: '이웃이 연 팟에 참여하면 여기에 모여요.' },
+}
 
 // 글자를 칠 때마다 서버에 묻지 않고, 입력을 멈춘 뒤 0.3초가 지나면 한 번만 검색한다 (debounce)
 const SEARCH_DELAY_MS = 300
@@ -29,11 +42,23 @@ export default function BuildingHomePage() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
   const [status, setStatus] = useState('OPEN')
+  const [mine, setMine] = useState(null) // null | 'HOST' | 'JOINED'
   const [pods, setPods] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   // 응답이 늦게 온 "예전 검색" 결과가 최신 결과를 덮어쓰지 않도록 요청 번호를 센다
   const requestSeq = useRef(0)
+  const searchRef = useRef(null)
+  // "/" 키로 검색창에 바로 포커스 (데스크톱 시연용)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== '/' || ['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   // 내가 참여한 팟 id 목록. 팟 목록 응답에는 "내가 연 팟(isHost)"만 있고 "참여했는지"는 없어서,
   // 마이페이지의 '참여한 팟' API로 따로 받아와 카드에 표시한다. 실패해도 목록은 그대로 보여준다.
   const [joinedIds, setJoinedIds] = useState(() => new Set())
@@ -61,7 +86,13 @@ export default function BuildingHomePage() {
 
   useEffect(load, [load])
 
-  const filtered = Boolean(keyword) || category !== 'ALL' || status !== 'OPEN'
+  const serverFiltered = Boolean(keyword) || category !== 'ALL' || status !== 'OPEN'
+  const filtered = serverFiltered || mine !== null
+  const isMine = (pod, key) => (key === 'HOST' ? pod.isHost : !pod.isHost && joinedIds.has(pod.id))
+  const visiblePods = mine ? pods.filter((pod) => isMine(pod, mine)) : pods
+  const mineCount = (key) => pods.filter((pod) => isMine(pod, key)).length
+  // 검색어·카테고리 없이 '내 팟' 필터만 걸린 상태에서 0개 → 전용 안내
+  const mineEmpty = mine && !keyword && category === 'ALL' ? MINE_EMPTY[mine] : null
   const goToPod = (pod) => navigate(`/pods/${pod.id}`)
   const goToCreatePod = () => navigate('/pods/new')
   const resetFilters = () => {
@@ -69,6 +100,7 @@ export default function BuildingHomePage() {
     setKeyword('')
     setCategory('ALL')
     setStatus('OPEN')
+    setMine(null)
   }
 
   return (
@@ -76,27 +108,35 @@ export default function BuildingHomePage() {
       <AppHeader buildingName={BUILDING.name} />
 
       <main className={styles.main}>
-        <div className={styles.statusStrip}>
-          <div className={styles.statusLeft}>
-            <span className={styles.verifiedBadge}>
-              <Icon name="verified" size={14} filled />
-              입주민 전용
-            </span>
-            <span className={styles.statusBuilding}>{BUILDING.name}</span>
-          </div>
-          {!loading && !error && !filtered && pods.length > 0 && (
-            <span className={styles.liveBadge}>
+        <section className={styles.heading}>
+          <div className={styles.headingText}>
+            <span className={styles.eyebrow}>
               <span className={styles.liveDot} />
-              모집중 {pods.length}개
+              입주민 전용 · {BUILDING.name}
             </span>
-          )}
-        </div>
+            <h1 className={styles.title}>우리 건물 공동구매</h1>
+            <p className={styles.subtitle}>대용량 묶음은 같이 사고, 뜯지 않은 단위 그대로 나눠요.</p>
+          </div>
+          <div className={styles.headingActions}>
+            <button type="button" className={styles.ghostButton} onClick={() => navigate('/impact')}>
+              <Icon name="monitoring" size={16} />
+              임팩트
+            </button>
+            <button type="button" className={styles.primaryButton} onClick={goToCreatePod}>
+              <Icon name="add" size={16} />
+              새 공동구매
+            </button>
+          </div>
+        </section>
 
-        <HeroBanner />
+        {/* 지표는 '내 팟만 보기'와 상관없이 건물 전체 기준이라 서버 필터만 표시한다 */}
+        <KpiStrip pods={pods} loading={loading} filtered={serverFiltered} />
 
+        <div className={styles.toolbar}>
         <div className={styles.searchBox}>
           <Icon name="search" size={20} className={styles.searchIcon} />
           <input
+            ref={searchRef}
             type="search"
             aria-label="공동구매 검색"
             className={styles.searchInput}
@@ -104,6 +144,7 @@ export default function BuildingHomePage() {
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
           />
+          <kbd className={styles.searchKbd}>/</kbd>
         </div>
 
         {/* 탭 줄 오른쪽 끝에 [+ 열기] — 탭(tablist) 밖에 둬야 화면 낭독기가 버튼을 탭으로 착각하지 않는다 */}
@@ -127,6 +168,7 @@ export default function BuildingHomePage() {
             열기
           </button>
         </div>
+        </div>
 
         <div className={styles.chipRow}>
           <div className={styles.chips}>
@@ -138,6 +180,21 @@ export default function BuildingHomePage() {
                 onClick={() => setCategory(c.key)}
               >
                 {c.label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.mineFilters} role="group" aria-label="내 팟만 보기">
+            {MINE_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                aria-pressed={mine === f.key}
+                className={`${styles.chip} ${styles.mineChip} ${mine === f.key ? styles.chipActive : ''}`}
+                onClick={() => setMine((cur) => (cur === f.key ? null : f.key))}
+              >
+                <Icon name={f.icon} size={14} filled={mine === f.key} />
+                {f.label}
+                {!loading && <span className={`${styles.mineCount} num`}>{mineCount(f.key)}</span>}
               </button>
             ))}
           </div>
@@ -160,8 +217,24 @@ export default function BuildingHomePage() {
           </div>
         )}
 
-        {!loading && !error && pods.length === 0 && !filtered && <EmptyPodState onCreatePod={goToCreatePod} />}
-        {!loading && !error && pods.length === 0 && filtered && (
+        {!loading && !error && visiblePods.length === 0 && !filtered && <EmptyPodState onCreatePod={goToCreatePod} />}
+        {!loading && !error && visiblePods.length === 0 && mineEmpty && (
+          <div className={styles.message}>
+            <p className={styles.messageTitle}>{mineEmpty.title}</p>
+            <p>{mineEmpty.body}</p>
+            {mine === 'HOST' && (
+              <>
+                <button type="button" className={styles.retryButton} onClick={goToCreatePod}>
+                  새 공동구매 열기
+                </button>{' '}
+              </>
+            )}
+            <button type="button" className={styles.ghostRetry} onClick={() => setMine(null)}>
+              모집 중인 팟 보기
+            </button>
+          </div>
+        )}
+        {!loading && !error && visiblePods.length === 0 && filtered && !mineEmpty && (
           <div className={styles.message}>
             <p>조건에 맞는 공동구매가 없어요.</p>
             <button type="button" className={styles.retryButton} onClick={resetFilters}>
@@ -173,10 +246,10 @@ export default function BuildingHomePage() {
           </div>
         )}
 
-        {!loading && !error && pods.length > 0 && (
+        {!loading && !error && visiblePods.length > 0 && (
           <>
             <div className={styles.feed}>
-              {pods.map((pod) => (
+              {visiblePods.map((pod) => (
                 <PodCard
                   key={pod.id}
                   pod={pod}
@@ -211,42 +284,47 @@ export default function BuildingHomePage() {
 function ListSkeleton() {
   return (
     <div className={styles.feed} aria-busy="true" aria-label="불러오는 중">
-      {[0, 1, 2].map((i) => (
+      {[0, 1, 2, 3, 4, 5].map((i) => (
         <div key={i} className={styles.skeleton} />
       ))}
     </div>
   )
 }
 
-function HeroBanner() {
+/**
+ * 지금 목록 기준 핵심 숫자 4개. 서버 집계 API 없이 목록 응답만으로 계산한다.
+ * 절약률 = (혼자 살 때 가격 - 다 모였을 때 1인 금액) / 혼자 살 때 가격 의 평균 (혼자 가격을 적은 팟만)
+ */
+function KpiStrip({ pods, loading, filtered }) {
+  const open = pods.filter((p) => p.status === 'OPEN' && !p.deadlinePassed)
+  const neighbors = open.reduce((sum, p) => sum + p.participantCount, 0)
+  const seats = open.reduce((sum, p) => sum + Math.max(0, p.targetParticipantCount - p.participantCount), 0)
+  const rates = open
+    .map((p) => calcDiscountRate(calcPerPersonPrice(p.totalAmount, p.commissionRate, p.targetParticipantCount), p.originalPrice))
+    .filter((r) => r !== null && r > 0)
+  const avgRate = rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : null
+  const items = [
+    { label: '모집 중인 팟', value: open.length, unit: '개' },
+    { label: '참여 중인 이웃', value: neighbors, unit: '명' },
+    { label: '남은 자리', value: seats, unit: '석' },
+    { label: '평균 절약률', value: avgRate ?? '–', unit: avgRate !== null ? '%' : '' },
+  ]
   return (
-    <div className={styles.hero}>
-      <div className={styles.heroContent}>
-        <span className={styles.heroTag}>우리 건물 생필품 공동구매</span>
-        <h2 className={styles.heroTitle}>
-          대용량 묶음은 같이 사고
-          <br />
-          미개봉 그대로 나눠요
-        </h2>
-        <div className={styles.heroPerks}>
-          <Icon name="apartment" size={16} className={styles.heroPerkIcon} />
-          <span>같은 건물 이웃</span>
-          <span className={styles.heroDot}>·</span>
-          <Icon name="inventory_2" size={16} className={styles.heroPerkIcon} />
-          <span>뜯지 않고 단위로 나눔</span>
+    <div className={styles.kpis} aria-busy={loading}>
+      {items.map((it) => (
+        <div key={it.label} className={styles.kpi}>
+          <span className={styles.kpiLabel}>
+            {it.label}
+            {filtered && <span className={styles.kpiFilter}>필터</span>}
+          </span>
+          <span className={styles.kpiValue}>
+            {loading ? <span className={styles.kpiSkeleton} /> : <>
+              <span className="num">{it.value}</span>
+              <small>{it.unit}</small>
+            </>}
+          </span>
         </div>
-      </div>
-      {/* 선물상자 그림: Stitch 디자인(05./code.html)의 SVG를 그대로 옮겼다 */}
-      <svg className={styles.heroGift} fill="none" viewBox="0 0 100 100" aria-hidden="true">
-        <rect fill="#FFDCC5" height="48" rx="8" width="60" x="20" y="38" />
-        <rect fill="#FD933D" height="14" rx="4" width="68" x="16" y="28" />
-        <rect fill="#F9BD22" height="58" width="10" x="45" y="28" />
-        <path d="M50 28C44 14 26 14 36 28C40 28 46 28 50 28Z" fill="#F9BD22" />
-        <path d="M50 28C56 14 74 14 64 28C60 28 54 28 50 28Z" fill="#F9BD22" />
-        <circle cx="50" cy="28" fill="#765700" r="4" />
-        <circle cx="82" cy="22" fill="#FFE5A3" r="3" />
-        <circle cx="20" cy="18" fill="#FFFFFF" r="2.5" />
-      </svg>
+      ))}
     </div>
   )
 }

@@ -1,10 +1,12 @@
 /**
- * 디자인 토큰 — stitch_new_starter_project/sobunsobun/DESIGN.md 의 값을 CSS 변수로 옮긴 것.
+ * 디자인 토큰 — 원래 팔레트(파랑 primary · 주황 secondary) + 2026-11 PC 레이아웃용 별칭
+ *
  * 색상을 코드에 직접(#006194) 쓰지 말고 var(--color-primary)처럼 이름으로 써야
  * 나중에 디자인이 바뀌어도 이 파일 하나만 고치면 전체가 바뀐다.
+ * 새로 만든 PC 화면(사이드바·홈·임팩트·피칭)은 --bg / --fg / --border / --accent 별칭을 쓴다.
  */
 :root {
-  /* 색상 */
+  /* ── 기본 팔레트 (원래 디자인: 파랑 primary + 주황 secondary) ── */
   --color-primary: #006194;
   --color-on-primary: #ffffff;
   --color-primary-container: #007bb9;
@@ -32,15 +34,53 @@
   --color-on-surface: #0b1c30;
   --color-on-surface-variant: #3f4850;
   --color-outline: #707881;
+  --color-outline-variant: #bfc7d2;
+
+  /* ── 2026-11 PC 화면용 별칭: 새 화면(사이드바·홈·임팩트·피칭)은 이 이름을 쓴다. 값은 위 팔레트에서 가져온다 ── */
+  --bg: var(--color-surface);
+  --bg-elevated: #ffffff;
+  --bg-subtle: var(--color-surface-container-low);
+  --bg-muted: var(--color-surface-container-high);
+  --fg: var(--color-on-surface);
+  --fg-secondary: var(--color-on-surface-variant);
+  --fg-muted: #5b6670;
+  --fg-faint: var(--color-outline);
+  --border: var(--color-surface-container-high);
+  --border-strong: var(--color-outline-variant);
+  --border-hover: var(--color-outline);
+  --accent: var(--color-primary);
+  --accent-hover: #004b73;
+  --ring: 0 0 0 1px #fff, 0 0 0 3px rgba(0, 97, 148, 0.35);
+
+  --success: var(--color-secondary);
+  --success-bg: var(--color-secondary-fixed);
+  --live: var(--color-secondary-container);
+  --warning: var(--color-secondary);
+  --warning-bg: var(--color-secondary-fixed);
+  --danger: #ba1a1a;
+  --danger-bg: #ffdad6;
+
+  --font-sans: 'Geist', 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-base: var(--font-sans);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration: 160ms;
+
+  /* 데스크톱 셸 (사이드바) — 모바일에서는 0 */
+  --shell-offset: 0px;
+  --page-max: 480px;
+  --page-max-wide: 480px;
 
   /* 간격 */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
+  --space-xl: 40px;
   --margin-mobile: 16px;
 
-  /* 모서리 둥글기 */
+  /* 모서리 */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -49,25 +89,151 @@
   /* 그림자 */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 20px 40px -12px rgba(11, 28, 48, 0.15);
+}
 
-  /*
-   * 폰트: Plus Jakarta Sans에는 한글 글자가 없다.
-   * 브라우저는 앞 폰트에 없는 글자를 다음 폰트에서 찾으므로,
-   * 영문·숫자는 Plus Jakarta Sans, 한글은 Pretendard로 자연스럽게 섞여 나온다.
-   */
-  --font-base: 'Plus Jakarta Sans', 'Pretendard Variable', Pretendard, -apple-system,
-    'Apple SD Gothic Neo', sans-serif;
+/* 데스크톱(시연용 PC 화면): 왼쪽 사이드바 + 넓은 본문 */
+@media (min-width: 1024px) {
+  :root {
+    --shell-offset: 248px;
+    --page-max: 720px;
+    --page-max-wide: 1120px;
+    --margin-mobile: 32px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-  font-family: var(--font-base);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv11';
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 1024px) {
+  body.has-shell #root {
+    padding-left: var(--shell-offset);
+  }
+}
+
+::selection {
+  background: var(--color-primary-fixed);
+  color: var(--color-on-surface);
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.025em;
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+a {
+  color: var(--fg);
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* 마이크로 인터랙션: 모든 버튼·링크가 같은 속도로 반응한다 */
+button,
+a,
+input,
+textarea,
+select {
+  transition:
+    background-color var(--duration) var(--ease-out),
+    border-color var(--duration) var(--ease-out),
+    color var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    opacity var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* 숫자는 고정폭으로 — 실시간으로 바뀌어도 글자가 흔들리지 않는다 */
+.num,
+[data-num] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.03em;
+}
+
+/* 아이콘은 얇게 */
+.material-symbols-outlined {
+  font-variation-settings: 'wght' 300;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border: 3px solid var(--bg);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 공용 진입 애니메이션 */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

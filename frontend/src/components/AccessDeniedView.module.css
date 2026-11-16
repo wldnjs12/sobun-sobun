@@ -1,5 +1,5 @@
 .page {
-  max-width: 480px;
+  max-width: var(--page-max);
   min-height: 100vh;
   margin: 0 auto;
   background: var(--color-surface);
@@ -28,7 +28,7 @@
 .title {
   margin: var(--space-sm) 0 0;
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 32px;
 }
 
@@ -68,7 +68,7 @@
   box-shadow: var(--shadow-md);
   color: var(--color-on-primary);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
 }
 

@@ -23,6 +23,9 @@ import CommunityWritePage from './features/community/CommunityWritePage.jsx'
 import LoginPage from './features/account/LoginPage.jsx'
 import SignupPage from './features/account/SignupPage.jsx'
 import SessionLoading from './components/SessionLoading.jsx'
+import AppShell from './components/Sidebar.jsx'
+import ImpactPage from './features/impact/ImpactPage.jsx'
+import PitchPage from './features/pitch/PitchPage.jsx'
 import { isLoggedIn, isVerified, loadMe } from './api/currentUser.js'
 
 /** 로그인 화면으로 보내면서, 원래 가려던 주소를 ?next= 로 넘긴다 → 로그인 후 그 화면으로 돌아온다 */
@@ -86,35 +89,41 @@ export default function App() {
               GPS 2차 확인(S2')·실패 시트(S3)는 화면이 아니라 각 행동 버튼에서 뜬다 (useLocationCheck) */}
           {/* 시연용 랜딩 페이지 2번째 버전(화려한 버전). 로그인 여부와 상관없이 열린다 */}
           <Route path="/intro2" element={<LandingV2Page />} />
+          {/* 최종피칭용: 문제 정의 → 실패 사례 → 변화 → 사업성 (로그인 없이 열림) */}
+          <Route path="/pitch" element={<PitchPage />} />
           <Route path="/" element={<GuestOnly><OnboardingPage /></GuestOnly>} />
           <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
           <Route path="/signup" element={<GuestOnly><SignupPage /></GuestOnly>} />
           <Route path="/onboarding/address" element={<RequireLogin><AddressSearchPage /></RequireLogin>} />
           <Route path="/onboarding/confirm" element={<RequireLogin><BuildingConfirmPage /></RequireLogin>} />
 
-          {/* ② 팟 (05/16 건물 홈 · 06 생성 · 07 상세 + 08 참여 확인 · 09 모집 완료) */}
-          <Route path="/home" element={<RequireBuilding><BuildingHomePage /></RequireBuilding>} />
-          <Route path="/pods/new" element={<RequireBuilding><PodCreatePage /></RequireBuilding>} />
-          <Route path="/pods/:podId" element={<RequireBuilding><PodDetailPage /></RequireBuilding>} />
-          <Route path="/pods/:podId/edit" element={<RequireBuilding><PodEditPage /></RequireBuilding>} />
-          <Route path="/pods/:podId/complete" element={<RequireBuilding><PodCompletePage /></RequireBuilding>} />
-          <Route path="/pods/:podId/chat" element={<RequireBuilding><PodChatPage /></RequireBuilding>} />
+          {/* 건물 인증까지 끝난 화면: 데스크톱에서는 왼쪽 사이드바(AppShell)가 붙는다 */}
+          <Route element={<RequireBuilding><AppShell /></RequireBuilding>}>
+            {/* ② 팟 (05/16 건물 홈 · 06 생성 · 07 상세 + 08 참여 확인 · 09 모집 완료) */}
+            <Route path="/home" element={<BuildingHomePage />} />
+            <Route path="/pods/new" element={<PodCreatePage />} />
+            <Route path="/pods/:podId" element={<PodDetailPage />} />
+            <Route path="/pods/:podId/edit" element={<PodEditPage />} />
+            <Route path="/pods/:podId/complete" element={<PodCompletePage />} />
+            <Route path="/pods/:podId/chat" element={<PodChatPage />} />
 
-          {/* ③ 정산 (10 영수증 + 11 금액 확인 · 12 정산 결과 · 13 비대면 픽업) */}
-          <Route path="/settlements/:podId" element={<RequireBuilding><SettlementPage /></RequireBuilding>} />
-          <Route path="/settlements/:podId/result" element={<RequireBuilding><SettlementResultPage /></RequireBuilding>} />
-          <Route path="/settlements/:podId/payments" element={<RequireBuilding><PaymentStatusPage /></RequireBuilding>} />
-          <Route path="/pods/:podId/pickup" element={<RequireBuilding><PickupPage /></RequireBuilding>} />
+            {/* ③ 정산 (10 영수증 + 11 금액 확인 · 12 정산 결과 · 13 비대면 픽업) */}
+            <Route path="/settlements/:podId" element={<SettlementPage />} />
+            <Route path="/settlements/:podId/result" element={<SettlementResultPage />} />
+            <Route path="/settlements/:podId/payments" element={<PaymentStatusPage />} />
+            <Route path="/pods/:podId/pickup" element={<PickupPage />} />
 
-          {/* 마이페이지 (15) · 내 팟 */}
-          <Route path="/mypage" element={<RequireBuilding><MyPage /></RequireBuilding>} />
-          <Route path="/my-pods" element={<RequireBuilding><MyPodsPage /></RequireBuilding>} />
-          <Route path="/notifications" element={<RequireBuilding><NotificationsPage /></RequireBuilding>} />
+            {/* 마이페이지 (15) · 내 팟 */}
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/my-pods" element={<MyPodsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
 
-          {/* ⑤ 커뮤니티: 목록(S16) · 상세(S17) · 글쓰기(S18). 들어올 때 GPS 확인(COMMUNITY_ENTER) */}
-          <Route path="/community" element={<RequireBuilding><CommunityListPage /></RequireBuilding>} />
-          <Route path="/community/posts/:postId" element={<RequireBuilding><CommunityDetailPage /></RequireBuilding>} />
-          <Route path="/community/write" element={<RequireBuilding><CommunityWritePage /></RequireBuilding>} />
+            {/* ⑤ 커뮤니티: 목록(S16) · 상세(S17) · 글쓰기(S18). 들어올 때 GPS 확인(COMMUNITY_ENTER) */}
+            <Route path="/community" element={<CommunityListPage />} />
+            <Route path="/community/posts/:postId" element={<CommunityDetailPage />} />
+            <Route path="/community/write" element={<CommunityWritePage />} />
+            <Route path="/impact" element={<ImpactPage />} />
+          </Route>
 
           {/* 없는 주소로 오면 시작 화면으로 */}
           <Route path="*" element={<Navigate to="/" replace />} />
