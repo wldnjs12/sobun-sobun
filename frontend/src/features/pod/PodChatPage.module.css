@@ -1,5 +1,5 @@
 .page {
-  max-width: 480px;
+  max-width: var(--page-max);
   min-height: 100vh;
   margin: 0 auto;
   background: var(--color-surface);
@@ -19,7 +19,7 @@
   overflow: hidden;
   color: var(--color-on-surface);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -136,11 +136,11 @@
 .composer {
   position: fixed;
   bottom: 0;
-  left: 50%;
+  left: calc(50% + var(--shell-offset) / 2);
   transform: translateX(-50%);
   z-index: 40;
   width: 100%;
-  max-width: 480px;
+  max-width: var(--page-max);
   box-sizing: border-box;
   padding: 10px var(--margin-mobile) calc(10px + env(safe-area-inset-bottom, 0px));
   background: rgba(248, 249, 255, 0.95);

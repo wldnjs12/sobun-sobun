@@ -1,5 +1,5 @@
 .page {
-  max-width: 480px;
+  max-width: var(--page-max);
   min-height: 100vh;
   margin: 0 auto;
   background: var(--color-surface);
@@ -53,7 +53,7 @@
 .tipLabel {
   color: var(--color-primary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.03em;
 }
 
@@ -86,7 +86,7 @@
 .secondaryHint {
   color: var(--color-secondary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .fieldRow {
@@ -163,14 +163,14 @@
   padding-right: 48px;
   text-align: right;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .amountUnit {
   position: absolute;
   right: 16px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   pointer-events: none;
 }
 
@@ -215,7 +215,7 @@
   width: 32px;
   color: var(--color-primary);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -238,7 +238,7 @@
 .previewPrice {
   color: var(--color-primary);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .shares {
@@ -256,7 +256,7 @@
   background: var(--color-secondary-fixed);
   color: var(--color-on-secondary-fixed);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .shareMine {
@@ -297,7 +297,7 @@
 }
 
 .feeChipActive small {
-  font-weight: 700;
+  font-weight: 600;
   opacity: 1;
 }
 
@@ -315,7 +315,7 @@
 .feeInfo p {
   margin: 0;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -418,11 +418,11 @@
 .dock {
   position: fixed;
   bottom: 0;
-  left: 50%;
+  left: calc(50% + var(--shell-offset) / 2);
   transform: translateX(-50%);
   z-index: 40;
   width: 100%;
-  max-width: 480px;
+  max-width: var(--page-max);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -454,7 +454,7 @@
   color: var(--color-on-primary);
   box-shadow: 0 10px 15px -3px rgba(0, 97, 148, 0.25);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .submitButton:disabled {
@@ -521,7 +521,7 @@
 .unitPickActive {
   background: var(--color-primary-fixed);
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .inputInvalid,

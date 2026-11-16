@@ -11,7 +11,7 @@ import { getMyUserId, getToken } from './currentUser.js'
 // 로컬 개발: 백엔드가 같은 머신의 8080 포트라고 가정. 배포(Vercel): VITE_WS_BASE_URL(백엔드 Railway 주소, wss://)을 쓴다.
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL ?? `ws://${location.hostname}:8080`
 
-export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
+export function connectPodSocket(podId, onUpdate, { onDenied, onConnect, onClose } = {}) {
   const client = new Client({
     // 백엔드가 /ws-sobun 을 SockJS로 열어둬서(WebSocketConfig의 .withSockJS()),
     // 순수 WebSocket으로 붙으려면 끝에 /websocket 을 붙여야 한다. 없으면 연결 자체가 실패한다.
@@ -23,7 +23,10 @@ export function connectPodSocket(podId, onUpdate, { onDenied } = {}) {
       client.subscribe(`/topic/pods/${podId}`, (message) => {
         onUpdate(JSON.parse(message.body))
       })
+      onConnect?.()
     },
+    // 연결이 끊기면(와이파이 전환 등) 화면의 "실시간" 표시를 끈다. 3초 뒤 자동 재연결된다.
+    onWebSocketClose: () => onClose?.(),
     // 서버가 STOMP ERROR 프레임을 보냄 = 연결·구독 거부 → 더 시도하지 않는다
     onStompError: (frame) => {
       console.warn('실시간 연결이 거부됐어요:', frame.headers?.message)

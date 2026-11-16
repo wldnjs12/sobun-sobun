@@ -6,16 +6,17 @@ import styles from './PodCard.module.css'
 
 const STATUS_LABEL = { CLOSED: '모집 마감', CANCELLED: '모집 취소' }
 
-// 내가 관계된 팟 표시: 'joined'(참여함)는 파란색, 'host'(내가 연 팟)는 노란색
+// 내가 관계된 팟은 사진 위 배지 대신 파란 테두리와 [내 팟 보기] 버튼으로만 구분한다.
+// (배지가 카드마다 붙으면 목록이 어수선해서, '내가 연 팟'·'참여한 팟'은 홈의 필터로 옮겼다)
 const MY_ROLE = {
-  joined: { label: '내가 참여한 팟', icon: 'check_circle', className: 'cardJoined' },
-  host: { label: '내가 연 팟', icon: 'star', className: 'cardHost' },
+  joined: { className: 'cardJoined' },
+  host: { className: 'cardHost' },
 }
 
 /**
  * 건물 홈 목록의 팟 카드 1개.
  * 카드를 누르면 onJoin(pod)을 호출하고, 실제 참여는 팟 상세 화면에서 처리한다.
- * myRole이 있으면(참여함/내가 연 팟) 카드 테두리·바탕색과 맨 위 띠로 다른 팟과 구분한다.
+ * myRole이 있으면(참여함/내가 연 팟) 카드 테두리와 버튼 문구로 다른 팟과 구분한다.
  */
 export default function PodCard({ pod, onJoin, myRole = null }) {
   const role = MY_ROLE[myRole]
@@ -35,80 +36,73 @@ export default function PodCard({ pod, onJoin, myRole = null }) {
   const stateText = STATUS_LABEL[pod.status] ?? (pod.deadlinePassed ? '마감 시간 지남' : remainingText)
 
   return (
-    <article className={`${styles.card} ${isOpen ? '' : styles.cardInactive} ${role ? styles[role.className] : ''}`}>
-      {role && (
-        <div className={styles.myRibbon}>
-          <Icon name={role.icon} size={16} filled />
-          {role.label}
+    <article
+      className={`${styles.card} ${isOpen ? '' : styles.cardInactive} ${role ? styles[role.className] : ''}`}
+      onClick={() => onJoin(pod)}
+    >
+      <div className={styles.media}>
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className={styles.mediaImage} loading="lazy" />
+        ) : (
+          <Icon name={categoryIcon(pod.category)} size={40} className={styles.mediaPlaceholder} />
+        )}
+        <span className={styles.unitBadge}>{pod.shareLabel}씩</span>
+      </div>
+
+      <div className={styles.body}>
+        <div className={styles.meta}>
+          <span>{pod.categoryLabel ?? '기타'}</span>
+          <span className={styles.metaDot} />
+          <span className={`${styles.timer} ${isLastSeat ? styles.timerHot : ''}`}>{stateText}</span>
         </div>
-      )}
-      <div className={styles.top}>
-        <div className={styles.thumbnail}>
-          {imageUrl ? (
-            <img src={imageUrl} alt="" className={styles.thumbnailImage} loading="lazy" />
-          ) : (
-            <Icon name={categoryIcon(pod.category)} size={36} className={styles.thumbnailPlaceholder} />
+        <h3 className={styles.title}>{pod.title}</h3>
+        {pod.pickupNote && (
+          <span className={styles.pickup}>
+            <Icon name="location_on" size={13} />
+            {pod.pickupNote}
+          </span>
+        )}
+
+        <div className={styles.price}>
+          <span className={styles.perPersonLabel}>1인</span>
+          <span className={`${styles.perPerson} num`}>{perPersonPrice.toLocaleString()}</span>
+          <span className={styles.won}>원</span>
+          {discountRate !== null && (
+            <>
+              <span className={`${styles.original} num`}>{pod.originalPrice.toLocaleString()}</span>
+              <span className={styles.discount}>−{discountRate}%</span>
+            </>
           )}
-          <span className={styles.unitBadge}>{pod.shareLabel}</span>
-        </div>
-
-        <div className={styles.info}>
-          <div>
-            <div className={styles.meta}>
-              <span className={styles.categoryBadge}>{pod.categoryLabel ?? '기타'}</span>
-              <span className={`${styles.metaItem} ${styles.timer}`}>
-                <Icon name="timer" size={14} />
-                {stateText}
-              </span>
-            </div>
-            <h3 className={styles.title}>{pod.title}</h3>
-            {pod.pickupNote && (
-              <span className={styles.metaItem}>
-                <Icon name="location_on" size={14} className={styles.pickupIcon} />
-                {pod.pickupNote}
-              </span>
-            )}
-          </div>
-
-          <div className={styles.price}>
-            {discountRate !== null && <span className={styles.discount}>{discountRate}%</span>}
-            <span className={styles.perPerson}>1인 {perPersonPrice.toLocaleString()}원</span>
-            {discountRate !== null && (
-              <span className={styles.original}>{pod.originalPrice.toLocaleString()}원</span>
-            )}
-          </div>
         </div>
       </div>
 
-      <div className={styles.bottom}>
-        <div className={styles.progressLabels}>
+      <div className={styles.footer}>
+        {/* 자리 수만큼 칸을 나눈 진행 막대: 채워진 칸 = 참여한 사람 */}
+        <div
+          className={styles.seats}
+          role="img"
+          aria-label={`${pod.targetParticipantCount}명 중 ${pod.participantCount}명 참여`}
+        >
+          {Array.from({ length: Math.min(pod.targetParticipantCount, 12) }, (_, i) => (
+            <span key={i} className={`${styles.seat} ${i < pod.participantCount ? styles.seatFilled : ''}`} />
+          ))}
+        </div>
+        <div className={styles.footerRow}>
           <span className={styles.joined}>
-            {pod.participantCount}/{pod.targetParticipantCount}명 참여
+            <span className="num">
+              {pod.participantCount}/{pod.targetParticipantCount}
+            </span>
+            명 ·{' '}
+            {isOpen ? (isFull ? '인원 다 모임' : isLastSeat ? '마지막 1자리' : `${seatsLeft}자리 남음`) : '참여 불가'}
           </span>
-          <span className={styles.target}>
-            {isOpen ? (isFull ? '인원 다 모임' : isLastSeat ? '마지막 1자리!' : `${seatsLeft}자리 남음`) : '참여 불가'}
-          </span>
-        </div>
-
-        <div className={styles.progressTrack}>
-          <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
-        </div>
-
-        <div className={styles.actions}>
-          <span className={styles.shareText}>
-            {pod.totalLabel ? `총 ${pod.totalLabel} → ${pod.shareLabel}씩` : pod.shareLabel}
-          </span>
-
-          <button
-            type="button"
-            className={`${styles.joinButton} ${isLastSeat && !role ? styles.joinButtonUrgent : ''}`}
-            onClick={() => onJoin(pod)}
-          >
+          <span className={`${styles.cta} ${isLastSeat && !role ? styles.ctaHot : ''}`}>
             {role ? '내 팟 보기' : isOpen && !isFull ? '참여하기' : '보러가기'}
-            {/* "마지막 1자리" 재촉 표시는 아직 참여 안 한 사람에게만 */}
-            <Icon name={isLastSeat && !role ? 'local_fire_department' : 'arrow_forward'} size={16} />
-          </button>
+            <Icon name="arrow_forward" size={15} />
+          </span>
         </div>
+        <span className={styles.shareText}>
+          {pod.totalLabel ? `총 ${pod.totalLabel} → ${pod.shareLabel}씩 미개봉 나눔` : `${pod.shareLabel}씩 미개봉 나눔`}
+        </span>
       </div>
     </article>
   )
