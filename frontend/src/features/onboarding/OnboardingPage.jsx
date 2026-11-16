@@ -21,7 +21,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate()
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.landing}`}>
       <header className={styles.brandBar}>
         <img src="/logo.svg" alt="소분소분 로고" className={styles.logo} />
         <span className={styles.brandName}>소분소분</span>
@@ -48,6 +48,16 @@ export default function OnboardingPage() {
                 {tag}
               </span>
             ))}
+          </div>
+          {/* PC에서는 하단 고정 버튼 대신 제목 아래에 바로 보여준다 */}
+          <div className={styles.heroCta}>
+            <button type="button" className={styles.primaryButton} onClick={() => navigate('/signup')}>
+              시작하기
+              <Icon name="arrow_forward" size={20} />
+            </button>
+            <Link to="/login" className={styles.textLink}>
+              이미 계정이 있어요
+            </Link>
           </div>
         </section>
 
@@ -105,7 +115,7 @@ export default function OnboardingPage() {
         </section>
       </main>
 
-      <div className={styles.ctaDock}>
+      <div className={`${styles.ctaDock} ${styles.landingDock}`}>
         <button type="button" className={styles.primaryButton} onClick={() => navigate('/signup')}>
           시작하기
           <Icon name="arrow_forward" size={20} />

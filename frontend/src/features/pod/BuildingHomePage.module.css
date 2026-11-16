@@ -442,7 +442,8 @@
   color: var(--accent);
 }
 
-@media (max-width: 719px) {
+/* 1280px 미만(폰·태블릿·작은 노트북)에서는 카테고리 칩이 눌리지 않게 내 팟 필터를 아랫줄로 */
+@media (max-width: 1279px) {
   .chipRow {
     flex-direction: column;
     align-items: stretch;
