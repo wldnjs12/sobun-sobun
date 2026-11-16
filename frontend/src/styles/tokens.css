@@ -95,7 +95,6 @@
 /* 데스크톱(시연용 PC 화면): 왼쪽 사이드바 + 넓은 본문 */
 @media (min-width: 1024px) {
   :root {
-    --shell-offset: 248px;
     --page-max: 720px;
     --page-max-wide: 1120px;
     --margin-mobile: 32px;
@@ -120,11 +119,18 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: 'ss01', 'cv11';
   letter-spacing: -0.011em;
+  word-break: keep-all; /* 한글이 단어 중간('대|용량')에서 줄바꿈되지 않게 */
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 사이드바는 로그인 후 건물 화면에만 있다. 첫 화면·로그인·가입처럼 사이드바가 없는 화면에서는
+   --shell-offset이 0이어야 하단 고정 버튼이 화면 가운데에 온다. */
 @media (min-width: 1024px) {
+  body.has-shell {
+    --shell-offset: 248px;
+  }
   body.has-shell #root {
     padding-left: var(--shell-offset);
   }
@@ -202,6 +208,13 @@ select:focus {
 /* 아이콘은 얇게 */
 .material-symbols-outlined {
   font-variation-settings: 'wght' 300;
+  /* 아이콘 폰트가 늦게 오면 'arrow_forward' 같은 이름이 글자로 보이며 레이아웃을 밀어낸다.
+     칸을 아이콘 1개 크기로 고정해서 그 순간에도 모양이 흐트러지지 않게 한다. */
+  display: inline-block;
+  width: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 ::-webkit-scrollbar {
