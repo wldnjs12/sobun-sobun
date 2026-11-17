@@ -204,7 +204,7 @@ export default function CommunityDetailPage() {
               <Icon name="bolt" size={16} /> 공구 제안 → 팟 바로 연결
             </span>
             <h2 className={styles.podCtaTitle}>이 품목으로 바로 팟 열기</h2>
-            <p className={styles.podCtaBody}>품목 이름이 채워진 팟 생성 화면으로 이동해요. 금액·인원과 1인당 미개봉 수량만 정하면 끝!</p>
+            <p className={styles.podCtaBody}>품목 이름이 채워진 팟 생성 화면으로 이동해요. 금액·인원과 1인당 미개봉 수량만 정하면 돼요.</p>
             <button type="button" className={styles.podCtaButton} onClick={openPod}>
               팟 개설하기
               <Icon name="arrow_forward" size={18} />

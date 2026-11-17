@@ -87,7 +87,7 @@
 .title {
   margin: 0;
   font-size: 26px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.04em;
 }
@@ -134,6 +134,13 @@
 
 .primaryButton:hover {
   background: var(--accent-hover);
+}
+
+/* PC에서는 사이드바에 [새 공동구매 열기]가 늘 있으니 헤더의 같은 버튼은 숨긴다 */
+@media (min-width: 1024px) {
+  :global(body.has-shell) .primaryButton {
+    display: none;
+  }
 }
 
 .ghostButton {
@@ -188,13 +195,18 @@
 }
 
 .kpiValue {
-  color: var(--color-primary);
+  color: var(--fg);
   display: flex;
   align-items: baseline;
   gap: 3px;
   min-height: 30px;
   font-size: 26px;
   font-weight: 600;
+}
+
+/* 강조색은 숫자 하나에만: 이 앱이 약속하는 결과(절약률) */
+.kpiAccent .kpiValue {
+  color: var(--accent);
 }
 
 .kpiValue small {

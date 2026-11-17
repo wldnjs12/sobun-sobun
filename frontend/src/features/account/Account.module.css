@@ -34,7 +34,7 @@
   align-items: center;
   gap: var(--space-sm);
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .logo {
@@ -53,7 +53,7 @@
 .title {
   margin: 0 0 var(--space-xs);
   font-size: 28px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 36px;
   letter-spacing: -0.02em;
 }

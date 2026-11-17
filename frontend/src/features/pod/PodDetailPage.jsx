@@ -27,6 +27,9 @@ export default function PodDetailPage() {
 
   const [pod, setPod] = useState(null)
   const [joined, setJoined] = useState(false)
+  // 실시간 이벤트 콜백 안에서 최신 참여 여부를 읽기 위한 ref
+  const joinedRef = useRef(false)
+  joinedRef.current = joined
   const [error, setError] = useState(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [joining, setJoining] = useState(false)
@@ -74,21 +77,24 @@ export default function PodDetailPage() {
       }
       if (!before) return
       if (event.status === 'CANCELLED' && before.status !== 'CANCELLED') {
-        setNotice('대표가 모집을 취소했어요.')
+        setNotice('대표가 모집을 취소했어요')
       } else if (event.closed && !before.closed) {
-        setNotice('대표가 모집을 마감했어요. 곧 구매가 진행돼요!')
+        setNotice('대표가 모집을 마감했어요. 곧 구매가 진행돼요')
       } else if (event.participantCount > before.participantCount) {
-        const priceBefore = calcPerPersonPrice(before.totalAmount, before.commissionRate, before.participantCount + 1)
-        const priceAfter = calcPerPersonPrice(updated.totalAmount, updated.commissionRate, updated.participantCount + 1)
+        // 화면에 보이는 '내 1인 가격'과 같은 기준으로 비교한다: 대표·참여자는 지금 인원, 아직 안 들어온 사람은 +1
+        const extra = before.isHost || joinedRef.current ? 0 : 1
+        const priceBefore = calcPerPersonPrice(before.totalAmount, before.commissionRate, before.participantCount + extra)
+        // 인원은 이벤트 값을 쓴다 (다시 불러온 응답이 저장 직전 값일 수 있어서)
+        const priceAfter = calcPerPersonPrice(before.totalAmount, before.commissionRate, event.participantCount + extra)
         setNotice(
           priceBefore > priceAfter
-            ? `방금 이웃 1명 참여로 ${(priceBefore - priceAfter).toLocaleString()}원 인하!`
-            : '방금 이웃 1명이 참여했어요.',
+            ? `방금 이웃 1명이 참여해서 1인 가격이 ${(priceBefore - priceAfter).toLocaleString()}원 내려갔어요`
+            : '방금 이웃 1명이 참여했어요',
         )
       } else if (event.participantCount < before.participantCount) {
-        setNotice('이웃 1명이 참여를 취소했어요.')
+        setNotice('이웃 1명이 참여를 취소했어요')
       } else if (updated.title !== before.title || updated.totalAmount !== before.totalAmount || updated.deadline !== before.deadline) {
-        setNotice('대표가 글 내용을 수정했어요.')
+        setNotice('대표가 글 내용을 수정했어요')
       }
     }, {
       // 실시간 구독을 서버가 거부 = 다른 건물 팟 (REST 403보다 먼저 올 수도 있어서 여기서도 처리)
@@ -139,7 +145,7 @@ export default function PodDetailPage() {
       if (updated.participantCount >= updated.targetParticipantCount) {
         navigate(`/pods/${pod.id}/complete`)
       } else {
-        setNotice('참여 완료! 대표가 마감하면 알려드릴게요.')
+        setNotice('참여했어요. 대표가 마감하면 알려드릴게요')
       }
     } catch (e) {
       myActionPending.current = false

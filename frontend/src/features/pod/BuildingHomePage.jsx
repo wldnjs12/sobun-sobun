@@ -307,12 +307,12 @@ function KpiStrip({ pods, loading, filtered }) {
     { label: '모집 중인 팟', value: open.length, unit: '개' },
     { label: '참여 중인 이웃', value: neighbors, unit: '명' },
     { label: '남은 자리', value: seats, unit: '석' },
-    { label: '평균 절약률', value: avgRate ?? '–', unit: avgRate !== null ? '%' : '' },
+    { label: '평균 절약률', value: avgRate ?? '–', unit: avgRate !== null ? '%' : '', accent: true },
   ]
   return (
     <div className={styles.kpis} aria-busy={loading}>
       {items.map((it) => (
-        <div key={it.label} className={styles.kpi}>
+        <div key={it.label} className={`${styles.kpi} ${it.accent ? styles.kpiAccent : ''}`}>
           <span className={styles.kpiLabel}>
             {it.label}
             {filtered && <span className={styles.kpiFilter}>필터</span>}

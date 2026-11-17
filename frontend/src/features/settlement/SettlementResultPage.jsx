@@ -185,7 +185,7 @@ export default function SettlementResultPage() {
             <div>
               <span>혼자 마트에서 샀다면 {pod.originalPrice.toLocaleString()}원</span>
               <strong>
-                {(pod.originalPrice - perPersonAmount).toLocaleString()}원 절약! ({savingRate}%)
+                {(pod.originalPrice - perPersonAmount).toLocaleString()}원 절약 ({savingRate}%)
               </strong>
             </div>
           </section>
