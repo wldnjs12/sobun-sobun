@@ -46,7 +46,6 @@ function Sidebar() {
       <Link to="/home" className={styles.brand}>
         <img src="/logo.svg" alt="" className={styles.logo} />
         <span className={styles.wordmark}>소분소분</span>
-        <span className={styles.version}>beta</span>
       </Link>
 
       <Link to="/onboarding/address" className={styles.building} title="건물 다시 등록하기">

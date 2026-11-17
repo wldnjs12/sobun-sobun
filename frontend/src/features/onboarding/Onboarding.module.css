@@ -48,17 +48,14 @@
 
 .brandName {
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .brandTag {
   margin-left: auto;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-high);
-  color: var(--color-primary);
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .hero {
@@ -73,18 +70,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-high);
-  color: var(--color-primary);
-  font-size: 12px;
-  font-weight: 600;
+  color: var(--fg-secondary);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .heroTitle {
   margin: 0;
   font-size: 30px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 38px;
   letter-spacing: -0.02em;
 }
@@ -192,7 +186,7 @@
 .compareBig {
   color: var(--color-primary);
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .compareBar {
@@ -588,7 +582,7 @@
 .searchTitle {
   margin: var(--space-sm) 0 var(--space-xs);
   font-size: 28px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 36px;
   letter-spacing: -0.02em;
 }
@@ -678,7 +672,7 @@
 .resultName {
   padding-right: 48px;
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .resultAddress {
@@ -792,7 +786,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary-fixed), var(--color-secondary-fixed));
+  background: var(--color-surface-container-low);
 }
 
 .heroBuildingIcon {
@@ -829,7 +823,7 @@
 .heroCardTitle {
   margin: var(--space-xs) 0 0;
   font-size: 28px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 38px;
   letter-spacing: -0.02em;
 }
@@ -852,7 +846,7 @@
 .dongHead h3 {
   margin: 0;
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .required {
@@ -888,7 +882,7 @@
   margin: 0 0 4px;
   color: var(--color-on-surface);
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .promiseTitle > span {

@@ -77,7 +77,7 @@ export default function CommunityListPage() {
 
           {/* 공구 제안 → 반응 좋으면 팟으로: 커뮤니티를 만든 이유(05-community.md) */}
           <section className={styles.promo}>
-            <span className={styles.promoBadge}>공구 제안 → 팟으로 바로 연결</span>
+            <span className={styles.promoBadge}>공구 제안 → 팟으로 연결</span>
             <h2 className={styles.promoTitle}>이웃과 나눌 대용량 생필품 있나요?</h2>
             <p className={styles.promoBody}>화장지·생수처럼 묶음으로 사서 미개봉 단위로 나누기 좋은 물건을 익명으로 제안해보세요. 반응이 좋으면 바로 팟을 열 수 있어요.</p>
             <button
@@ -89,7 +89,6 @@ export default function CommunityListPage() {
               지금 제안하기
               <Icon name="arrow_forward" size={16} />
             </button>
-            <Icon name="shopping_bag" size={88} className={styles.promoDeco} />
           </section>
 
           {error && (
@@ -107,7 +106,7 @@ export default function CommunityListPage() {
             <div className={styles.empty}>
               <Icon name="post_add" size={40} />
               <strong>{q ? '검색 결과가 없어요' : '등록된 글이 아직 없어요'}</strong>
-              <span>{q ? '다른 단어로 찾아보세요.' : '예) "휴지 30롤 같이 사실 분" 처럼 첫 이야기를 들려주세요!'}</span>
+              <span>{q ? '다른 단어로 찾아보세요.' : '예) "휴지 30롤 같이 사실 분" 처럼 첫 이야기를 들려주세요'}</span>
             </div>
           )}
 

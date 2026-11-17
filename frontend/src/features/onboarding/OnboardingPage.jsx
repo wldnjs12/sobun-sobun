@@ -25,22 +25,22 @@ export default function OnboardingPage() {
       <header className={styles.brandBar}>
         <img src="/logo.svg" alt="소분소분 로고" className={styles.logo} />
         <span className={styles.brandName}>소분소분</span>
-        <span className={styles.brandTag}>동네 생활용품 공동구매</span>
+        <span className={styles.brandTag}>인하대 인근 · 용현·학익동</span>
       </header>
 
       <main className={styles.mainWithCta}>
         <section className={styles.hero}>
           <span className={styles.pill}>
             <Icon name="groups" size={16} />
-            우리 동네 이웃 공동구매
+            같은 건물 이웃 공동구매
           </span>
           <h1 className={styles.heroTitle}>
             대용량 가격으로,
             <br />
-            <span className={styles.heroAccent}>필요한 만큼만.</span>
+            <span className={styles.heroAccent}>필요한 만큼만</span>
           </h1>
           <p className={styles.heroBody}>
-            휴지·세제·물티슈·샴푸처럼 묶음으로 파는 생활용품, 동네 이웃과 나눠 사면 대용량 가격 그대로 필요한 만큼만 가져갈 수 있어요.
+            휴지·세제·물티슈·샴푸처럼 묶음으로 파는 생활용품, 같은 건물 이웃과 나눠 사면 대용량 가격 그대로 필요한 만큼만 가져갈 수 있어요.
           </p>
           <div className={styles.quickChips} aria-label="이런 물건을 나눠요">
             {EXAMPLES.map((tag) => (

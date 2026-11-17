@@ -35,7 +35,7 @@
 .title {
   margin: var(--space-xs) 0;
   font-size: 26px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 34px;
   letter-spacing: -0.02em;
 }
@@ -320,7 +320,7 @@
   color: var(--color-primary);
   font: inherit;
   font-size: 32px;
-  font-weight: 650;
+  font-weight: 600;
   text-align: right;
   outline: none;
 }
@@ -386,7 +386,7 @@
 .perPersonRow > strong {
   color: var(--color-primary);
   font-size: 30px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .perPersonRow > strong small {
@@ -419,7 +419,7 @@
 
 .breakdownTotal > span:last-child {
   color: var(--color-primary);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .note {
@@ -476,7 +476,7 @@
 .resultAmount {
   color: var(--color-primary);
   font-size: 44px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 52px;
   letter-spacing: -0.03em;
 }
@@ -977,7 +977,7 @@
   background: var(--color-primary-fixed);
   color: var(--color-primary);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .statusAvatarMe {
@@ -1060,7 +1060,7 @@
 .popupTitle {
   margin: 4px 0 0;
   font-size: 22px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .popupBody {

@@ -94,7 +94,7 @@
   position: relative;
   margin: 0 0 var(--space-xs);
   font-size: 30px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 38px;
   letter-spacing: -0.02em;
 }
@@ -307,7 +307,7 @@
 .quoteTotalPrice {
   color: var(--color-primary);
   font-size: 30px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 38px;
 }
 
