@@ -60,7 +60,6 @@ function Sidebar() {
       <button type="button" className={styles.create} onClick={() => navigate('/pods/new')}>
         <Icon name="add" size={18} />
         새 공동구매 열기
-        <kbd className={styles.kbd}>N</kbd>
       </button>
 
       <nav className={styles.nav}>
