@@ -210,13 +210,53 @@ export async function markPickedUp(podId) {
  * 사진은 <img src="/api/...">로 바로 못 띄운다 — <img>는 로그인 토큰을 못 붙여서 서버가 "같은 건물인지" 확인할 수 없기 때문.
  * 그래서 다른 API처럼 토큰을 붙여 JSON으로 받고, 그 안의 dataUrl("data:image/jpeg;base64,...")을 src에 넣는다.
  * 같은 사진을 화면마다 다시 받지 않도록 "팟 id + 버전"으로 기억해 둔다. 사진을 바꾸면 버전이 올라가서 새로 받는다.
+ *
+ * 메모리(Map)만 쓰면 새로고침할 때마다 다 사라져서, 사진이 오기 전까지 아이콘이 잠깐 보인다.
+ * 그래서 받은 사진을 브라우저 저장소(localStorage)에도 넣어 두고, 다음에 들어오면 첫 화면부터 바로 꺼내 쓴다.
+ * localStorage는 브라우저마다 5MB 정도라서, 꽉 차면 오래된 사진부터 지우고 다시 넣는다.
  */
 const podPhotoCache = new Map()
+const STORE_PREFIX = 'podPhoto:'
+
+/** 저장소에 있는 사진을 바로(동기로) 꺼낸다. 없으면 null */
+export function cachedPodPhoto(podId, version) {
+  try {
+    return localStorage.getItem(`${STORE_PREFIX}${podId}:${version}`)
+  } catch {
+    return null // 시크릿 창 등에서 저장소를 못 쓰면 그냥 서버에서 받는다
+  }
+}
+
+function storePodPhoto(podId, version, dataUrl) {
+  try {
+    // 같은 팟의 옛 버전 사진은 지운다
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith(`${STORE_PREFIX}${podId}:`)) localStorage.removeItem(key)
+    }
+    const key = `${STORE_PREFIX}${podId}:${version}`
+    for (;;) {
+      try {
+        localStorage.setItem(key, dataUrl)
+        return
+      } catch {
+        // 꽉 찼으면 다른 사진 하나를 지우고 다시 시도, 지울 게 없으면 포기
+        const victim = Object.keys(localStorage).find((k) => k.startsWith(STORE_PREFIX))
+        if (!victim) return
+        localStorage.removeItem(victim)
+      }
+    }
+  } catch {
+    // 저장소를 못 써도 화면은 메모리 캐시로 동작한다
+  }
+}
 
 export function fetchPodPhoto(podId, version) {
   const key = `${podId}:${version}`
   if (!podPhotoCache.has(key)) {
-    const request = api.get(`/pods/${podId}/image`, withMe()).then((image) => image.dataUrl)
+    const request = api.get(`/pods/${podId}/image`, withMe()).then((image) => {
+      storePodPhoto(podId, version, image.dataUrl)
+      return image.dataUrl
+    })
     // 실패한 요청은 기억하지 않는다 → 다음에 화면을 열 때 다시 시도
     request.catch(() => podPhotoCache.delete(key))
     podPhotoCache.set(key, request)
