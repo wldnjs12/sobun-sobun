@@ -35,13 +35,7 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
 
         <div className={styles.header}>
           <div>
-            <div className={styles.headerBadges}>
-              <span className={styles.waitBadge}>
-                <Icon name="hourglass_top" size={13} filled />
-                팟 참여 대기
-              </span>
-              <span className={styles.seatsText}>잔여 {seatsLeft}자리 남음</span>
-            </div>
+            <p className={styles.seatsText}>{seatsLeft}자리 남음</p>
             <h2 id="join-sheet-title" className={styles.title}>
               이 팟에 참여할까요?
             </h2>
@@ -52,72 +46,54 @@ export default function JoinConfirmSheet({ pod, pricePerPerson, joining, checkin
         </div>
 
         <div className={styles.body}>
-          <div className={styles.itemCard}>
+          <div className={styles.item}>
             <div className={styles.itemThumb}>
               {photoUrl ? (
                 <img src={photoUrl} alt="" />
               ) : (
-                <Icon name="inventory_2" size={32} className={styles.itemPlaceholder} />
+                <Icon name="inventory_2" size={28} className={styles.itemPlaceholder} />
               )}
             </div>
             <div className={styles.itemInfo}>
-              <span className={styles.itemLabel}>{pod.categoryLabel ?? '기타'} · {pod.shareLabel}</span>
+              <span className={styles.itemLabel}>{pod.categoryLabel ?? '기타'}</span>
               <div className={styles.itemTitle}>{pod.title}</div>
               <div className={styles.itemDesc}>미개봉 상태로 {pod.shareLabel}씩 받아요</div>
             </div>
           </div>
 
-          <div className={styles.costBox}>
+          <div className={styles.cost}>
             <div className={styles.costTotalRow}>
-              <span className={styles.costLabel}>1인 최종 예상 부담액</span>
+              <span className={styles.costLabel}>1인 예상 부담액</span>
               <span className={styles.costTotal}>
                 {pricePerPerson.toLocaleString()}
                 <small>원</small>
               </span>
             </div>
-            <div className={styles.divider} />
             <div className={styles.costRow}>
-              <span>상품 예상 금액 (1/{headCount} 분배)</span>
+              <span>상품 금액 ({headCount}명이 나눔)</span>
               <span className={styles.costValue}>{productShare.toLocaleString()}원</span>
             </div>
             <div className={styles.costRow}>
-              <span>대표 수고비 ({Math.round(pod.commissionRate * 100)}%)</span>
+              <span>대표 수고비 {Math.round(pod.commissionRate * 100)}%</span>
               <span className={styles.costValue}>+{feeShare.toLocaleString()}원</span>
             </div>
             <div className={styles.costRow}>
               <span>배송비</span>
-              <span className={styles.costFree}>없음 (건물 안 픽업)</span>
+              <span className={styles.costValue}>없음</span>
             </div>
-          </div>
-
-          <div className={styles.policy}>
-            <span className={styles.policyIcon}>
-              <Icon name="receipt_long" size={18} />
-            </span>
-            <div>
-              <div className={styles.policyTitle}>투명한 영수증 실비 정산 원칙</div>
-              <p className={styles.policyBody}>
-                실제 금액은 구매 후 영수증 기준으로 다시 계산돼요. 할인이나 차액이 생기면 최종 정산에 그대로
-                반영됩니다.
-              </p>
-            </div>
+            <p className={styles.costNote}>구매 후 영수증 금액으로 다시 계산해요. 할인이나 차액은 최종 정산에 그대로 반영돼요.</p>
           </div>
 
           <div className={styles.pickup}>
-            <span className={styles.pickupIcon}>
-              <Icon name="pin_drop" size={20} />
-            </span>
-            <div>
-              <div className={styles.pickupLabel}>픽업 안내</div>
-              <div className={styles.pickupSpot}>{pod.pickupNote || '정산할 때 대표가 알려드려요'}</div>
-              <div className={styles.pickupHint}>같은 건물 이웃끼리 주고받아요</div>
-            </div>
+            <Icon name="pin_drop" size={18} className={styles.pickupIcon} />
+            <span className={styles.pickupLabel}>픽업</span>
+            <span className={styles.pickupSpot}>{pod.pickupNote || '정산할 때 대표가 알려드려요'}</span>
           </div>
 
           {/* 팟 정책: 마감 전까지는 참여 취소 가능, 마감 후에는 불가 (docs/features/02-pod.md) */}
           <label className={styles.agree}>
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            대표가 마감한 뒤에는 참여를 취소할 수 없다는 점에 동의해요.
+            대표가 마감한 뒤에는 참여를 취소할 수 없다는 점에 동의해요
           </label>
 
           {error && <p className={styles.error}>{error}</p>}

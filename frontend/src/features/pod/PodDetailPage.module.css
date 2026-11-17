@@ -250,11 +250,20 @@
   font-weight: 600;
 }
 
-.priceOriginal {
-  margin-left: auto;
+/* 지금 가격 아래: 다 모였을 때 가격 · 혼자 살 때 가격 */
+.priceCompare {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 8px;
   color: var(--color-on-surface-variant);
   font-size: 13px;
-  text-decoration: line-through;
+  font-variant-numeric: tabular-nums;
+}
+
+.priceCompare strong {
+  color: var(--color-on-surface);
+  font-weight: 600;
 }
 
 .breakdown {
@@ -569,14 +578,6 @@
   color: var(--color-on-secondary-container);
 }
 
-.dockSeats {
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
-  font-size: 11px;
-}
-
 /* ── 2026-11 개편: 상태 배너·카테고리·나눔 설명·대표 메뉴·확인 패널 ── */
 .statusBanner {
   display: flex;
@@ -770,10 +771,3 @@
   100% { transform: scale(1); }
 }
 
-.liveMeta {
-  margin-left: auto;
-  color: var(--color-outline);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-}

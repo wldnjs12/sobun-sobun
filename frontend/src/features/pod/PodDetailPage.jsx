@@ -278,10 +278,17 @@ export default function PodDetailPage() {
           <div className={styles.priceRow}>
             <span className={`${styles.priceBig} num`}>{myPrice.toLocaleString()}</span>
             <span className={styles.priceWon}>원</span>
-            {pod.originalPrice && (
-              <span className={styles.priceOriginal}>혼자 살 때 {pod.originalPrice.toLocaleString()}원</span>
-            )}
           </div>
+          {(myHeadCount < pod.targetParticipantCount || pod.originalPrice) && (
+            <p className={styles.priceCompare}>
+              {myHeadCount < pod.targetParticipantCount && (
+                <span>
+                  {pod.targetParticipantCount}명 다 모이면 <strong>{finalPrice.toLocaleString()}원</strong>
+                </span>
+              )}
+              {pod.originalPrice && <span>혼자 살 때 {pod.originalPrice.toLocaleString()}원</span>}
+            </p>
+          )}
           <p className={styles.progressHint}>
             총 결제 금액 {pod.totalAmount.toLocaleString()}원 · 수고비 {Math.round(pod.commissionRate * 100)}% 포함, 원 단위 올림
           </p>
@@ -580,7 +587,6 @@ function DockAction({ pod, isHost, joined, isFull, canJoin, canLeave, canClose, 
       <button type="button" className={styles.dockButton} onClick={onJoin}>
         <Icon name="shopping_bag" size={20} />
         참여하기
-        <span className={styles.dockSeats}>{seatsLeft}자리 남음</span>
       </button>
     )
   }
@@ -627,10 +633,6 @@ function LiveIndicator({ live }) {
     <div className={`${styles.live} ${styles[`live_${live.state}`]}`} aria-live="polite">
       <span key={live.events} className={styles.liveDot} />
       <span>{label}</span>
-      <span className={styles.liveMeta}>
-        STOMP · /topic/pods · 수신 {live.events}
-        {live.lastAt && ` · ${live.lastAt.toTimeString().slice(0, 8)}`}
-      </span>
     </div>
   )
 }
