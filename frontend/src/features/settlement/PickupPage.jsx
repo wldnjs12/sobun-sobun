@@ -192,7 +192,7 @@ export default function PickupPage() {
           onClick={handlePickedUp}
         >
           <Icon name="check_circle" size={20} />
-          {pickedUp ? '수령 완료! 잘 쓰세요' : pickingUp ? '처리 중…' : '물건을 꺼냈어요 · 수령 완료'}
+          {pickedUp ? '수령 완료 · 잘 쓰세요' : pickingUp ? '처리 중…' : '물건을 꺼냈어요 · 수령 완료'}
         </button>
       </div>
 

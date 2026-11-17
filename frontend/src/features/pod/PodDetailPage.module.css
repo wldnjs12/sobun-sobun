@@ -240,7 +240,7 @@
 
 .priceBig {
   font-size: 40px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 48px;
   letter-spacing: -0.03em;
 }
@@ -303,7 +303,7 @@
 .countText {
   color: var(--color-primary);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .progressTrack {
@@ -431,9 +431,9 @@
 .hostTag {
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  font-size: 10px;
+  background: var(--color-primary-fixed);
+  color: var(--accent-hover);
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -527,7 +527,7 @@
 .dockAmount {
   color: var(--color-primary);
   font-size: 22px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 28px;
 }
 
@@ -603,9 +603,10 @@
 
 .categoryBadge {
   padding: 2px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--fg-secondary);
   font-size: 12px;
   font-weight: 600;
 }

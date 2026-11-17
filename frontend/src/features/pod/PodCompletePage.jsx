@@ -121,7 +121,7 @@ export default function PodCompletePage() {
             <span className={styles.pingDot} />
             {pod.closed ? '모집 마감' : '목표 인원 달성'}
           </span>
-          <h2 className={styles.heroTitle}>{headCount}명이 함께 나눠요!</h2>
+          <h2 className={styles.heroTitle}>{headCount}명이 함께 나눠요</h2>
           <p className={styles.heroBody}>
             {settlement
               ? '정산이 확정됐어요. 정산 결과를 확인해주세요.'
