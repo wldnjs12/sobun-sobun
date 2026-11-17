@@ -144,7 +144,6 @@ export default function BuildingHomePage() {
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
           />
-          <kbd className={styles.searchKbd}>/</kbd>
         </div>
 
         {/* 탭 줄 오른쪽 끝에 [+ 열기] — 탭(tablist) 밖에 둬야 화면 낭독기가 버튼을 탭으로 착각하지 않는다 */}
